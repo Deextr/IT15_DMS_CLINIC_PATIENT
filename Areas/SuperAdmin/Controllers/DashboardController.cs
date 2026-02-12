@@ -9,8 +9,17 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
     {
         public IActionResult Index()
         {
-            // Placeholder view for SuperAdmin dashboard
             return View("~/Views/SuperAdmin/Dashboard.cshtml");
+        }
+
+        public IActionResult ArchiveRetention()
+        {
+            return View("~/Views/SuperAdmin/ArchiveRetention.cshtml");
+        }
+
+        public IActionResult ActivityLogs()
+        {
+            return View("~/Views/SuperAdmin/ActivityLogs.cshtml");
         }
     }
 }

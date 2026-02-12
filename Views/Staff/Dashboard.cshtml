@@ -2,8 +2,465 @@
     ViewData["Title"] = "Staff Dashboard";
 }
 
-<div class="container-fluid">
-    <h1 class="mb-3">Staff Dashboard</h1>
-    <p class="text-muted">Dashboard content for Staff will be added here.</p>
+<div class="container-fluid dashboard-container">
+    <!-- Welcome & Time Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <h5 class="mb-0 text-primary fw-semibold">Welcome, Staff Member</h5>
+                            <small class="text-muted">Clinic Patient Management Dashboard</small>
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Time Range">
+                            <button type="button" class="btn btn-outline-secondary btn-sm time-filter active" data-range="today">Today</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm time-filter" data-range="7days">7 Days</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm time-filter" data-range="30days">30 Days</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm time-filter" data-range="custom" data-bs-toggle="modal" data-bs-target="#customDateModal">Custom</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-primary-subtle text-primary rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">My Patients</p>
+                            <h4 class="mb-0 fw-bold">48</h4>
+                            <small class="text-success">+5 today</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-success-subtle text-success rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Today's Appointments</p>
+                            <h4 class="mb-0 fw-bold">12</h4>
+                            <small class="text-muted">3 remaining</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-info-subtle text-info rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Documents Uploaded</p>
+                            <h4 class="mb-0 fw-bold">23</h4>
+                            <small class="text-success">+8 today</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-warning-subtle text-warning rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Pending Tasks</p>
+                            <h4 class="mb-0 fw-bold">7</h4>
+                            <small class="text-danger">2 urgent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule & Patient Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold text-primary">Today's Schedule</h6>
+                    <span class="badge bg-primary">3 Remaining</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-center py-3">
+                            <div class="me-3 text-center">
+                                <div class="fw-bold text-primary">09:00</div>
+                                <small class="text-muted">AM</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">John Smith</h6>
+                                <small class="text-muted">Follow-up Checkup</small>
+                            </div>
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center py-3">
+                            <div class="me-3 text-center">
+                                <div class="fw-bold text-primary">10:30</div>
+                                <small class="text-muted">AM</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Sarah Johnson</h6>
+                                <small class="text-muted">Initial Consultation</small>
+                            </div>
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center py-3 bg-light">
+                            <div class="me-3 text-center">
+                                <div class="fw-bold text-primary">01:00</div>
+                                <small class="text-muted">PM</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Michael Brown</h6>
+                                <small class="text-muted">Lab Results Review</small>
+                            </div>
+                            <span class="badge bg-warning text-dark">In Progress</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center py-3">
+                            <div class="me-3 text-center">
+                                <div class="fw-bold text-primary">02:30</div>
+                                <small class="text-muted">PM</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Emily Davis</h6>
+                                <small class="text-muted">Routine Checkup</small>
+                            </div>
+                            <span class="badge bg-secondary">Upcoming</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center py-3">
+                            <div class="me-3 text-center">
+                                <div class="fw-bold text-primary">04:00</div>
+                                <small class="text-muted">PM</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">David Wilson</h6>
+                                <small class="text-muted">Prescription Renewal</small>
+                            </div>
+                            <span class="badge bg-secondary">Upcoming</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Patient Activity Overview</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="patientActivityChart" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Document Types Uploaded</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="staffDocChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Weekly Patient Visits</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyVisitsChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Patients & Quick Actions -->
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold text-primary">Recently Updated Patients</h6>
+                    <a href="/Patient" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Last Visit</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary-subtle rounded-circle p-2 me-2">
+                                                <span class="fw-bold text-primary">JS</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">John Smith</div>
+                                                <small class="text-muted">ID: P-2024-001</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Today, 09:00 AM</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-success-subtle rounded-circle p-2 me-2">
+                                                <span class="fw-bold text-success">SJ</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Sarah Johnson</div>
+                                                <small class="text-muted">ID: P-2024-015</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Today, 10:30 AM</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-info-subtle rounded-circle p-2 me-2">
+                                                <span class="fw-bold text-info">MB</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Michael Brown</div>
+                                                <small class="text-muted">ID: P-2024-032</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Yesterday, 02:15 PM</td>
+                                    <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-warning-subtle rounded-circle p-2 me-2">
+                                                <span class="fw-bold text-warning">ED</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Emily Davis</div>
+                                                <small class="text-muted">ID: P-2024-048</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Yesterday, 11:00 AM</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/Patient" class="btn btn-outline-primary text-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Manage Patients
+                        </a>
+                        <a href="#" class="btn btn-outline-primary text-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            View Schedule
+                        </a>
+                        <a href="#" class="btn btn-outline-primary text-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Upload Document
+                        </a>
+                        <a href="#" class="btn btn-outline-primary text-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            View My Tasks
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Custom Date Range Modal -->
+<div class="modal fade" id="customDateModal" tabindex="-1" aria-labelledby="customDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customDateModalLabel">Select Custom Date Range</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customDateForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="applyCustomDate">Apply Range</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Time Range Filter
+        document.querySelectorAll('.time-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.dataset.range !== 'custom') {
+                    document.querySelectorAll('.time-filter').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updateDashboard(this.dataset.range);
+                }
+            });
+        });
+
+        function updateDashboard(range) {
+            console.log('Updating dashboard for range:', range);
+        }
+
+        // Patient Activity Chart
+        const patientActivityCtx = document.getElementById('patientActivityChart').getContext('2d');
+        new Chart(patientActivityCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Patient Visits',
+                    data: [8, 12, 10, 15, 11, 5, 3],
+                    borderColor: '#006d77',
+                    backgroundColor: 'rgba(0, 109, 119, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Documents Processed',
+                    data: [15, 22, 18, 25, 20, 8, 5],
+                    borderColor: '#83c5be',
+                    backgroundColor: 'rgba(131, 197, 190, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Staff Document Chart
+        const staffDocCtx = document.getElementById('staffDocChart').getContext('2d');
+        new Chart(staffDocCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Medical Records', 'Lab Results', 'Prescriptions', 'Imaging'],
+                datasets: [{
+                    data: [45, 32, 28, 15],
+                    backgroundColor: ['#006d77', '#005660', '#83c5be', '#b8e0d8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true } }
+                },
+                cutout: '60%'
+            }
+        });
+
+        // Weekly Visits Chart
+        const weeklyVisitsCtx = document.getElementById('weeklyVisitsChart').getContext('2d');
+        new Chart(weeklyVisitsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'New Patients',
+                    data: [12, 15, 10, 18],
+                    backgroundColor: '#006d77',
+                    borderRadius: 6
+                }, {
+                    label: 'Follow-ups',
+                    data: [35, 42, 38, 45],
+                    backgroundColor: '#83c5be',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Custom Date Range
+        document.getElementById('applyCustomDate').addEventListener('click', function() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate && endDate) {
+                document.querySelectorAll('.time-filter').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-range="custom"]').classList.add('active');
+                bootstrap.Modal.getInstance(document.getElementById('customDateModal')).hide();
+                updateDashboard('custom:' + startDate + ':' + endDate);
+            }
+        });
+    </script>
+}
 

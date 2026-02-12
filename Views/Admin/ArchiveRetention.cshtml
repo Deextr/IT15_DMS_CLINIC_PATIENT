@@ -1,0 +1,217 @@
+@{
+    ViewData["Title"] = "Document Retention";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-0 text-primary fw-semibold">Document Retention</h5>
+            <small class="text-muted">View retention policies for patient documents</small>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary-subtle rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Total Documents</p>
+                            <h4 class="mb-0 fw-bold">45,231</h4>
+                            <small class="text-muted">All patient records</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-success-subtle rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Active Records</p>
+                            <h4 class="mb-0 fw-bold">38,456</h4>
+                            <small class="text-success">Currently accessible</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-warning-subtle rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-warning"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Pending Review</p>
+                            <h4 class="mb-0 fw-bold">892</h4>
+                            <small class="text-warning">For retention check</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-danger-subtle rounded-3 p-3 me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-1 small">Expired Records</p>
+                            <h4 class="mb-0 fw-bold">124</h4>
+                            <small class="text-danger">Ready for deletion</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Retention Policies -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold text-primary">Retention Policies</h6>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" placeholder="Search policies..." style="width: 200px;">
+                        <button class="btn btn-sm btn-outline-secondary">Filter</button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-header-ocean">
+                                <tr>
+                                    <th>Policy Name</th>
+                                    <th>Document Type</th>
+                                    <th>Retention</th>
+                                    <th>Auto-Delete</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold">Medical Records</td>
+                                    <td>Patient Medical History</td>
+                                    <td>7 years</td>
+                                    <td><span class="badge bg-danger">No</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Lab Results</td>
+                                    <td>Blood Tests, Urinalysis</td>
+                                    <td>5 years</td>
+                                    <td><span class="badge bg-danger">No</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Prescriptions</td>
+                                    <td>Medication Records</td>
+                                    <td>3 years</td>
+                                    <td><span class="badge bg-success">Yes</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Imaging Data</td>
+                                    <td>X-Rays, MRI, CT Scans</td>
+                                    <td>10 years</td>
+                                    <td><span class="badge bg-danger">No</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Insurance Claims</td>
+                                    <td>Claim Forms & Approvals</td>
+                                    <td>5 years</td>
+                                    <td><span class="badge bg-success">Yes</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Vaccination Records</td>
+                                    <td>Immunization History</td>
+                                    <td>Indefinite</td>
+                                    <td><span class="badge bg-danger">No</span></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Overview -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Storage Usage</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Active Documents</span>
+                            <span class="fw-semibold">650 GB (65%)</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 65%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Pending Review</span>
+                            <span class="fw-semibold">120 GB (12%)</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 12%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Available Space</span>
+                            <span class="fw-semibold">230 GB (23%)</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 23%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Total Storage</span>
+                            <span class="fw-semibold">1 TB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-semibold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-warning text-start" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Review Pending (892)
+                            <small class="d-block text-muted">Contact SuperAdmin</small>
+                        </button>
+                        <button class="btn btn-outline-secondary text-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

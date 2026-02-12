@@ -9,8 +9,17 @@ namespace DMS_CPMS.Areas.Staff.Controllers
     {
         public IActionResult Index()
         {
-            // Placeholder view for Staff dashboard
             return View("~/Views/Staff/Dashboard.cshtml");
+        }
+
+        public IActionResult Patients()
+        {
+            return View("~/Views/Staff/Patients.cshtml");
+        }
+
+        public IActionResult ArchiveRetention()
+        {
+            return View("~/Views/Staff/ArchiveRetention.cshtml");
         }
     }
 }

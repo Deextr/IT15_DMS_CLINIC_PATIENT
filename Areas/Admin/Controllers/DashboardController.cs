@@ -9,8 +9,17 @@ namespace DMS_CPMS.Areas.Admin.Controllers
     {
         public IActionResult Index()
         {
-            // Placeholder view for Admin dashboard
             return View("~/Views/Admin/Dashboard.cshtml");
+        }
+
+        public IActionResult ArchiveRetention()
+        {
+            return View("~/Views/Admin/ArchiveRetention.cshtml");
+        }
+
+        public IActionResult ActivityLogs()
+        {
+            return View("~/Views/Admin/ActivityLogs.cshtml");
         }
     }
 }

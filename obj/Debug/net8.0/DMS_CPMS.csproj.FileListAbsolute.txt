@@ -285,3 +285,4 @@ C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\obj\Debug\net8.0\refint\DMS_CPMS.d
 C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\obj\Debug\net8.0\DMS_CPMS.pdb
 C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\obj\Debug\net8.0\DMS_CPMS.genruntimeconfig.cache
 C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\obj\Debug\net8.0\ref\DMS_CPMS.dll
+C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\obj\Debug\net8.0\DMS_CPMS.sourcelink.json
