@@ -1,0 +1,152 @@
+@model DMS_CPMS.Models.Patient.PatientIndexViewModel
+
+@{
+    ViewData["Title"] = "Patient Management";
+}
+
+<div class="container-fluid">
+    <!-- New Patient Button - Outside Table Container -->
+    <div class="d-flex justify-content-start mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPatientModal">
+            + New Patient
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form class="row g-2 align-items-end mb-3" method="get">
+                <div class="col-md-4">
+                    <label class="form-label">Search by name</label>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Enter first or last name" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Gender</label>
+                    <select name="gender" class="form-select">
+                        <option value="">All</option>
+                        <option value="Male" selected="@(Model.GenderFilter == "Male" ? "selected" : null)">Male</option>
+                        <option value="Female" selected="@(Model.GenderFilter == "Female" ? "selected" : null)">Female</option>
+                        <option value="Other" selected="@(Model.GenderFilter == "Other" ? "selected" : null)">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-secondary me-2">Filter</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-header-ocean">
+                        <tr>
+                            <th style="width: 18%;">First Name</th>
+                            <th style="width: 18%;">Last Name</th>
+                            <th style="width: 8%;">Age</th>
+                            <th style="width: 12%;">Gender</th>
+                            <th style="width: 22%;">Last Visited</th>
+                            <th style="width: 22%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Patients.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No patients found. Use the button above to add a new patient.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var patient in Model.Patients)
+                            {
+                                var age = DateTime.Now.Year - patient.BirthDate.Year;
+                                if (DateTime.Now.DayOfYear < patient.BirthDate.DayOfYear) age--;
+                                <tr>
+                                    <td>@patient.FirstName</td>
+                                    <td>@patient.LastName</td>
+                                    <td>@age</td>
+                                    <td>@patient.Gender</td>
+                                    <td>@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                    <td>
+                                        <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@patient.PatientID" class="btn btn-sm btn-outline-secondary me-1">View</a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editPatientModal"
+                                                data-id="@patient.PatientID"
+                                                data-firstname="@patient.FirstName"
+                                                data-lastname="@patient.LastName"
+                                                data-birthdate="@patient.BirthDate.ToString("yyyy-MM-dd")"
+                                                data-gender="@patient.Gender"
+                                                data-visitedat="@patient.VisitedAt.ToString("yyyy-MM-ddTHH:mm")">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="mt-3">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter">Previous</a>
+                        </li>
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Patient/_CreatePatientModal.cshtml", Model.NewPatient)
+@await Html.PartialAsync("~/Views/Patient/_EditPatientModal.cshtml", new DMS_CPMS.Models.Patient.EditPatientViewModel())
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var editModal = document.getElementById('editPatientModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (e) {
+                    var btn = e.relatedTarget;
+                    if (!btn) return;
+                    var id = btn.getAttribute('data-id');
+                    var first = btn.getAttribute('data-firstname') || '';
+                    var last = btn.getAttribute('data-lastname') || '';
+                    var birth = btn.getAttribute('data-birthdate') || '';
+                    var gender = btn.getAttribute('data-gender') || '';
+                    var visited = btn.getAttribute('data-visitedat') || '';
+
+                    var idInput = editModal.querySelector('input[name="PatientID"]');
+                    var firstInput = editModal.querySelector('input[name="FirstName"]');
+                    var lastInput = editModal.querySelector('input[name="LastName"]');
+                    var birthInput = editModal.querySelector('input[name="BirthDate"]');
+                    var genderSelect = editModal.querySelector('select[name="Gender"]');
+                    var visitedInput = editModal.querySelector('input[name="VisitedAt"]');
+
+                    if (idInput) idInput.value = id || '';
+                    if (firstInput) firstInput.value = first;
+                    if (lastInput) lastInput.value = last;
+                    if (birthInput) birthInput.value = birth;
+                    if (genderSelect) genderSelect.value = gender;
+                    if (visitedInput) visitedInput.value = visited;
+                });
+            }
+        })();
+    </script>
+}
+

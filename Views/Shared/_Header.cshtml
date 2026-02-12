@@ -1,0 +1,46 @@
+@using DMS_CPMS.Data.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var pageTitle = ViewData["Title"]?.ToString() ?? "Dashboard";
+    var userName = User.Identity?.Name ?? "User";
+    
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+    var userRole = isSuperAdmin ? "Super Admin" : isAdmin ? "Admin" : isStaff ? "Staff" : "User";
+}
+
+@if (isAuthenticated)
+{
+    <header class="global-header" role="banner">
+        <div class="global-header-left">
+            <h1 class="global-header-title">@pageTitle</h1>
+        </div>
+        
+        <div class="global-header-right">
+            <div class="header-account-info">
+                <span class="header-account-name">@userName</span>
+                <span class="header-account-role">@userRole</span>
+            </div>
+            
+            <form asp-area=""
+                  asp-controller="Login"
+                  asp-action="Logout"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="header-logout-btn">
+                    <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+                        <path d="M4 3h7a1 1 0 0 1 1 1v3h-2V5H6v10h4v-2h2v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="currentColor"></path>
+                        <path d="M14 7l3 3-3 3v-2h-4v-2h4V7z" fill="currentColor"></path>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </header>
+}

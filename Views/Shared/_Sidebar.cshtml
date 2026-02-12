@@ -1,0 +1,112 @@
+@using DMS_CPMS.Data.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+}
+
+@if (isAuthenticated)
+{
+    <nav class="sidebar" role="navigation" aria-label="Main navigation">
+        <div class="sidebar-logo">
+            <!-- Logo placeholder; you can replace this with an <img> later -->
+        </div>
+        <div class="sidebar-header">
+            <span class="sidebar-title">Clinic DMS</span>
+        </div>
+        <ul class="sidebar-menu list-unstyled">
+            <li class="sidebar-item @(currentController == "Dashboard" ? "active" : "")">
+                @if (isSuperAdmin)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+                else if (isAdmin)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "Admin" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+                else if (isStaff)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "Staff" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+            </li>
+
+            @if (isSuperAdmin || isAdmin)
+            {
+                <li class="sidebar-item @(currentController == "Accounts" ? "active" : "")">
+                    @if (isSuperAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Accounts", new { area = "SuperAdmin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <circle cx="10" cy="6" r="3" fill="currentColor"></circle>
+                                    <path d="M4 16c0-2.2 2.2-4 6-4s6 1.8 6 4H4z" fill="currentColor"></path>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Accounts</span>
+                        </a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Accounts", new { area = "Admin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <circle cx="10" cy="6" r="3" fill="currentColor"></circle>
+                                    <path d="M4 16c0-2.2 2.2-4 6-4s6 1.8 6 4H4z" fill="currentColor"></path>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Accounts</span>
+                        </a>
+                    }
+                </li>
+
+                <li class="sidebar-item @(currentController == "Patient" ? "active" : "")">
+                    <a href="@Url.Action("Index", "Patient", new { area = "" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M10 4.5c-1.8-2.5-6-1.8-6 1.8 0 3.1 4.8 5.8 6 7 1.2-1.2 6-3.9 6-7 0-3.6-4.2-4.3-6-1.8z" fill="currentColor"></path>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Patients</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+

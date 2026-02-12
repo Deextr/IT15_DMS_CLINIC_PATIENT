@@ -1,0 +1,221 @@
+@model DMS_CPMS.Models.Accounts.AccountsIndexViewModel
+@{
+    ViewData["Title"] = "Manage Accounts";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+<div class="container-fluid">
+    <!-- Create Account Button - Outside Table Container -->
+    <div class="d-flex justify-content-start mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+            + Create Account
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <!-- Search & Filters -->
+            <form class="row g-2 align-items-end mb-3" method="get" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts">
+                <div class="col-md-4">
+                    <label class="form-label">Search by name/username</label>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Enter name or username" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">All</option>
+                        <option value="Admin" selected="@(Model.RoleFilter == "Admin" ? "selected" : null)">Admin</option>
+                        <option value="Staff" selected="@(Model.RoleFilter == "Staff" ? "selected" : null)">Staff</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All</option>
+                        <option value="Active" selected="@(Model.StatusFilter == "Active" ? "selected" : null)">Active</option>
+                        <option value="Inactive" selected="@(Model.StatusFilter == "Inactive" ? "selected" : null)">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-secondary me-2">Filter</button>
+                    <a asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-header-ocean">
+                        <tr>
+                            <th style="width: 20%;">Username</th>
+                            <th style="width: 20%;">Full Name</th>
+                            <th style="width: 15%;">Role</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 30%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Accounts.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    No accounts found. Use the button above to create a new account.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Accounts)
+                            {
+                            <tr>
+                                <td>@item.Username</td>
+                                <td>@item.FullName</td>
+                                <td><span class="badge bg-secondary">@item.Role</span></td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Deactivated</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editAccountModal"
+                                            data-id="@item.Id"
+                                            data-username="@item.Username"
+                                            data-fullname="@item.FullName"
+                                            data-role="@item.Role"
+                                            data-isactive="@(item.IsActive.ToString().ToLowerInvariant())">
+                                        Edit
+                                    </button>
+                                    @if (item.Id != currentUserId && item.IsActive)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deactivateModal"
+                                                data-id="@item.Id"
+                                                data-name="@item.FullName">
+                                            Deactivate
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="mt-3">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">Previous</a>
+                        </li>
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/SuperAdmin/Accounts/_CreateAccountModal.cshtml", Model.NewAccount)
+@await Html.PartialAsync("~/Views/SuperAdmin/Accounts/_EditAccountModal.cshtml", new DMS_CPMS.Models.Accounts.EditAccountViewModel())
+
+<div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivateModalLabel">Confirm deactivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to deactivate <strong id="deactivateUserName"></strong>? They will not be able to log in.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deactivateForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deactivateUserId" />
+                    <button type="submit" class="btn btn-danger">Deactivate account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var deactivateModal = document.getElementById('deactivateModal');
+            if (deactivateModal) {
+                deactivateModal.addEventListener('show.bs.modal', function (e) {
+                    var btn = e.relatedTarget;
+                    var id = btn.getAttribute('data-id');
+                    var name = btn.getAttribute('data-name');
+                    document.getElementById('deactivateUserId').value = id || '';
+                    document.getElementById('deactivateUserName').textContent = name || '';
+                    var form = document.getElementById('deactivateForm');
+                    if (form) form.action = '@Url.Action("Deactivate", "Accounts", new { area = "SuperAdmin" })?id=' + encodeURIComponent(id || '');
+                });
+            }
+
+            var editModal = document.getElementById('editAccountModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (e) {
+                    var btn = e.relatedTarget;
+                    if (!btn) return;
+                    var id = btn.getAttribute('data-id') || '';
+                    var username = btn.getAttribute('data-username') || '';
+                    var fullName = btn.getAttribute('data-fullname') || '';
+                    var role = btn.getAttribute('data-role') || 'Staff';
+                    var isActive = btn.getAttribute('data-isactive') === 'true';
+
+                    var firstName = '';
+                    var lastName = '';
+                    if (fullName) {
+                        var parts = fullName.trim().split(' ');
+                        firstName = parts[0] || '';
+                        if (parts.length > 1) {
+                            lastName = parts.slice(1).join(' ');
+                        }
+                    }
+
+                    var modalBody = editModal;
+                    var idInput = modalBody.querySelector('input[name="Id"]');
+                    var firstInput = modalBody.querySelector('input[name="FirstName"]');
+                    var lastInput = modalBody.querySelector('input[name="LastName"]');
+                    var usernameInput = modalBody.querySelector('input[name="Username"]');
+                    var roleSelect = modalBody.querySelector('select[name="RoleType"]');
+                    var isActiveInput = modalBody.querySelector('input[name="IsActive"]');
+                    var newPassInput = modalBody.querySelector('input[name="NewPassword"]');
+                    var confirmPassInput = modalBody.querySelector('input[name="ConfirmPassword"]');
+
+                    if (idInput) idInput.value = id;
+                    if (firstInput) firstInput.value = firstName;
+                    if (lastInput) lastInput.value = lastName;
+                    if (usernameInput) usernameInput.value = username;
+                    if (roleSelect) roleSelect.value = role;
+                    if (isActiveInput) isActiveInput.checked = isActive;
+                    if (newPassInput) newPassInput.value = '';
+                    if (confirmPassInput) confirmPassInput.value = '';
+                });
+            }
+        })();
+    </script>
+}

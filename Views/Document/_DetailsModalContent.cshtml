@@ -1,0 +1,134 @@
+@model DMS_CPMS.Models.Document.DocumentDetailsViewModel
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-primary text-white">
+                <strong>Document information</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-secondary">Title</dt>
+                    <dd class="col-sm-8">@Model.Document.DocumentTitle</dd>
+
+                    <dt class="col-sm-4 text-secondary">Type</dt>
+                    <dd class="col-sm-8">@Model.Document.DocumentType</dd>
+
+                    <dt class="col-sm-4 text-secondary">Upload date</dt>
+                    <dd class="col-sm-8">@Model.Document.UploadDate.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-4 text-secondary">Uploaded by</dt>
+                    <dd class="col-sm-8">@Model.Document.UploadedByUser?.UserName</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong>Latest version</strong>
+                @if (Model.LatestVersion != null)
+                {
+                    <span class="badge bg-ocean-accent">v@Model.LatestVersion.VersionNumber</span>
+                }
+            </div>
+            <div class="card-body">
+                @if (Model.LatestVersion == null)
+                {
+                    <p class="text-muted mb-0">No file available for this document.</p>
+                }
+                else
+                {
+                    var filePath = Url.Content(Model.LatestVersion.FilePath);
+                    var extension = System.IO.Path.GetExtension(Model.LatestVersion.FilePath).ToLowerInvariant();
+
+                    if (extension == ".pdf")
+                    {
+                        <div class="ratio ratio-4x3 mb-2 document-preview-frame">
+                            <iframe src="@filePath" title="PDF preview" loading="lazy"></iframe>
+                        </div>
+                    }
+                    else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png")
+                    {
+                        <div class="document-preview-frame mb-2 text-center">
+                            <img src="@filePath" alt="Document preview" class="img-fluid rounded shadow-sm" />
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Preview is not available for this file type. Please download instead.</p>
+                    }
+
+                    <a asp-action="Download" asp-route-versionId="@Model.LatestVersion.VersionID" class="btn btn-primary btn-sm">
+                        Download latest
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong>Version history</strong>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-header-ocean">
+                    <tr>
+                        <th scope="col">Version</th>
+                        <th scope="col">Created date</th>
+                        <th scope="col">File</th>
+                        <th scope="col" style="width: 180px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Versions.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                No versions have been uploaded yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        var latestVersionId = Model.LatestVersion?.VersionID;
+                        foreach (var version in Model.Versions)
+                        {
+                            var isCurrent = latestVersionId.HasValue && latestVersionId.Value == version.VersionID;
+                            <tr class="@(isCurrent ? "table-ocean-current" : "")">
+                                <td>
+                                    v@version.VersionNumber
+                                    @if (isCurrent)
+                                    {
+                                        <span class="badge bg-ocean-accent ms-1">Current</span>
+                                    }
+                                </td>
+                                <td>@version.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="text-truncate" style="max-width: 220px;">
+                                    @System.IO.Path.GetFileName(version.FilePath)
+                                </td>
+                                <td>
+                                    <a asp-action="ViewDocument"
+                                       asp-route-id="@Model.Document.DocumentID"
+                                       asp-route-versionId="@version.VersionID"
+                                       class="btn btn-sm btn-outline-secondary me-1">
+                                        View this version
+                                    </a>
+                                    <a asp-action="Download"
+                                       asp-route-versionId="@version.VersionID"
+                                       class="btn btn-sm btn-primary">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,70 @@
+@model EditAccountViewModel
+@{
+    ViewData["Title"] = "Edit Staff Account";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-3">Edit Staff Account</h1>
+    <p class="text-muted mb-4">Update account details. Leave password fields blank to keep the current password.</p>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-5">
+            <form asp-area="Admin" asp-controller="Accounts" asp-action="Edit" method="post" novalidate>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="RoleType" value="Staff" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="FirstName" class="form-label"></label>
+                    <input asp-for="FirstName" class="form-control" placeholder="First name" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="LastName" class="form-label"></label>
+                    <input asp-for="LastName" class="form-control" placeholder="Last name" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control" placeholder="Username" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Role</label>
+                    <input class="form-control" value="Staff" disabled />
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                    <small class="form-text text-muted d-block">Deactivated users cannot log in. You cannot deactivate your own account.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NewPassword" class="form-label"></label>
+                    <input asp-for="NewPassword" class="form-control" placeholder="Leave blank to keep current" autocomplete="new-password" />
+                    <small class="form-text text-muted">Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
+                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm new password" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <a asp-area="Admin" asp-controller="Accounts" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

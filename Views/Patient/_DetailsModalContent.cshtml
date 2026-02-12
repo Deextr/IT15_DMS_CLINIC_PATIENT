@@ -1,0 +1,125 @@
+@model DMS_CPMS.Models.Patient.PatientDetailsViewModel
+
+<ul class="nav nav-tabs mb-3" id="patientDetailsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="patient-info-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#patient-info-pane"
+                type="button"
+                role="tab"
+                aria-controls="patient-info-pane"
+                aria-selected="true">
+            Patient information
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="patient-docs-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#patient-docs-pane"
+                type="button"
+                role="tab"
+                aria-controls="patient-docs-pane"
+                aria-selected="false">
+            Recent documents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="patient-docdetails-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#patient-docdetails-pane"
+                type="button"
+                role="tab"
+                aria-controls="patient-docdetails-pane"
+                aria-selected="false">
+            Document details
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="patientDetailsTabsContent">
+    <div class="tab-pane fade show active" id="patient-info-pane" role="tabpanel" aria-labelledby="patient-info-tab">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-primary text-white">
+                <strong>Patient information</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-secondary">First name</dt>
+                    <dd class="col-sm-8">@Model.Patient.FirstName</dd>
+
+                    <dt class="col-sm-4 text-secondary">Last name</dt>
+                    <dd class="col-sm-8">@Model.Patient.LastName</dd>
+
+                    <dt class="col-sm-4 text-secondary">Birth date</dt>
+                    <dd class="col-sm-8">@Model.Patient.BirthDate.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-4 text-secondary">Gender</dt>
+                    <dd class="col-sm-8">@Model.Patient.Gender</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="patient-docs-pane" role="tabpanel" aria-labelledby="patient-docs-tab">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0 text-secondary">Recent documents</h6>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                + Add document
+            </button>
+        </div>
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle mb-0">
+                        <thead class="table-header-ocean">
+                            <tr>
+                                <th scope="col">Title</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Upload date</th>
+                                <th scope="col" style="width: 140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Documents.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        No documents uploaded yet for this patient.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var doc in Model.Documents)
+                                {
+                                    <tr>
+                                        <td>@doc.DocumentTitle</td>
+                                        <td>@doc.DocumentType</td>
+                                        <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary btn-patient-doc-view"
+                                                    data-document-id="@doc.DocumentID"
+                                                    data-document-title="@doc.DocumentTitle">
+                                                View details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="patient-docdetails-pane" role="tabpanel" aria-labelledby="patient-docdetails-tab">
+        <div id="patientDocDetailsContainer">
+            <p class="text-muted mb-0">Select a document from the Recent documents tab to see its details here.</p>
+        </div>
+    </div>
+</div>
+

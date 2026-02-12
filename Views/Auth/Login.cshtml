@@ -1,0 +1,78 @@
+@model DMS_CPMS.Models.Auth.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_LoginLayout";
+}
+
+<div class="login-card-container">
+    <div class="login-card shadow-sm">
+        <h1 class="h4 mb-3 text-center">Clinic DMS Login</h1>
+
+        <form asp-action="Login" asp-controller="Login" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" placeholder="Enter your username" autocomplete="username" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <div class="input-group password-toggle-group">
+                    <input asp-for="Password" class="form-control" placeholder="Enter your password" autocomplete="current-password" />
+                    <button type="button"
+                            class="btn btn-outline-secondary password-toggle-btn"
+                            id="togglePassword"
+                            aria-label="Show password"
+                            aria-pressed="false">
+                        <span class="visually-hidden">Toggle password visibility</span>
+                        <svg id="iconEye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
+                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/>
+                        </svg>
+                        <svg id="iconEyeSlash" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" class="d-none">
+                            <path d="M13.359 11.238C14.06 10.453 14.6 9.656 15 9c-1.5-2.5-4-4.5-7-4.5-.803 0-1.574.146-2.3.414l1.221 1.222A3.5 3.5 0 0 1 11 8a3.48 3.48 0 0 1-.523 1.836l1.882 1.402z"/>
+                            <path d="M11.297 12.554A7.03 7.03 0 0 1 8 13.5C3 13.5 0 8 0 8a15.4 15.4 0 0 1 3.25-3.727l-.99-.99.708-.708 10.5 10.5-.708.708-1.463-1.463zM5.354 6.611 6.74 7.996A2 2 0 0 0 8 10a2 2 0 0 0 1.389-.553l.707.707A3 3 0 0 1 5.354 6.61z"/>
+                        </svg>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Login
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const passwordInput = document.getElementById("@Html.IdFor(m => m.Password)");
+            const toggleButton = document.getElementById("togglePassword");
+            const iconEye = document.getElementById("iconEye");
+            const iconEyeSlash = document.getElementById("iconEyeSlash");
+
+            if (!passwordInput || !toggleButton || !iconEye || !iconEyeSlash) {
+                return;
+            }
+
+            toggleButton.addEventListener("click", function () {
+                const isPassword = passwordInput.type === "password";
+                passwordInput.type = isPassword ? "text" : "password";
+
+                toggleButton.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
+                toggleButton.setAttribute("aria-pressed", (!isPassword).toString());
+
+                iconEye.classList.toggle("d-none", !isPassword);
+                iconEyeSlash.classList.toggle("d-none", isPassword);
+            });
+        })();
+    </script>
+}
+
