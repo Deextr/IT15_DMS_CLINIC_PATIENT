@@ -614,3 +614,182 @@ body.app-with-header {
     margin-left: 0;
   }
 }
+
+/* ============================================
+   SIDEBAR TOGGLE - COLLAPSIBLE SIDEBAR
+   ============================================ */
+
+/* Desktop Toggle Button */
+.sidebar-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 0.375rem;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Mobile/Tablet Toggle Button - in header */
+.mobile-menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: var(--color-text-main);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  margin-right: 0.75rem;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--color-surface-soft);
+}
+
+.mobile-menu-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Mobile Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 899;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Collapsed Sidebar State - Desktop */
+.sidebar.collapsed {
+  width: 60px;
+  padding: 1.5rem 0.5rem 1rem;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  right: 0.75rem;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar.collapsed .sidebar-header {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-link-text {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.sidebar.collapsed .sidebar-link-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Adjust main content when sidebar is collapsed */
+.sidebar.collapsed ~ .app-content,
+body:has(.sidebar.collapsed) .app-content {
+  margin-left: 60px;
+}
+
+.sidebar.collapsed ~ .global-header,
+body:has(.sidebar.collapsed) .global-header {
+  left: 60px;
+}
+
+/* Responsive: Mobile & Tablet (max-width: 991px) */
+@media (max-width: 991px) {
+  /* Hide desktop toggle on mobile */
+  .sidebar-toggle {
+    display: none;
+  }
+  
+  /* Show mobile hamburger button in header */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  /* Sidebar - hidden by default on mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    width: 240px;
+    padding: 1.5rem 1rem 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  /* Sidebar - visible when mobile-open */
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  /* Reset collapsed styles on mobile */
+  .sidebar.mobile-open .sidebar-toggle {
+    display: none;
+  }
+  
+  .sidebar.mobile-open .sidebar-header,
+  .sidebar.mobile-open .sidebar-link-text {
+    display: block;
+  }
+  
+  .sidebar.mobile-open .sidebar-link {
+    justify-content: flex-start;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .sidebar.mobile-open .sidebar-link-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  
+  /* Global header - full width on mobile */
+  .global-header {
+    left: 0;
+  }
+  
+  .app-shell {
+    padding-top: 64px;
+  }
+  
+  .app-content {
+    margin-left: 0;
+  }
+}

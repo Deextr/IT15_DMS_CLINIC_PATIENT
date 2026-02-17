@@ -6,8 +6,8 @@ by editing this MSBuild file. In order to learn more about this please visit htt
 <Project>
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
-    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAbuHr2JbgDkmCuvREujuy+gAAAAACAAAAAAAQZgAAAAEAACAAAACJmv8eTRR62AR47Bc2qWjAt7uAN1oxgKnuqlQnFBlDmQAAAAAOgAAAAAIAACAAAADPWZMiKd4MCz8erIhKjk7xlndio+xEYfQiSoP4XYTyDyAAAADpErri2AJFQ5ZYdjdd/y6iUDM2yK5W2BkqBQT3ki8vVUAAAABW1VVGAsttHyFLnBiK9V6rTyYmXqnaxtQ4N9YeoNoaaB7vN8CkXqATIsI3sD4Z4T8xzgj0muZZgbozlOyABTzB</EncryptedPassword>
-    <History>True|2026-02-12T11:18:18.8015231Z||;</History>
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAbuHr2JbgDkmCuvREujuy+gAAAAACAAAAAAAQZgAAAAEAACAAAAC9zu8vwdFpS2Ba/aZebHbV3lJUYhKg/VISJHpU9X8T3wAAAAAOgAAAAAIAACAAAAC4CWkfjYty0/TMswy2BiIaaik5mAMA1LHdl0sOi4LWsCAAAABGM1ntnergRs5kLdzNc+wThT15Ya5nMN+RVzNy0l0EVkAAAAB2nYK+b90L/5RNkGBLvn7kW4inUkT+c270uVZMIvEQlJ2xM+FyotHgDm/7UpzwZMnDV4wW5V8JdXt4+0ZTYEMW</EncryptedPassword>
+    <History>True|2026-02-12T13:06:08.7097483Z||;True|2026-02-12T21:03:03.2725272+08:00||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>

@@ -285,6 +285,179 @@ namespace DMS_CPMS.Controllers
             return Json(new { versions = versionsList });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetDocuments(int patientId, string? searchTerm, string? documentType, int page = 1)
+        {
+            var patient = await _context.Patients.FindAsync(patientId);
+            if (patient == null)
+            {
+                return Json(new { success = false, message = "Patient not found" });
+            }
+
+            var query = _context.Documents
+                .Where(d => d.PatientID == patientId)
+                .Include(d => d.UploadedByUser)
+                .Include(d => d.Versions)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(d => d.DocumentTitle.Contains(searchTerm));
+            }
+
+            if (!string.IsNullOrWhiteSpace(documentType))
+            {
+                query = query.Where(d => d.DocumentType == documentType);
+            }
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var lastUpload = await query.OrderByDescending(d => d.UploadDate).FirstOrDefaultAsync();
+
+            var documents = await query
+                .OrderByDescending(d => d.UploadDate)
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
+
+            var documentList = documents.Select(d =>
+            {
+                var latestVersion = d.Versions?.OrderByDescending(v => v.VersionNumber).FirstOrDefault();
+                var filePath = latestVersion?.FilePath ?? string.Empty;
+                var extension = !string.IsNullOrEmpty(filePath) ? Path.GetExtension(filePath).ToLower() : string.Empty;
+                return new
+                {
+                    documentID = d.DocumentID,
+                    documentName = d.DocumentTitle,
+                    documentType = d.DocumentType,
+                    version = $"v{d.Versions?.Count ?? 1}.0",
+                    uploadedBy = d.UploadedByUser?.UserName ?? "Unknown",
+                    uploadDate = d.UploadDate.ToString("yyyy-MM-dd"),
+                    fileExtension = extension
+                };
+            }).ToList();
+
+            return Json(new
+            {
+                success = true,
+                documents = documentList,
+                pageNumber = page,
+                totalPages = totalPages,
+                totalCount = totalCount,
+                lastUploadDate = lastUpload?.UploadDate.ToString("yyyy-MM-dd") ?? "--"
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAjax(UploadDocumentViewModel model)
+        {
+            if (!ModelState.IsValid || model.UploadedFile == null)
+            {
+                return Json(new { success = false, message = "Invalid input data" });
+            }
+
+            var patient = await _context.Patients.FindAsync(model.PatientID);
+            if (patient == null)
+            {
+                return Json(new { success = false, message = "Patient not found" });
+            }
+
+            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Other - {model.OtherDocumentType}"
+                : model.DocumentType;
+
+            var currentUserId = _userManager.GetUserId(User);
+            
+            var document = new Document
+            {
+                PatientID = model.PatientID,
+                UploadBy = currentUserId ?? string.Empty,
+                DocumentTitle = model.DocumentTitle,
+                DocumentType = documentType,
+                UploadDate = DateTime.UtcNow
+            };
+
+            _context.Documents.Add(document);
+            await _context.SaveChangesAsync();
+
+            var relativePath = await SaveFileAsync(model.PatientID, document.DocumentID, 1, model.UploadedFile);
+
+            var version = new DocumentVersion
+            {
+                DocumentID = document.DocumentID,
+                VersionNumber = 1,
+                FilePath = relativePath,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _context.DocumentVersions.Add(version);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Document uploaded successfully" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAjax(EditDocumentViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Invalid input data" });
+            }
+
+            var document = await _context.Documents.FindAsync(model.DocumentID);
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found" });
+            }
+
+            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Other - {model.OtherDocumentType}"
+                : model.DocumentType;
+
+            document.DocumentTitle = model.DocumentTitle;
+            document.DocumentType = documentType;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Document updated successfully" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var document = await _context.Documents
+                .Include(d => d.Versions)
+                .FirstOrDefaultAsync(d => d.DocumentID == id);
+
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found" });
+            }
+
+            // Delete physical files
+            foreach (var version in document.Versions ?? new List<DocumentVersion>())
+            {
+                if (!string.IsNullOrEmpty(version.FilePath))
+                {
+                    var physicalPath = Path.Combine(_environment.WebRootPath, version.FilePath.TrimStart('/'));
+                    if (System.IO.File.Exists(physicalPath))
+                    {
+                        System.IO.File.Delete(physicalPath);
+                    }
+                }
+            }
+
+            _context.Documents.Remove(document);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Document deleted successfully" });
+        }
+
         private static string GetMimeType(string extension)
         {
             return extension.ToLower() switch

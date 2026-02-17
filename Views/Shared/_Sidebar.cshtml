@@ -14,7 +14,14 @@
 
 @if (isAuthenticated)
 {
-    <nav class="sidebar" role="navigation" aria-label="Main navigation">
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+        <div class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </div>
         <div class="sidebar-logo">
             <!-- Logo placeholder; you can replace this with an <img> later -->
         </div>
@@ -193,5 +200,47 @@
             }
         </ul>
     </nav>
+
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const desktopToggle = document.getElementById('sidebarToggle');
+            const mobileToggle = document.getElementById('mobileMenuToggle');
+            
+            // Create overlay element for mobile slide mode (if needed)
+            let overlay = document.querySelector('.sidebar-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                overlay.id = 'sidebarOverlay';
+                document.body.appendChild(overlay);
+            }
+            
+            // Check for saved state (applies to both desktop and mobile)
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+            }
+            
+            // Desktop toggle - shrink/expand
+            if (desktopToggle) {
+                desktopToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    const collapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebarCollapsed', collapsed);
+                });
+            }
+            
+            // Mobile toggle - same shrink/expand behavior
+            if (mobileToggle && sidebar) {
+                mobileToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    const collapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebarCollapsed', collapsed);
+                    mobileToggle.setAttribute('aria-expanded', !collapsed);
+                });
+            }
+        })();
+    </script>
 }
 

@@ -68,7 +68,24 @@
                                     <td>@patient.Gender</td>
                                     <td>@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")</td>
                                     <td>
-                                        <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@patient.PatientID" class="btn btn-sm btn-outline-secondary me-1">View</a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#patientDocumentsModal"
+                                                data-patient-id="@patient.PatientID"
+                                                data-first-name="@patient.FirstName"
+                                                data-last-name="@patient.LastName"
+                                                data-birthdate="@patient.BirthDate.ToString("yyyy-MM-dd")"
+                                                data-gender="@patient.Gender"
+                                                onclick="openPatientDocumentsModal(this)">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                            Documents
+                                        </button>
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-primary"
                                                 data-bs-toggle="modal"
@@ -114,10 +131,567 @@
 
 @await Html.PartialAsync("~/Views/Patient/_CreatePatientModal.cshtml", Model.NewPatient)
 @await Html.PartialAsync("~/Views/Patient/_EditPatientModal.cshtml", new DMS_CPMS.Models.Patient.EditPatientViewModel())
+@await Html.PartialAsync("~/Views/Patient/_PatientDocumentsModal.cshtml", new DMS_CPMS.Models.Patient.PatientDocumentsIndexViewModel())
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Global variables for document management
+        let currentPatientId = null;
+        let currentPatientData = null;
+        let currentDocumentPage = 1;
+        let documentSearchTerm = '';
+        let documentTypeFilter = '';
+
+        // Open Patient Documents Modal
+        function openPatientDocumentsModal(button) {
+            currentPatientId = button.getAttribute('data-patient-id');
+            currentPatientData = {
+                firstName: button.getAttribute('data-first-name'),
+                lastName: button.getAttribute('data-last-name'),
+                birthDate: button.getAttribute('data-birthdate'),
+                gender: button.getAttribute('data-gender')
+            };
+
+            // Update modal header with patient info
+            document.getElementById('modalPatientInitials').textContent = 
+                (currentPatientData.firstName?.charAt(0) || '') + (currentPatientData.lastName?.charAt(0) || '');
+            document.getElementById('patientDocumentsModalLabel').textContent = 'Document Management';
+            document.querySelector('#modalPatientInfo .name').textContent = 
+                `${currentPatientData.firstName} ${currentPatientData.lastName}`;
+            
+            const age = calculateAge(new Date(currentPatientData.birthDate));
+            document.querySelector('#modalPatientInfo .age-gender').textContent = 
+                `${age} years, ${currentPatientData.gender}`;
+
+            // Reset filters and load documents
+            documentSearchTerm = '';
+            documentTypeFilter = '';
+            document.getElementById('documentSearchInput').value = '';
+            document.getElementById('documentTypeFilter').value = '';
+            
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        // Calculate age from birthdate
+        function calculateAge(birthDate) {
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Load patient documents via AJAX
+        async function loadPatientDocuments(patientId, page = 1) {
+            currentDocumentPage = page;
+            
+            // Show loading state
+            document.getElementById('loadingDocumentsState').style.display = 'block';
+            document.getElementById('documentsTable').style.display = 'none';
+            document.getElementById('emptyDocumentsState').style.display = 'none';
+            document.getElementById('documentsPagination').style.display = 'none';
+
+            try {
+                const url = new URL('/PatientDocuments/GetDocuments', window.location.origin);
+                url.searchParams.append('patientId', patientId);
+                url.searchParams.append('page', page);
+                if (documentSearchTerm) url.searchParams.append('searchTerm', documentSearchTerm);
+                if (documentTypeFilter) url.searchParams.append('documentType', documentTypeFilter);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Update statistics
+                document.getElementById('totalDocuments').textContent = data.totalCount || 0;
+                document.getElementById('lastUploadDate').textContent = data.lastUploadDate || '--';
+
+                // Render documents
+                renderDocumentsTable(data.documents || []);
+                renderPagination(data.pageNumber || 1, data.totalPages || 1);
+
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                showNotification('Error loading documents. Please try again.', 'error');
+            } finally {
+                document.getElementById('loadingDocumentsState').style.display = 'none';
+            }
+        }
+
+        // Render documents table
+        function renderDocumentsTable(documents) {
+            const tbody = document.getElementById('documentsTableBody');
+            tbody.innerHTML = '';
+
+            if (documents.length === 0) {
+                document.getElementById('documentsTable').style.display = 'none';
+                document.getElementById('emptyDocumentsState').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('documentsTable').style.display = 'table';
+            document.getElementById('emptyDocumentsState').style.display = 'none';
+
+            documents.forEach(doc => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="Document Name">
+                        <div class="doc-name-cell">
+                            <div class="doc-icon ${getDocIconClass(doc.fileExtension)}">
+                                ${getDocIconSvg(doc.fileExtension)}
+                            </div>
+                            <span class="doc-name">${escapeHtml(doc.documentName)}</span>
+                        </div>
+                    </td>
+                    <td data-label="Type">${escapeHtml(doc.documentType)}</td>
+                    <td data-label="Version">${escapeHtml(doc.version)}</td>
+                    <td data-label="Uploaded By">${escapeHtml(doc.uploadedBy)}</td>
+                    <td data-label="Date">${formatDate(doc.uploadDate)}</td>
+                    <td data-label="Status">
+                        <span class="status-badge ${doc.status === 'Active' ? 'active' : 'archived'}">${doc.status}</span>
+                    </td>
+                    <td data-label="Actions">
+                        <div class="doc-actions">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewDocument(${doc.documentID})" title="View">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editDocument(${doc.documentID}, '${escapeJs(doc.documentName)}', '${escapeJs(doc.documentType)}')" title="Edit">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewVersionHistory(${doc.documentID})" title="Versions">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="12 8 12 12 16 14"></polyline>
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                </svg>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument(${doc.documentID}, '${escapeJs(doc.documentName)}')" title="Delete">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render pagination
+        function renderPagination(currentPage, totalPages) {
+            const pagination = document.getElementById('documentsPagination');
+            const ul = pagination.querySelector('ul');
+            ul.innerHTML = '';
+
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+
+            pagination.style.display = 'block';
+
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changeDocumentPage(${currentPage - 1}); return false;">Previous</a>`;
+            ul.appendChild(prevLi);
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="changeDocumentPage(${i}); return false;">${i}</a>`;
+                ul.appendChild(li);
+            }
+
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changeDocumentPage(${currentPage + 1}); return false;">Next</a>`;
+            ul.appendChild(nextLi);
+        }
+
+        // Change document page
+        function changeDocumentPage(page) {
+            loadPatientDocuments(currentPatientId, page);
+        }
+
+        // Apply document filters
+        function applyDocumentFilters() {
+            documentSearchTerm = document.getElementById('documentSearchInput').value;
+            documentTypeFilter = document.getElementById('documentTypeFilter').value;
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        // Reset document filters
+        function resetDocumentFilters() {
+            document.getElementById('documentSearchInput').value = '';
+            document.getElementById('documentTypeFilter').value = '';
+            documentSearchTerm = '';
+            documentTypeFilter = '';
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        // Get document icon class based on extension
+        function getDocIconClass(extension) {
+            if (!extension) return 'default';
+            const ext = extension.toLowerCase();
+            if (ext === '.pdf') return 'pdf';
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) return 'image';
+            if (['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'].includes(ext)) return 'office';
+            return 'default';
+        }
+
+        // Get document icon SVG based on extension
+        function getDocIconSvg(extension) {
+            if (!extension) return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+            
+            const ext = extension.toLowerCase();
+            if (ext === '.pdf') {
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 13h6"></path><path d="M9 17h6"></path><path d="M9 9h1"></path></svg>';
+            }
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) {
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+            }
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Escape JavaScript string
+        function escapeJs(text) {
+            if (!text) return '';
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        // Upload Modal Functions
+        function openUploadModal() {
+            document.getElementById('uploadPatientId').value = currentPatientId;
+            document.getElementById('uploadDocumentForm').reset();
+            document.getElementById('uploadOtherTypeContainer').style.display = 'none';
+            
+            const uploadModal = new bootstrap.Modal(document.getElementById('nestedUploadModal'));
+            uploadModal.show();
+        }
+
+        // Handle document type change in upload modal
+        document.getElementById('uploadDocumentType')?.addEventListener('change', function() {
+            const otherContainer = document.getElementById('uploadOtherTypeContainer');
+            const otherInput = document.getElementById('uploadOtherDocumentType');
+            
+            if (this.value === 'Other') {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        });
+
+        // Handle upload form submission
+        document.getElementById('uploadDocumentForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const normalText = submitBtn.querySelector('.normal-text');
+            const loadingText = submitBtn.querySelector('.loading-text');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            normalText.style.display = 'none';
+            loadingText.style.display = 'inline';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/PatientDocuments/UploadAjax', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('Document uploaded successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('nestedUploadModal')).hide();
+                        loadPatientDocuments(currentPatientId, 1);
+                    } else {
+                        showNotification(result.message || 'Failed to upload document.', 'error');
+                    }
+                } else {
+                    showNotification('Failed to upload document. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showNotification('An error occurred during upload.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                normalText.style.display = 'inline';
+                loadingText.style.display = 'none';
+            }
+        });
+
+        // Edit Modal Functions
+        function editDocument(docId, docName, docType) {
+            document.getElementById('editDocumentId').value = docId;
+            document.getElementById('editDocumentTitle').value = docName;
+            document.getElementById('editDocumentType').value = docType;
+            
+            const otherContainer = document.getElementById('editOtherTypeContainer');
+            const otherInput = document.getElementById('editOtherDocumentType');
+            
+            if (docType === 'Other' || docType.startsWith('Other -')) {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+                otherInput.value = docType.startsWith('Other -') ? docType.substring(8) : '';
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+            
+            const editModal = new bootstrap.Modal(document.getElementById('nestedEditModal'));
+            editModal.show();
+        }
+
+        // Handle document type change in edit modal
+        document.getElementById('editDocumentType')?.addEventListener('change', function() {
+            const otherContainer = document.getElementById('editOtherTypeContainer');
+            const otherInput = document.getElementById('editOtherDocumentType');
+            
+            if (this.value === 'Other') {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        });
+
+        // Handle edit form submission
+        document.getElementById('editDocumentForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/PatientDocuments/EditAjax', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('Document updated successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('nestedEditModal')).hide();
+                        loadPatientDocuments(currentPatientId, currentDocumentPage);
+                    } else {
+                        showNotification(result.message || 'Failed to update document.', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showNotification('An error occurred while updating.', 'error');
+            }
+        });
+
+        // View Document
+        async function viewDocument(docId) {
+            try {
+                const response = await fetch(`/PatientDocuments/GetFileInfo?id=${docId}`);
+                const data = await response.json();
+                
+                document.getElementById('viewModalTitle').textContent = data.documentName;
+                document.getElementById('viewModalDownload').href = `/PatientDocuments/Download?id=${docId}`;
+                
+                const body = document.getElementById('viewModalBody');
+                
+                if (data.isImage) {
+                    body.innerHTML = `<img src="${data.filePath}" alt="${data.documentName}" class="img-fluid" style="max-height: 70vh;">`;
+                } else if (data.isPdf) {
+                    body.innerHTML = `<iframe src="${data.filePath}" width="100%" height="500px" frameborder="0"></iframe>`;
+                } else {
+                    body.innerHTML = `
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <h5>Preview not available</h5>
+                            <p class="text-muted">This file type cannot be previewed. Please download to view.</p>
+                        </div>
+                    `;
+                }
+                
+                const viewModal = new bootstrap.Modal(document.getElementById('nestedViewModal'));
+                viewModal.show();
+            } catch (error) {
+                console.error('View error:', error);
+                showNotification('Failed to load document preview.', 'error');
+            }
+        }
+
+        // View Version History
+        async function viewVersionHistory(docId) {
+            try {
+                document.getElementById('versionModalDocName').textContent = 'Loading...';
+                document.getElementById('versionModalBody').innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2">Loading version history...</p>
+                    </div>
+                `;
+                
+                const versionModal = new bootstrap.Modal(document.getElementById('nestedVersionModal'));
+                versionModal.show();
+                
+                const response = await fetch(`/PatientDocuments/GetVersionHistory?id=${docId}`);
+                const data = await response.json();
+                
+                // Get document name from the table
+                const docName = document.querySelector(`button[onclick*="viewVersionHistory(${docId})"]`).closest('tr').querySelector('.doc-name').textContent;
+                document.getElementById('versionModalDocName').textContent = docName;
+                
+                if (data.versions && data.versions.length > 0) {
+                    let html = '<div class="version-timeline">';
+                    data.versions.forEach((v, index) => {
+                        html += `
+                            <div class="version-item">
+                                <div class="version-marker"></div>
+                                <div class="version-content">
+                                    <div class="version-header">
+                                        <span class="version-number">${v.version}</span>
+                                        <span class="version-date">${v.dateModified}</span>
+                                    </div>
+                                    <div class="version-meta">
+                                        Modified by ${v.modifiedBy} &bull; ${v.notes}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    document.getElementById('versionModalBody').innerHTML = html;
+                } else {
+                    document.getElementById('versionModalBody').innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            No version history available for this document.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Version history error:', error);
+                document.getElementById('versionModalBody').innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        Failed to load version history.
+                    </div>
+                `;
+            }
+        }
+
+        // Delete Document
+        let documentToDelete = null;
+        
+        function deleteDocument(docId, docName) {
+            documentToDelete = docId;
+            document.getElementById('deleteDocName').textContent = docName;
+            
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        }
+
+        async function confirmDeleteDocument() {
+            if (!documentToDelete) return;
+            
+            try {
+                const response = await fetch(`/PatientDocuments/Delete?id=${documentToDelete}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('Document deleted successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                        loadPatientDocuments(currentPatientId, currentDocumentPage);
+                    } else {
+                        showNotification(result.message || 'Failed to delete document.', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification('An error occurred while deleting.', 'error');
+            }
+            
+            documentToDelete = null;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Check if notification container exists
+            let container = document.getElementById('notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-container';
+                container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+                document.body.appendChild(container);
+            }
+            
+            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show`;
+            notification.style.cssText = 'min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+            notification.innerHTML = `
+                <strong>${icon}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 150);
+            }, 5000);
+        }
+
+        // Original edit patient modal handler
         (function () {
             var editModal = document.getElementById('editPatientModal');
             if (editModal) {
