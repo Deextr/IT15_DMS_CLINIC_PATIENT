@@ -89,4 +89,25 @@ namespace DMS_CPMS.Models.Patient
         [Required]
         public IFormFile? UploadedFile { get; set; }
     }
+
+    public class EditDocumentWithVersionViewModel
+    {
+        public int DocumentID { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string DocumentTitle { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string DocumentType { get; set; } = string.Empty;
+
+        [StringLength(30)]
+        public string? OtherDocumentType { get; set; }
+
+        public IFormFile? NewVersionFile { get; set; }
+
+        [StringLength(100)]
+        public string? VersionNotes { get; set; }
+    }
 }

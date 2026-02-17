@@ -2,176 +2,163 @@
 @model DMS_CPMS.Models.Patient.PatientDocumentsIndexViewModel
 
 <!-- Patient Documents Management Modal -->
-<div class="modal fade" id="patientDocumentsModal" tabindex="-1" aria-labelledby="patientDocumentsModalLabel" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="patientDocumentsModal" tabindex="-1" aria-labelledby="patientDocumentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-scrollable">
         <div class="modal-content document-management-modal">
             <!-- Modal Header -->
             <div class="modal-header document-modal-header">
-                <div class="header-content">
-                    <div class="patient-info-badge">
-                        <div class="avatar-circle">
-                            <span id="modalPatientInitials">--</span>
-                        </div>
-                        <div class="patient-details">
-                            <h5 class="modal-title" id="patientDocumentsModalLabel">Document Management</h5>
-                            <p class="patient-meta" id="modalPatientInfo">
-                                <span class="name">--</span>
-                                <span class="divider">|</span>
-                                <span class="age-gender">--</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <h5 class="modal-title" id="patientDocumentsModalLabel">Document Management</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <!-- Modal Body -->
             <div class="modal-body document-modal-body">
-                <!-- Document Statistics Cards -->
-                <div class="document-stats-row">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-primary-subtle">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value" id="totalDocuments">0</span>
-                            <span class="stat-label">Total Documents</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon bg-info-subtle">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value" id="lastUploadDate">--</span>
-                            <span class="stat-label">Last Upload</span>
-                        </div>
-                    </div>
+                <!-- Patient Profile Summary (horizontal, no grid lines) -->
+                <div class="patient-info-section">
+                    <h6 class="patient-profile-title">Patient Profile Summary</h6>
+                    <table class="table patient-info-table patient-info-table-borderless">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Sex</th>
+                                <th>Total Documents</th>
+                                <th>Last Visited</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="patientInfoFullName">--</td>
+                                <td id="patientInfoAge">--</td>
+                                <td id="patientInfoSex">--</td>
+                                <td id="patientInfoTotalDocs">0</td>
+                                <td id="patientInfoLastVisit">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <!-- Action Bar -->
-                <div class="document-action-bar">
-                    <div class="action-bar-left">
-                        <h6 class="section-title">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            Document List
-                        </h6>
-                    </div>
-                    <div class="action-bar-right">
-                        <button type="button" class="btn btn-primary btn-sm" id="uploadDocumentBtn" onclick="openUploadModal()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            Upload Document
-                        </button>
-                    </div>
+                <!-- Upload button - above table container -->
+                <div class="d-flex justify-content-start mb-2">
+                    <button type="button" class="btn btn-primary" id="uploadDocumentBtn" onclick="openUploadModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Upload Document
+                    </button>
                 </div>
 
-                <!-- Search and Filter Section -->
-                <div class="filter-section">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
-                            <label class="form-label small text-muted">Search Documents</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                    </svg>
-                                </span>
-                                <input type="text" id="documentSearchInput" class="form-control border-start-0" placeholder="Search by document name...">
+                <!-- Documents: unified container (search + table) - same pattern as Patient Management -->
+                <div class="card shadow-sm border-0 mb-2 documents-unified-card">
+                    <div class="card-body">
+                        <!-- Top section: Search / filter controls -->
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Search Documents</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="documentSearchInput" class="form-control border-start-0" placeholder="Search by document name...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Document Type</label>
+                                <select id="documentTypeFilter" class="form-select">
+                                    <option value="">All Types</option>
+                                    <option value="Medical Record">Medical Record</option>
+                                    <option value="Lab Result">Lab Result</option>
+                                    <option value="Prescription">Prescription</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-secondary btn-sm me-2" onclick="applyDocumentFilters()">
+                                    Apply Filters
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetDocumentFilters()">
+                                    Reset
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small text-muted">Document Type</label>
-                            <select id="documentTypeFilter" class="form-select">
-                                <option value="">All Types</option>
-                                <option value="Medical Record">Medical Record</option>
-                                <option value="Lab Result">Lab Result</option>
-                                <option value="Prescription">Prescription</option>
-                                <option value="Other">Other</option>
-                            </select>
+
+                        <!-- Bottom section: Table records -->
+                        <div class="table-responsive">
+                            <table class="table documents-table mb-0" id="documentsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">Document Name</th>
+                                        <th style="width: 20%;">Type</th>
+                                        <th style="width: 15%;">Version</th>
+                                        <th style="width: 18%;">Uploaded By</th>
+                                        <th style="width: 14%;">Date</th>
+                                        <th style="width: 18%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsTableBody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-md-4">
-                            <button type="button" class="btn btn-secondary btn-sm me-2" onclick="applyDocumentFilters()">
-                                Apply Filters
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetDocumentFilters()">
-                                Reset
-                            </button>
+
+                        <!-- Empty State -->
+                        <div class="empty-state" id="emptyDocumentsState" style="display: none;">
+                            <div class="empty-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <h6>No Documents Found</h6>
+                            <p class="text-muted">This patient has no documents yet. Click "Upload Document" to add one.</p>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div class="loading-state" id="loadingDocumentsState">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading documents...</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Documents Table -->
-                <div class="documents-table-container">
-                    <div class="table-responsive">
-                        <table class="table documents-table" id="documentsTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%;">Document Name</th>
-                                    <th style="width: 15%;">Type</th>
-                                    <th style="width: 10%;">Version</th>
-                                    <th style="width: 15%;">Uploaded By</th>
-                                    <th style="width: 12%;">Date</th>
-                                    <th style="width: 10%;">Status</th>
-                                    <th style="width: 18%;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="documentsTableBody">
-                                <!-- Dynamic content -->
-                            </tbody>
-                        </table>
+                <!-- Table Footer with Pagination - Below table container, inside modal body -->
+                <div class="table-footer" id="documentsTableFooter">
+                    <div class="table-footer-left">
+                        <span class="footer-text">Show</span>
+                        <select id="entriesPerPage" class="form-select form-select-sm entries-select" onchange="changeEntriesPerPage()">
+                            <option value="5">5</option>
+                            <option value="8" selected>8</option>
+                        </select>
+                        <span class="footer-text">entries</span>
                     </div>
-
-                    <!-- Empty State -->
-                    <div class="empty-state" id="emptyDocumentsState" style="display: none;">
-                        <div class="empty-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                        </div>
-                        <h6>No Documents Found</h6>
-                        <p class="text-muted">This patient has no documents yet. Click "Upload Document" to add one.</p>
+                    <div class="table-footer-center">
+                        <span id="entriesInfo" class="footer-text">Showing 0 to 0 of 0 entries</span>
                     </div>
-
-                    <!-- Loading State -->
-                    <div class="loading-state" id="loadingDocumentsState">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted mt-2">Loading documents...</p>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav" id="documentsPagination">
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="goToFirstPage()" title="First Page">
+                                <<
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="changeDocumentPage(currentDocumentPage - 1)" title="Previous Page">
+                                <
+                            </button>
+                            <span class="pagination-indicator" id="paginationIndicator">1/1</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="changeDocumentPage(currentDocumentPage + 1)" title="Next Page">
+                                >
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="goToLastPage()" title="Last Page">
+                                >>
+                            </button>
+                        </nav>
                     </div>
                 </div>
-
-                <!-- Pagination -->
-                <nav class="documents-pagination" id="documentsPagination">
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        <!-- Dynamic pagination -->
-                    </ul>
-                </nav>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer document-modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    Close
-                </button>
             </div>
         </div>
     </div>
@@ -211,14 +198,6 @@
                         <div class="col-12">
                             <label class="form-label">Select File <span class="text-danger">*</span></label>
                             <input type="file" name="UploadedFile" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.csv,.txt,.doc,.docx,.xls,.xlsx">
-                            <small class="text-muted d-block mt-1">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                Allowed: PDF, Images, Office files (max 10MB)
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -239,40 +218,80 @@
 
 <!-- Edit Document Modal (Nested) -->
 <div class="modal fade" id="nestedEditModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content ocean-modal">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Document</h5>
+                <div>
+                    <h5 class="modal-title">Edit Document</h5>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editDocumentForm">
+            <form id="editDocumentForm" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="hidden" id="editDocumentId" name="DocumentID" />
                 <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">Document Title <span class="text-danger">*</span></label>
-                            <input type="text" id="editDocumentTitle" name="DocumentTitle" class="form-control" required maxlength="100">
+                    <!-- Document Information Section -->
+                    <div class="edit-section mb-4">
+                        <h6 class="section-subtitle mb-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Document Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Document Title <span class="text-danger">*</span></label>
+                                <input type="text" id="editDocumentTitle" name="DocumentTitle" class="form-control" required maxlength="100">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Document Type <span class="text-danger">*</span></label>
+                                <select id="editDocumentType" name="DocumentType" class="form-select" required>
+                                    <option value="">Select document type</option>
+                                    <option value="Medical Record">Medical Record</option>
+                                    <option value="Lab Result">Lab Result</option>
+                                    <option value="Prescription">Prescription</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-12" id="editOtherTypeContainer" style="display: none;">
+                                <label class="form-label">Specify Type <span class="text-danger">*</span></label>
+                                <input type="text" id="editOtherDocumentType" name="OtherDocumentType" class="form-control" maxlength="30">
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Document Type <span class="text-danger">*</span></label>
-                            <select id="editDocumentType" name="DocumentType" class="form-select" required>
-                                <option value="">Select document type</option>
-                                <option value="Medical Record">Medical Record</option>
-                                <option value="Lab Result">Lab Result</option>
-                                <option value="Prescription">Prescription</option>
-                                <option value="Other">Other</option>
-                            </select>
+                    </div>
+
+                    <!-- Version Upload Section -->
+                    <div class="edit-section version-upload-section">
+                        <div class="mb-3">
+                            <label class="form-label">New Version File <span class="text-muted">(Optional)</span></label>
+                            <input type="file" id="editNewVersionFile" name="NewVersionFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.gif,.csv,.txt,.doc,.docx,.xls,.xlsx">
                         </div>
-                        <div class="col-12" id="editOtherTypeContainer" style="display: none;">
-                            <label class="form-label">Specify Type <span class="text-danger">*</span></label>
-                            <input type="text" id="editOtherDocumentType" name="OtherDocumentType" class="form-control" maxlength="30">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Version Notes <span class="text-muted">(Optional)</span></label>
+                                <small class="text-muted char-counter" id="versionNotesCounter">0 / 100</small>
+                            </div>
+                            <textarea id="editVersionNotes" name="VersionNotes" class="form-control" rows="2" maxlength="100" placeholder="Describe what changed in this version"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="normal-text">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Changes
+                        </span>
+                        <span class="loading-text" style="display: none;">
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Saving...
+                        </span>
+                    </button>
                 </div>
             </form>
         </div>

@@ -286,8 +286,11 @@ namespace DMS_CPMS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDocuments(int patientId, string? searchTerm, string? documentType, int page = 1)
+        public async Task<IActionResult> GetDocuments(int patientId, string? searchTerm, string? documentType, int page = 1, int pageSize = 8)
         {
+            // Validate and cap pageSize (max 8)
+            pageSize = Math.Min(Math.Max(pageSize, 1), 8);
+            
             var patient = await _context.Patients.FindAsync(patientId);
             if (patient == null)
             {
@@ -311,15 +314,15 @@ namespace DMS_CPMS.Controllers
             }
 
             var totalCount = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
 
             var lastUpload = await query.OrderByDescending(d => d.UploadDate).FirstOrDefaultAsync();
 
             var documents = await query
                 .OrderByDescending(d => d.UploadDate)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var documentList = documents.Select(d =>
@@ -346,6 +349,7 @@ namespace DMS_CPMS.Controllers
                 pageNumber = page,
                 totalPages = totalPages,
                 totalCount = totalCount,
+                pageSize = pageSize,
                 lastUploadDate = lastUpload?.UploadDate.ToString("yyyy-MM-dd") ?? "--"
             });
         }
@@ -424,6 +428,61 @@ namespace DMS_CPMS.Controllers
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Document updated successfully" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditWithVersionAjax([FromForm] EditDocumentWithVersionViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Invalid input data" });
+            }
+
+            var document = await _context.Documents
+                .Include(d => d.Versions)
+                .FirstOrDefaultAsync(d => d.DocumentID == model.DocumentID);
+
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found" });
+            }
+
+            // Update document metadata
+            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Other - {model.OtherDocumentType}"
+                : model.DocumentType;
+
+            document.DocumentTitle = model.DocumentTitle;
+            document.DocumentType = documentType;
+            document.UploadDate = DateTime.UtcNow;
+
+            // Handle new version upload if provided
+            if (model.NewVersionFile != null && model.NewVersionFile.Length > 0)
+            {
+                var latestVersion = document.Versions?.OrderByDescending(v => v.VersionNumber).FirstOrDefault();
+                var newVersionNumber = (latestVersion?.VersionNumber ?? 0) + 1;
+
+                var relativePath = await SaveFileAsync(document.PatientID, document.DocumentID, newVersionNumber, model.NewVersionFile);
+
+                var version = new DocumentVersion
+                {
+                    DocumentID = document.DocumentID,
+                    VersionNumber = newVersionNumber,
+                    FilePath = relativePath,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.DocumentVersions.Add(version);
+            }
+
+            await _context.SaveChangesAsync();
+
+            var message = model.NewVersionFile != null && model.NewVersionFile.Length > 0
+                ? "Document updated and new version uploaded successfully"
+                : "Document updated successfully";
+
+            return Json(new { success = true, message = message });
         }
 
         [HttpPost]
