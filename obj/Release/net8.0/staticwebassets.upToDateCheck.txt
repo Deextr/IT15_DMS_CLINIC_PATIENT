@@ -1,4 +1,4 @@
-wwwroot\css\site.css
+wwwroot\css\site-edit-version.css
 wwwroot\favicon.ico
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
@@ -60,4 +60,16 @@ wwwroot\lib\jquery\dist\jquery.min.map
 wwwroot\lib\jquery\LICENSE.txt
 wwwroot\uploads\documents\1\1\v1_6ee74ca5-3fa6-4bff-aac2-9032322a75be.png
 wwwroot\uploads\documents\1\1\v2_cfe771a2-acef-4c02-9994-79037224923a.png
-wwwroot\uploads\documents\1\2\v1_550db8d5-6d3c-454f-a063-5e8415b84250.pdf
+wwwroot\css\archive-retention.css
+wwwroot\css\site.css
+wwwroot\css\staff-archive.css
+wwwroot\images\logo.png
+wwwroot\js\archive-retention.js
+wwwroot\js\staff-archive.js
+wwwroot\uploads\documents\1\1\v3_restored_4a9baf50-097f-400c-806b-679e6f05be3b.png
+wwwroot\uploads\documents\1\1\v4_restored_ba9442b3-a7f0-4389-a2ba-128208cb15c5.png
+wwwroot\uploads\documents\1\3\v1_e9fac1be-db7c-4982-9d0b-772b699d4433.pdf
+wwwroot\uploads\documents\1\3\v2_e83cd60c-8613-433b-90b3-b21aea6439da.pdf
+wwwroot\uploads\documents\2\5\v1_78b6bcd2-f591-4a92-942c-ee89ff9a6cac.pdf
+wwwroot\uploads\documents\2\5\v2_40020fa4-66a5-4979-ae70-e3bedada55d2.docx
+wwwroot\uploads\documents\3\4\v1_b192e833-0f2b-47a0-8f3a-e935271317fe.pdf

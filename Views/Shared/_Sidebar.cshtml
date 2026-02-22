@@ -23,7 +23,7 @@
             </svg>
         </div>
         <div class="sidebar-logo">
-            <!-- Logo placeholder; you can replace this with an <img> later -->
+            <img src="~/images/logo.png" alt="Clinic DMS Logo" class="sidebar-logo-img" />
         </div>
         <div class="sidebar-header">
             <span class="sidebar-title">Clinic DMS</span>
@@ -142,33 +142,17 @@
                     </a>
                 </li>
 
-                <li class="sidebar-item @(currentAction == "ArchiveRetention" ? "active" : "")">
-                    @if (isSuperAdmin)
-                    {
-                        <a href="/SuperAdmin/Dashboard/ArchiveRetention" class="sidebar-link">
-                            <span class="sidebar-link-icon" aria-hidden="true">
-                                <svg viewBox="0 0 20 20" focusable="false">
-                                    <path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M8 10h4M8 14h4" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M2 6h2M2 10h2M2 14h2" stroke="currentColor" stroke-width="2"/>
-                                </svg>
-                            </span>
-                            <span class="sidebar-link-text">Archive & Retention</span>
-                        </a>
-                    }
-                    else if (isAdmin)
-                    {
-                        <a href="/Admin/Dashboard/ArchiveRetention" class="sidebar-link">
-                            <span class="sidebar-link-icon" aria-hidden="true">
-                                <svg viewBox="0 0 20 20" focusable="false">
-                                    <path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M8 10h4M8 14h4" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M2 6h2M2 10h2M2 14h2" stroke="currentColor" stroke-width="2"/>
-                                </svg>
-                            </span>
-                            <span class="sidebar-link-text">Archive & Retention</span>
-                        </a>
-                    }
+                <li class="sidebar-item @(currentController == "ArchiveRetention" ? "active" : "")">
+                    <a href="@Url.Action("Index", "ArchiveRetention", new { area = "" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 10h4M8 14h4" stroke="currentColor" stroke-width="2"/>
+                                <path d="M2 6h2M2 10h2M2 14h2" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Archive & Retention</span>
+                    </a>
                 </li>
 
                 <li class="sidebar-item @(currentAction == "ActivityLogs" ? "active" : "")">

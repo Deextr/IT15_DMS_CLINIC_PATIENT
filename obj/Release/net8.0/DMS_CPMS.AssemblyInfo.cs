@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+185c77a1cbba9c2359e9f8f59875fac9f1a18974")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b169ca092a2b0cad67461ea3c062660ff8bb150")]
 [assembly: System.Reflection.AssemblyProductAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,272 +1,1052 @@
+@model DMS_CPMS.Models.Patient.PatientIndexViewModel
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Patient Records";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- New Patient Button - Outside Table Container -->
     <div class="d-flex justify-content-start mb-2">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-            + Upload Document
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPatientModal">
+            + New Patient
         </button>
     </div>
 
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
-            <!-- Search and Filter -->
             <form class="row g-2 align-items-end mb-3" method="get">
                 <div class="col-md-4">
-                    <label class="form-label">Search Patients</label>
-                    <input type="text" class="form-control" placeholder="Enter name, ID, or document...">
+                    <label class="form-label">Search by name</label>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Enter first or last name" />
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Document Type</label>
-                    <select class="form-select">
-                        <option value="">All Types</option>
-                        <option>Medical Records</option>
-                        <option>Lab Results</option>
-                        <option>Prescriptions</option>
-                        <option>Imaging</option>
-                        <option>Insurance</option>
+                    <label class="form-label">Gender</label>
+                    <select name="gender" class="form-select">
+                        <option value="">All</option>
+                        <option value="Male" selected="@(Model.GenderFilter == "Male" ? "selected" : null)">Male</option>
+                        <option value="Female" selected="@(Model.GenderFilter == "Female" ? "selected" : null)">Female</option>
+                        <option value="Other" selected="@(Model.GenderFilter == "Other" ? "selected" : null)">Other</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-secondary me-2">Filter</button>
-                    <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                    <a asp-action="Patients" class="btn btn-outline-secondary">Reset</a>
                 </div>
             </form>
 
-            <!-- Patient Records Table -->
             <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle mb-0">
                     <thead class="table-header-ocean">
                         <tr>
-                            <th style="width: 22%;">Patient Name</th>
-                            <th style="width: 12%;">Patient ID</th>
-                            <th style="width: 20%;">Document</th>
-                            <th style="width: 12%;">Type</th>
-                            <th style="width: 18%;">Last Updated</th>
-                            <th style="width: 16%;">Actions</th>
+                            <th style="width: 18%;">First Name</th>
+                            <th style="width: 18%;">Last Name</th>
+                            <th style="width: 8%;">Age</th>
+                            <th style="width: 12%;">Gender</th>
+                            <th style="width: 22%;">Last Visited</th>
+                            <th style="width: 22%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">John Davis</div>
-                            </td>
-                            <td>P-2024-1847</td>
-                            <td>Blood Test Results</td>
-                            <td>Lab Results</td>
-                            <td>Feb 12, 2024 at 2:30 PM</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDocumentModal">Edit</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Sarah Johnson</div>
-                            </td>
-                            <td>P-2024-1846</td>
-                            <td>Annual Physical Report</td>
-                            <td>Medical Record</td>
-                            <td>Feb 12, 2024 at 1:45 PM</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDocumentModal">Edit</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Michael Williams</div>
-                            </td>
-                            <td>P-2024-1845</td>
-                            <td>Prescription - Amoxicillin</td>
-                            <td>Prescription</td>
-                            <td>Feb 11, 2024 at 4:20 PM</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDocumentModal">Edit</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Emily Brown</div>
-                            </td>
-                            <td>P-2024-1844</td>
-                            <td>Chest X-Ray - PA View</td>
-                            <td>Imaging</td>
-                            <td>Feb 11, 2024 at 11:15 AM</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDocumentModal">Edit</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Robert Martinez</div>
-                            </td>
-                            <td>P-2024-1843</td>
-                            <td>Insurance Claim Form</td>
-                            <td>Insurance</td>
-                            <td>Feb 10, 2024 at 3:00 PM</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDocumentModal">Edit</button>
-                            </td>
-                        </tr>
+                        @if (!Model.Patients.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No patients found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var patient in Model.Patients)
+                            {
+                                var age = DateTime.Now.Year - patient.BirthDate.Year;
+                                if (DateTime.Now.DayOfYear < patient.BirthDate.DayOfYear) age--;
+                                <tr>
+                                    <td>@patient.FirstName</td>
+                                    <td>@patient.LastName</td>
+                                    <td>@age</td>
+                                    <td>@patient.Gender</td>
+                                    <td>@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                data-patient-id="@patient.PatientID"
+                                                data-first-name="@patient.FirstName"
+                                                data-last-name="@patient.LastName"
+                                                data-birthdate="@patient.BirthDate.ToString("yyyy-MM-dd")"
+                                                data-gender="@patient.Gender"
+                                                data-visitedat="@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")"
+                                                onclick="openPatientDocumentsModal(this)">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                            Documents
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Edit Patient"
+                                                data-id="@patient.PatientID"
+                                                data-firstname="@patient.FirstName"
+                                                data-lastname="@patient.LastName"
+                                                data-birthdate="@patient.BirthDate.ToString("yyyy-MM-dd")"
+                                                data-gender="@patient.Gender"
+                                                data-visitedat="@patient.VisitedAt.ToString("yyyy-MM-ddTHH:mm")"
+                                                onclick="openEditPatientModal(this)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <nav class="mt-3">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
-<!-- Upload Document Modal -->
-<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Upload Patient Document</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">Patient <span class="text-danger">*</span></label>
-                        <select class="form-select" required>
-                            <option value="">Select Patient...</option>
-                            <option>John Davis (P-2024-1847)</option>
-                            <option>Sarah Johnson (P-2024-1846)</option>
-                            <option>Michael Williams (P-2024-1845)</option>
-                        </select>
+            @if (Model.TotalPages > 1)
+            {
+                <!-- Table Footer with Pagination - Standardized Style -->
+                <div class="table-footer">
+                    <div class="table-footer-left">
+                        <span class="text-muted small">Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Document Type <span class="text-danger">*</span></label>
-                        <select class="form-select" required>
-                            <option value="">Select Type...</option>
-                            <option>Medical Record</option>
-                            <option>Lab Results</option>
-                            <option>Prescription</option>
-                            <option>Imaging</option>
-                            <option>Insurance</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Upload File <span class="text-danger">*</span></label>
-                        <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Upload</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- View Document Modal -->
-<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Document Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="border rounded bg-light p-4 text-center" style="min-height: 400px;">
-                            <p class="text-muted">Document Preview</p>
-                            <small class="text-muted">PDF Viewer would load here</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <h6 class="fw-semibold mb-3">Document Info</h6>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Patient</small>
-                            <div class="fw-semibold">John Davis</div>
-                            <small class="text-muted">P-2024-1847</small>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Type</small>
-                            <div>Lab Results</div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Size</small>
-                            <div>2.4 MB</div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted d-block">Created</small>
-                            <div>Feb 12, 2024</div>
-                        </div>
-                        <div class="mb-0">
-                            <small class="text-muted d-block">Status</small>
-                            <div><span class="badge bg-success">Active</span></div>
-                        </div>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav">
+                            <a asp-action="Patients" asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                            <a asp-action="Patients" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
+                            <a asp-action="Patients" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                            <a asp-action="Patients" asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                        </nav>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Download</button>
-            </div>
+            }
         </div>
     </div>
 </div>
 
-<!-- Edit Document Modal -->
-<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Document</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">Document Name</label>
-                        <input type="text" class="form-control" value="Blood Test Results">
+@await Html.PartialAsync("~/Views/Patient/_CreatePatientModal.cshtml", Model.NewPatient)
+@await Html.PartialAsync("~/Views/Patient/_EditPatientModal.cshtml", new DMS_CPMS.Models.Patient.EditPatientViewModel())
+@await Html.PartialAsync("~/Views/Patient/_PatientDocumentsModal.cshtml", new DMS_CPMS.Models.Patient.PatientDocumentsIndexViewModel())
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Global variables for document management
+        let currentPatientId = null;
+        let currentPatientData = null;
+        let currentDocumentPage = 1;
+        let documentSearchTerm = '';
+        let documentTypeFilter = '';
+
+        // Open Patient Documents Modal
+        function openPatientDocumentsModal(button) {
+            if (!button) {
+                console.error('openPatientDocumentsModal called without a valid button element');
+                showNotification('Error opening document management. Please try again.', 'error');
+                return;
+            }
+            
+            currentPatientId = button.getAttribute('data-patient-id');
+            if (!currentPatientId) {
+                console.error('Button missing data-patient-id attribute');
+                showNotification('Error: Patient ID not found.', 'error');
+                return;
+            }
+            
+            currentPatientData = {
+                firstName: button.getAttribute('data-first-name') || '',
+                lastName: button.getAttribute('data-last-name') || '',
+                birthDate: button.getAttribute('data-birthdate') || '',
+                gender: button.getAttribute('data-gender') || '',
+                visitedAt: button.getAttribute('data-visitedat') || ''
+            };
+
+            // Update patient info table
+            const fullNameEl = document.getElementById('patientInfoFullName');
+            const ageEl = document.getElementById('patientInfoAge');
+            const sexEl = document.getElementById('patientInfoSex');
+            const lastVisitEl = document.getElementById('patientInfoLastVisit');
+            const totalDocsEl = document.getElementById('patientInfoTotalDocs');
+            
+            if (fullNameEl) fullNameEl.textContent = `${currentPatientData.firstName || ''} ${currentPatientData.lastName || ''}`.trim() || '--';
+            const age = calculateAge(new Date(currentPatientData.birthDate));
+            if (ageEl) ageEl.textContent = currentPatientData.birthDate ? `${age} years` : '--';
+            if (sexEl) sexEl.textContent = currentPatientData.gender || '--';
+            if (lastVisitEl) lastVisitEl.textContent = currentPatientData.visitedAt || '--';
+            if (totalDocsEl) totalDocsEl.textContent = '0';
+
+            // Reset filters and load documents
+            documentSearchTerm = '';
+            documentTypeFilter = '';
+            const searchInput = document.getElementById('documentSearchInput');
+            const typeFilter = document.getElementById('documentTypeFilter');
+            if (searchInput) searchInput.value = '';
+            if (typeFilter) typeFilter.value = '';
+            
+            // Show the modal programmatically
+            const modalElement = document.getElementById('patientDocumentsModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+            
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        // Calculate age from birthdate
+        function calculateAge(birthDate) {
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Render documents table - Staff cannot delete
+        function renderDocumentsTable(documents) {
+            const tbody = document.getElementById('documentsTableBody');
+            if (!tbody) {
+                console.error('documentsTableBody element not found');
+                return;
+            }
+            
+            tbody.innerHTML = '';
+
+            if (documents.length === 0) {
+                const table = document.getElementById('documentsTable');
+                const emptyState = document.getElementById('emptyDocumentsState');
+                if (table) table.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+                return;
+            }
+
+            const table = document.getElementById('documentsTable');
+            const emptyState = document.getElementById('emptyDocumentsState');
+            if (table) table.style.display = 'table';
+            if (emptyState) emptyState.style.display = 'none';
+
+            // Staff cannot delete - hide delete button
+            const canDelete = false;
+
+            documents.forEach(doc => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="Document Name">
+                        <div class="doc-name-cell">
+                            <div class="doc-icon ${getDocIconClass(doc.fileExtension)}">
+                                ${getDocIconSvg(doc.fileExtension)}
+                            </div>
+                            <span class="doc-name">${escapeHtml(doc.documentName)}</span>
+                        </div>
+                    </td>
+                    <td data-label="Type">${escapeHtml(doc.documentType)}</td>
+                    <td data-label="Version">${escapeHtml(doc.version)}</td>
+                    <td data-label="Uploaded By">${escapeHtml(doc.uploadedBy)}</td>
+                    <td data-label="Date">${formatDate(doc.uploadDate)}</td>
+                    <td data-label="Actions">
+                        <div class="doc-actions">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewDocument(${doc.documentID})" title="View">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editDocument(${doc.documentID}, '${escapeJs(doc.documentName)}', '${escapeJs(doc.documentType)}')" title="Edit">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewVersionHistory(${doc.documentID})" title="Versions">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="12 8 12 12 16 14"></polyline>
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render pagination
+        function renderPagination(currentPage, totalPages, totalCount, pageSize) {
+            const footer = document.getElementById('documentsTableFooter');
+            const entriesInfo = document.getElementById('entriesInfo');
+            const paginationIndicator = document.getElementById('paginationIndicator');
+            const paginationNav = document.getElementById('documentsPagination');
+            
+            if (!footer || !entriesInfo || !paginationIndicator || !paginationNav) {
+                console.warn('Pagination elements not found');
+                return;
+            }
+            
+            const startEntry = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const endEntry = Math.min(currentPage * pageSize, totalCount);
+            
+            entriesInfo.textContent = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
+            
+            if (totalCount === 0) {
+                footer.style.display = 'none';
+                return;
+            }
+            
+            footer.style.display = 'flex';
+            paginationIndicator.textContent = `${currentPage}/${totalPages}`;
+            
+            const buttons = paginationNav.querySelectorAll('.pagination-btn');
+            if (buttons.length >= 4) {
+                buttons[0].disabled = currentPage === 1;
+                buttons[1].disabled = currentPage === 1;
+                buttons[2].disabled = currentPage === totalPages;
+                buttons[3].disabled = currentPage === totalPages;
+            }
+        }
+
+        // Change document page
+        function changeDocumentPage(page) {
+            if (page < 1) return;
+            loadPatientDocuments(currentPatientId, page);
+        }
+
+        function goToFirstPage() { changeDocumentPage(1); }
+        function goToLastPage() {
+            const currentIndicator = document.getElementById('paginationIndicator').textContent;
+            const totalPages = parseInt(currentIndicator.split('/')[1]) || 1;
+            changeDocumentPage(totalPages);
+        }
+
+        function changeEntriesPerPage() {
+            const entriesSelect = document.getElementById('entriesPerPage');
+            const newPageSize = parseInt(entriesSelect.value);
+            loadPatientDocuments(currentPatientId, 1, newPageSize);
+        }
+
+        async function loadPatientDocuments(patientId, page = 1, pageSize = null) {
+            currentDocumentPage = page;
+            
+            if (!pageSize) {
+                const entriesSelect = document.getElementById('entriesPerPage');
+                pageSize = entriesSelect ? parseInt(entriesSelect.value) : 8;
+            } else {
+                const entriesSelect = document.getElementById('entriesPerPage');
+                if (entriesSelect) entriesSelect.value = pageSize;
+            }
+            
+            const loadingState = document.getElementById('loadingDocumentsState');
+            const table = document.getElementById('documentsTable');
+            const emptyState = document.getElementById('emptyDocumentsState');
+            const footer = document.getElementById('documentsTableFooter');
+            
+            if (loadingState) loadingState.style.display = 'block';
+            if (table) table.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
+            if (footer) footer.style.display = 'none';
+
+            try {
+                const url = new URL('/PatientDocuments/GetDocuments', window.location.origin);
+                url.searchParams.append('patientId', patientId);
+                url.searchParams.append('page', page);
+                url.searchParams.append('pageSize', pageSize);
+                if (documentSearchTerm) url.searchParams.append('searchTerm', documentSearchTerm);
+                if (documentTypeFilter) url.searchParams.append('documentType', documentTypeFilter);
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Server returned unsuccessful response');
+                }
+
+                const totalDocsElement = document.getElementById('patientInfoTotalDocs');
+                if (totalDocsElement) totalDocsElement.textContent = data.totalCount ?? 0;
+
+                renderDocumentsTable(data.documents || []);
+                renderPagination(data.pageNumber || 1, data.totalPages || 1, data.totalCount || 0, data.pageSize || pageSize);
+
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                showNotification('Error loading documents: ' + error.message, 'error');
+            } finally {
+                if (loadingState) loadingState.style.display = 'none';
+            }
+        }
+
+        function applyDocumentFilters() {
+            documentSearchTerm = document.getElementById('documentSearchInput').value;
+            documentTypeFilter = document.getElementById('documentTypeFilter').value;
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        function resetDocumentFilters() {
+            document.getElementById('documentSearchInput').value = '';
+            document.getElementById('documentTypeFilter').value = '';
+            documentSearchTerm = '';
+            documentTypeFilter = '';
+            loadPatientDocuments(currentPatientId, 1);
+        }
+
+        function getDocIconClass(extension) {
+            if (!extension) return 'default';
+            const ext = extension.toLowerCase();
+            if (ext === '.pdf') return 'pdf';
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) return 'image';
+            if (['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'].includes(ext)) return 'office';
+            return 'default';
+        }
+
+        function getDocIconSvg(extension) {
+            if (!extension) return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+            
+            const ext = extension.toLowerCase();
+            if (ext === '.pdf') {
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 13h6"></path><path d="M9 17h6"></path><path d="M9 9h1"></path></svg>';
+            }
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) {
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+            }
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeJs(text) {
+            if (!text) return '';
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        // Upload Modal
+        function openUploadModal() {
+            document.getElementById('uploadPatientId').value = currentPatientId;
+            document.getElementById('uploadDocumentForm').reset();
+            document.getElementById('uploadOtherTypeContainer').style.display = 'none';
+            document.body.classList.add('modal-blur-backdrop');
+            const uploadModal = new bootstrap.Modal(document.getElementById('nestedUploadModal'));
+            uploadModal.show();
+        }
+
+        document.getElementById('nestedUploadModal')?.addEventListener('hidden.bs.modal', function() {
+            document.body.classList.remove('modal-blur-backdrop');
+        });
+
+        document.getElementById('uploadDocumentType')?.addEventListener('change', function() {
+            const otherContainer = document.getElementById('uploadOtherTypeContainer');
+            const otherInput = document.getElementById('uploadOtherDocumentType');
+            if (this.value === 'Other') {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        });
+
+        document.getElementById('uploadDocumentForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const normalText = submitBtn.querySelector('.normal-text');
+            const loadingText = submitBtn.querySelector('.loading-text');
+            
+            submitBtn.disabled = true;
+            normalText.style.display = 'none';
+            loadingText.style.display = 'inline';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/PatientDocuments/UploadAjax', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('Document uploaded successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('nestedUploadModal')).hide();
+                        loadPatientDocuments(currentPatientId, 1);
+                    } else {
+                        showNotification(result.message || 'Failed to upload document.', 'error');
+                    }
+                } else {
+                    showNotification('Failed to upload document. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showNotification('An error occurred during upload.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                normalText.style.display = 'inline';
+                loadingText.style.display = 'none';
+            }
+        });
+
+        // Edit Modal
+        function editDocument(docId, docName, docType) {
+            document.getElementById('editDocumentId').value = docId;
+            document.getElementById('editDocumentTitle').value = docName;
+            document.getElementById('editDocumentType').value = docType;
+            
+            const otherContainer = document.getElementById('editOtherTypeContainer');
+            const otherInput = document.getElementById('editOtherDocumentType');
+            
+            if (docType === 'Other' || docType.startsWith('Other -')) {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+                otherInput.value = docType.startsWith('Other -') ? docType.substring(8) : '';
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+            
+            const editModal = new bootstrap.Modal(document.getElementById('nestedEditModal'));
+            document.body.classList.add('modal-blur-backdrop');
+            editModal.show();
+        }
+
+        document.getElementById('nestedEditModal')?.addEventListener('hidden.bs.modal', function() {
+            document.body.classList.remove('modal-blur-backdrop');
+        });
+
+        document.getElementById('editDocumentType')?.addEventListener('change', function() {
+            const otherContainer = document.getElementById('editOtherTypeContainer');
+            const otherInput = document.getElementById('editOtherDocumentType');
+            if (this.value === 'Others') {
+                otherContainer.style.display = 'block';
+                otherInput.required = true;
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        });
+
+        document.getElementById('editDocumentForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const normalText = submitBtn.querySelector('.normal-text');
+            const loadingText = submitBtn.querySelector('.loading-text');
+            
+            submitBtn.disabled = true;
+            normalText.style.display = 'none';
+            loadingText.style.display = 'inline';
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/PatientDocuments/EditWithVersionAjax', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification(result.message || 'Document updated successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('nestedEditModal')).hide();
+                        loadPatientDocuments(currentPatientId, currentDocumentPage);
+                    } else {
+                        showNotification(result.message || 'Failed to update document.', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showNotification('An error occurred while updating.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                normalText.style.display = 'inline';
+                loadingText.style.display = 'none';
+            }
+        });
+
+        // View Document
+        async function viewDocument(docId) {
+            try {
+                const response = await fetch(`/PatientDocuments/GetFileInfo?id=${docId}`);
+                const data = await response.json();
+                
+                document.getElementById('viewModalTitle').textContent = data.documentName;
+                document.getElementById('viewModalDownload').href = `/PatientDocuments/Download?id=${docId}`;
+                
+                const body = document.getElementById('viewModalBody');
+                
+                if (data.isImage) {
+                    body.innerHTML = `<img src="${data.filePath}" alt="${data.documentName}" class="img-fluid" style="max-height: 70vh;">`;
+                } else if (data.isPdf) {
+                    body.innerHTML = `<iframe src="${data.filePath}" width="100%" height="500px" frameborder="0"></iframe>`;
+                } else {
+                    body.innerHTML = `
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <h5>Preview not available</h5>
+                            <p class="text-muted">This file type cannot be previewed. Please download to view.</p>
+                        </div>
+                    `;
+                }
+                
+                const viewModal = new bootstrap.Modal(document.getElementById('nestedViewModal'));
+                document.body.classList.add('modal-blur-backdrop');
+                viewModal.show();
+            } catch (error) {
+                console.error('View error:', error);
+                showNotification('Failed to load document preview.', 'error');
+            }
+        }
+
+        document.getElementById('nestedViewModal')?.addEventListener('hidden.bs.modal', function() {
+            document.body.classList.remove('modal-blur-backdrop');
+        });
+
+        // Version History
+        async function viewVersionHistory(docId) {
+            try {
+                document.getElementById('versionModalDocName').textContent = 'Loading...';
+                document.getElementById('versionModalBody').innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2">Loading version history...</p>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="3">Complete Blood Count performed on Feb 12, 2024</textarea>
+                `;
+                
+                const versionModal = new bootstrap.Modal(document.getElementById('nestedVersionModal'));
+                document.body.classList.add('modal-blur-backdrop');
+                versionModal.show();
+                
+                const response = await fetch(`/PatientDocuments/GetVersionHistory?id=${docId}`);
+                const data = await response.json();
+                
+                const docNameBtn = document.querySelector(`button[onclick*="viewVersionHistory(${docId})"]`);
+                const docName = data.documentTitle || (docNameBtn ? docNameBtn.closest('tr').querySelector('.doc-name').textContent : 'Document');
+                document.getElementById('versionModalDocName').textContent = docName;
+                const safeDocName = docName.replace(/'/g, "\\'");
+                
+                if (data.versions && data.versions.length > 0) {
+                    let html = '<div class="version-timeline">';
+                    data.versions.forEach((v, index) => {
+                        const isCurrent = v.isCurrent || index === 0;
+                        
+                        html += `
+                            <div class="version-item ${isCurrent ? 'version-current' : ''}">
+                                <div class="version-marker ${isCurrent ? 'bg-primary' : ''}"></div>
+                                <div class="version-content">
+                                    <div class="version-header">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="version-number">${v.version}</span>
+                                            ${isCurrent ? '<span class="badge bg-success" style="font-size:0.7rem;">Active</span>' : '<span class="badge bg-secondary" style="font-size:0.7rem;">Inactive</span>'}
+                                        </div>
+                                        <span class="version-date">${v.dateModified}</span>
+                                    </div>
+                                    <div class="version-meta">
+                                        Modified by ${v.modifiedBy} &bull; ${v.notes || 'No notes'}
+                                    </div>
+                                    <div class="version-actions">
+                                        <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="View" onclick="viewVersionDocument(${v.versionID}, '${safeDocName}')">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        </button>
+                                        <a href="/PatientDocuments/DownloadVersion?versionId=${v.versionID}" class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Download">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        </a>
+                                        ${!isCurrent ? `
+                                        <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Restore" onclick="showRestoreConfirmModal(${v.versionID}, '${safeDocName}', '${v.version}')">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                        </button>
+                                        ` : ''}
+                                        <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive" onclick="showArchiveVersionConfirmModal(${v.versionID}, ${docId}, '${safeDocName}', '${v.version}')">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    document.getElementById('versionModalBody').innerHTML = html;
+                    // Initialize tooltips
+                    document.getElementById('versionModalBody').querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                        new bootstrap.Tooltip(el);
+                    });
+                } else {
+                    document.getElementById('versionModalBody').innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            No version history available for this document.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Version history error:', error);
+                document.getElementById('versionModalBody').innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        Failed to load version history.
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select">
-                            <option value="active" selected>Active</option>
-                            <option value="pending">Pending Review</option>
-                            <option value="archived">Archive</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
+                `;
+            }
+        }
+
+        async function viewVersionDocument(versionId, documentName) {
+            try {
+                const response = await fetch(`/PatientDocuments/GetVersionFileInfo?versionId=${versionId}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    showNotification(data.message || 'Failed to load document version.', 'error');
+                    return;
+                }
+                
+                const modalTitle = document.getElementById('viewModalTitle');
+                const modalBody = document.getElementById('viewModalBody');
+                const downloadLink = document.getElementById('viewModalDownload');
+                
+                if (!modalTitle || !modalBody || !downloadLink) {
+                    showNotification('View modal elements not found.', 'error');
+                    return;
+                }
+                
+                modalTitle.textContent = documentName ? `${documentName} (${data.version})` : 'View Document Version';
+                downloadLink.href = `/PatientDocuments/DownloadVersion?versionId=${versionId}`;
+                
+                if (data.isImage) {
+                    modalBody.innerHTML = `<img src="${data.filePath}" alt="${documentName || 'Document'}" class="img-fluid" style="max-height: 70vh;" />`;
+                } else if (data.isPdf) {
+                    modalBody.innerHTML = `<iframe src="${data.filePath}" width="100%" height="500px" style="border: none;"></iframe>`;
+                } else {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-info">
+                            <p>This file type cannot be previewed. Please download the file to view it.</p>
+                            <p class="mb-0"><strong>Version:</strong> ${data.version}<br><strong>Type:</strong> ${data.fileExtension || 'Unknown'}</p>
+                        </div>`;
+                }
+                
+                const versionModalEl = document.getElementById('nestedVersionModal');
+                const versionModalInstance = bootstrap.Modal.getInstance(versionModalEl);
+                if (versionModalInstance) {
+                    versionModalInstance.hide();
+                }
+                
+                const viewModal = document.getElementById('nestedViewModal');
+                const bsViewModal = new bootstrap.Modal(viewModal);
+                bsViewModal.show();
+                
+                viewModal.addEventListener('hidden.bs.modal', function() {
+                    const versionModal = new bootstrap.Modal(versionModalEl);
+                    versionModal.show();
+                    document.body.classList.add('modal-blur-backdrop');
+                }, { once: true });
+                
+            } catch (error) {
+                console.error('View version error:', error);
+                showNotification('Failed to load document version. Please try again.', 'error');
+            }
+        }
+
+        document.getElementById('nestedVersionModal')?.addEventListener('hidden.bs.modal', function() {
+            document.body.classList.remove('modal-blur-backdrop');
+        });
+
+        // ─── Archive Version from Version History ───
+        let archiveVersionId = null;
+        let archiveVersionDocId = null;
+        let archiveVersionDocName = null;
+        let archiveVersionNumber = null;
+
+        function showArchiveVersionConfirmModal(versionId, documentId, documentName, versionNumber) {
+            archiveVersionId = versionId;
+            archiveVersionDocId = documentId;
+            archiveVersionDocName = documentName;
+            archiveVersionNumber = versionNumber;
+            const docNameEl = document.getElementById('archiveVersionDocName');
+            const versionEl = document.getElementById('archiveVersionNumber');
+            const reasonInput = document.getElementById('archiveVersionReasonInput');
+            if (docNameEl) docNameEl.textContent = documentName || '';
+            if (versionEl) versionEl.textContent = versionNumber || '';
+            if (reasonInput) reasonInput.value = '';
+            const modal = new bootstrap.Modal(document.getElementById('archiveVersionConfirmModal'));
+            modal.show();
+        }
+
+        async function confirmArchiveVersion() {
+            if (!archiveVersionId || !archiveVersionDocId) return;
+            const confirmBtn = document.getElementById('confirmArchiveVersionBtn');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Archiving...';
+
+            try {
+                const reason = (document.getElementById('archiveVersionReasonInput') || {}).value || '';
+                const response = await fetch('/PatientDocuments/ArchiveVersionAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ versionId: archiveVersionId, documentId: archiveVersionDocId, archiveReason: reason })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showNotification(result.message || 'Version archived successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('archiveVersionConfirmModal')).hide();
+                    // Refresh version history
+                    if (archiveVersionDocId) {
+                        viewVersionHistory(archiveVersionDocId);
+                    }
+                } else {
+                    showNotification(result.message || 'Failed to archive version.', 'error');
+                }
+            } catch (error) {
+                console.error('Archive version error:', error);
+                showNotification('An error occurred while archiving the version.', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+                archiveVersionId = null;
+                archiveVersionDocId = null;
+                archiveVersionDocName = null;
+                archiveVersionNumber = null;
+            }
+        }
+
+        // ─── Archive Document from Version History ───
+        let archiveDocId = null;
+        let archiveDocName = null;
+
+        function showArchiveConfirmModal(documentId, documentName) {
+            archiveDocId = documentId;
+            archiveDocName = documentName;
+            const docNameEl = document.getElementById('archiveDocName');
+            const reasonInput = document.getElementById('archiveReasonInput');
+            if (docNameEl) docNameEl.textContent = documentName || '';
+            if (reasonInput) reasonInput.value = '';
+            const archiveModal = new bootstrap.Modal(document.getElementById('archiveConfirmModal'));
+            archiveModal.show();
+        }
+
+        async function confirmArchiveDocument() {
+            if (!archiveDocId) return;
+            const confirmBtn = document.getElementById('confirmArchiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Archiving...';
+
+            try {
+                const reason = (document.getElementById('archiveReasonInput') || {}).value || '';
+                const response = await fetch('/PatientDocuments/ArchiveDocumentAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ documentId: archiveDocId, archiveReason: reason })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showNotification(result.message || 'Document archived successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('archiveConfirmModal')).hide();
+                    const versionModal = bootstrap.Modal.getInstance(document.getElementById('nestedVersionModal'));
+                    if (versionModal) versionModal.hide();
+                    document.body.classList.remove('modal-blur-backdrop');
+                    // Refresh documents list
+                    loadPatientDocuments(currentPatientId, currentDocumentPage);
+                } else {
+                    showNotification(result.message || 'Failed to archive document.', 'error');
+                }
+            } catch (error) {
+                console.error('Archive error:', error);
+                showNotification('An error occurred while archiving the document.', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+                archiveDocId = null;
+                archiveDocName = null;
+            }
+        }
+
+        // Notifications
+        function showNotification(message, type = 'info') {
+            let container = document.getElementById('notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-container';
+                container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+                document.body.appendChild(container);
+            }
+            
+            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show`;
+            notification.style.cssText = 'min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+            notification.innerHTML = `
+                <strong>${icon}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 150);
+            }, 5000);
+        }
+
+        // Initialize Bootstrap tooltips
+        (function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        })();
+
+        // Edit Patient Modal Function
+        function openEditPatientModal(btn) {
+            if (!btn) return;
+            var id = btn.getAttribute('data-id');
+            var first = btn.getAttribute('data-firstname') || '';
+            var last = btn.getAttribute('data-lastname') || '';
+            var birth = btn.getAttribute('data-birthdate') || '';
+            var gender = btn.getAttribute('data-gender') || '';
+            var visited = btn.getAttribute('data-visitedat') || '';
+
+            var editModal = document.getElementById('editPatientModal');
+            var idInput = editModal.querySelector('input[name="PatientID"]');
+            var firstInput = editModal.querySelector('input[name="FirstName"]');
+            var lastInput = editModal.querySelector('input[name="LastName"]');
+            var birthInput = editModal.querySelector('input[name="BirthDate"]');
+            var genderSelect = editModal.querySelector('select[name="Gender"]');
+            var visitedInput = editModal.querySelector('input[name="VisitedAt"]');
+
+            if (idInput) idInput.value = id || '';
+            if (firstInput) firstInput.value = first;
+            if (lastInput) lastInput.value = last;
+            if (birthInput) birthInput.value = birth;
+            if (genderSelect) genderSelect.value = gender;
+            if (visitedInput) visitedInput.value = visited;
+
+            var modal = new bootstrap.Modal(editModal);
+            modal.show();
+        }
+
+        // Restore Version Functions
+        let currentRestoreVersionId = null;
+        let currentRestoreDocId = null;
+
+        function showRestoreConfirmModal(versionId, docName, version) {
+            currentRestoreVersionId = versionId;
+            document.getElementById('restoreVersionName').textContent = `${docName} (${version})`;
+            const restoreModal = new bootstrap.Modal(document.getElementById('restoreConfirmModal'));
+            restoreModal.show();
+        }
+
+        async function confirmRestoreVersion() {
+            if (!currentRestoreVersionId) return;
+            
+            const confirmBtn = document.getElementById('confirmRestoreBtn');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Restoring...';
+            
+            try {
+                // Get the document ID from the version history modal
+                const versionModalEl = document.getElementById('nestedVersionModal');
+                const docName = document.getElementById('versionModalDocName').textContent;
+                
+                // Find the document ID from the currently displayed versions
+                const response = await fetch('/PatientDocuments/RestoreVersion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        versionId: currentRestoreVersionId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message || 'Version restored successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('restoreConfirmModal')).hide();
+                    
+                    // Refresh the version history modal
+                    // Find the document ID by looking at the version history data
+                    const docRow = document.querySelector(`button[onclick*="viewVersionHistory("]`);
+                    if (docRow) {
+                        const onclickAttr = docRow.getAttribute('onclick');
+                        const docIdMatch = onclickAttr.match(/viewVersionHistory\((\d+)\)/);
+                        if (docIdMatch) {
+                            viewVersionHistory(parseInt(docIdMatch[1]));
+                        }
+                    }
+                    
+                    // Refresh documents table
+                    loadPatientDocuments(currentPatientId, currentDocumentPage);
+                } else {
+                    showNotification(result.message || 'Failed to restore version.', 'error');
+                }
+            } catch (error) {
+                console.error('Restore error:', error);
+                showNotification('An error occurred while restoring the version.', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+                currentRestoreVersionId = null;
+            }
+        }
+
+        // ─── Z-index fix: bump confirmation modals above version history ───
+        ['restoreConfirmModal', 'archiveVersionConfirmModal', 'archiveConfirmModal'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('show.bs.modal', () => {
+                    setTimeout(() => {
+                        const backdrops = document.querySelectorAll('.modal-backdrop');
+                        if (backdrops.length > 1) {
+                            backdrops[backdrops.length - 1].style.zIndex = '1065';
+                        }
+                    }, 10);
+                });
+            }
+        });
+    </script>
+}

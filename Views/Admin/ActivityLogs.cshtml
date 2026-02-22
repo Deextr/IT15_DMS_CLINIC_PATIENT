@@ -357,21 +357,21 @@
             </div>
         </div>
         <div class="card-footer bg-white border-0 py-3">
-            <nav aria-label="Activity logs pagination">
-                <ul class="pagination pagination-sm justify-content-center mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">4</a></li>
-                    <li class="page-item"><a class="page-link" href="#">5</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
+            <!-- Table Footer with Pagination - Standardized Style -->
+            <div class="table-footer">
+                <div class="table-footer-left">
+                    <span class="text-muted small">Showing 1 to 10 of 50 entries</span>
+                </div>
+                <div class="table-footer-right">
+                    <nav class="pagination-nav">
+                        <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn disabled" title="First Page">&laquo;</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn disabled" title="Previous">&lsaquo;</button>
+                        <span class="pagination-indicator">1 / 5</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" title="Next">&rsaquo;</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" title="Last Page">&raquo;</button>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
 </div>

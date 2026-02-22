@@ -14,7 +14,7 @@ namespace DMS_CPMS.Areas.Admin.Controllers
 
         public IActionResult ArchiveRetention()
         {
-            return View("~/Views/Admin/ArchiveRetention.cshtml");
+            return RedirectToAction("Index", "ArchiveRetention", new { area = "" });
         }
 
         public IActionResult ActivityLogs()

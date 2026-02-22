@@ -46,11 +46,11 @@
                 <table class="table table-striped table-hover align-middle mb-0">
                     <thead class="table-header-ocean">
                         <tr>
-                            <th style="width: 20%;">Username</th>
-                            <th style="width: 20%;">Full Name</th>
+                            <th style="width: 25%;">Username</th>
+                            <th style="width: 25%;">Full Name</th>
                             <th style="width: 15%;">Role</th>
                             <th style="width: 15%;">Status</th>
-                            <th style="width: 30%;">Actions</th>
+                            <th style="width: 20%;" class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,27 +80,35 @@
                                         <span class="badge bg-secondary">Deactivated</span>
                                     }
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <button type="button"
                                             class="btn btn-sm btn-outline-secondary me-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editAccountModal"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="Edit Account"
+                                            data-modal-toggle="modal"
+                                            data-modal-target="#editAccountModal"
                                             data-id="@item.Id"
                                             data-username="@item.Username"
                                             data-fullname="@item.FullName"
                                             data-role="@item.Role"
-                                            data-isactive="@(item.IsActive.ToString().ToLowerInvariant())">
-                                        Edit
+                                            data-isactive="@(item.IsActive.ToString().ToLowerInvariant())"
+                                            onclick="openEditAccountModal(this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </button>
                                     @if (item.Id != currentUserId && item.IsActive)
                                     {
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-secondary"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#deactivateModal"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Deactivate Account"
+                                                data-modal-toggle="modal"
+                                                data-modal-target="#deactivateModal"
                                                 data-id="@item.Id"
-                                                data-name="@item.FullName">
-                                            Deactivate
+                                                data-name="@item.FullName"
+                                                onclick="openDeactivateModal(this)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                                         </button>
                                     }
                                 </td>
@@ -112,22 +120,25 @@
             </div>
             @if (Model.TotalPages > 1)
             {
-                <nav class="mt-3">
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">Previous</a>
-                        </li>
-                        @for (var i = 1; i <= Model.TotalPages; i++)
-                        {
-                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                                <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">@i</a>
-                            </li>
-                        }
-                        <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link" asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+                <!-- Table Footer with Pagination - Standardized Style -->
+                <div class="table-footer">
+                    <div class="table-footer-left">
+                        <span class="text-muted small">Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
+                    </div>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav">
+                            <a asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                            <a asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
+                            <a asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                            <a asp-area="SuperAdmin" asp-action="Index" asp-controller="Accounts" asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                        </nav>
+                    </div>
+                </div>
             }
         </div>
     </div>
@@ -161,61 +172,65 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        (function () {
-            var deactivateModal = document.getElementById('deactivateModal');
-            if (deactivateModal) {
-                deactivateModal.addEventListener('show.bs.modal', function (e) {
-                    var btn = e.relatedTarget;
-                    var id = btn.getAttribute('data-id');
-                    var name = btn.getAttribute('data-name');
-                    document.getElementById('deactivateUserId').value = id || '';
-                    document.getElementById('deactivateUserName').textContent = name || '';
-                    var form = document.getElementById('deactivateForm');
-                    if (form) form.action = '@Url.Action("Deactivate", "Accounts", new { area = "SuperAdmin" })?id=' + encodeURIComponent(id || '');
-                });
+        // Initialize Bootstrap tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        function openDeactivateModal(btn) {
+            var id = btn.getAttribute('data-id');
+            var name = btn.getAttribute('data-name');
+            document.getElementById('deactivateUserId').value = id || '';
+            document.getElementById('deactivateUserName').textContent = name || '';
+            var form = document.getElementById('deactivateForm');
+            if (form) form.action = '@Url.Action("Deactivate", "Accounts", new { area = "SuperAdmin" })?id=' + encodeURIComponent(id || '');
+            var modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+            modal.show();
+        }
+
+        function openEditAccountModal(btn) {
+            var id = btn.getAttribute('data-id') || '';
+            var username = btn.getAttribute('data-username') || '';
+            var fullName = btn.getAttribute('data-fullname') || '';
+            var role = btn.getAttribute('data-role') || 'Staff';
+            var isActive = btn.getAttribute('data-isactive') === 'true';
+
+            var firstName = '';
+            var lastName = '';
+            if (fullName) {
+                var parts = fullName.trim().split(' ');
+                firstName = parts[0] || '';
+                if (parts.length > 1) {
+                    lastName = parts.slice(1).join(' ');
+                }
             }
 
             var editModal = document.getElementById('editAccountModal');
-            if (editModal) {
-                editModal.addEventListener('show.bs.modal', function (e) {
-                    var btn = e.relatedTarget;
-                    if (!btn) return;
-                    var id = btn.getAttribute('data-id') || '';
-                    var username = btn.getAttribute('data-username') || '';
-                    var fullName = btn.getAttribute('data-fullname') || '';
-                    var role = btn.getAttribute('data-role') || 'Staff';
-                    var isActive = btn.getAttribute('data-isactive') === 'true';
+            var modalBody = editModal;
+            var idInput = modalBody.querySelector('input[name="Id"]');
+            var firstInput = modalBody.querySelector('input[name="FirstName"]');
+            var lastInput = modalBody.querySelector('input[name="LastName"]');
+            var usernameInput = modalBody.querySelector('input[name="Username"]');
+            var roleSelect = modalBody.querySelector('select[name="RoleType"]');
+            var isActiveInput = modalBody.querySelector('input[name="IsActive"]');
+            var newPassInput = modalBody.querySelector('input[name="NewPassword"]');
+            var confirmPassInput = modalBody.querySelector('input[name="ConfirmPassword"]');
 
-                    var firstName = '';
-                    var lastName = '';
-                    if (fullName) {
-                        var parts = fullName.trim().split(' ');
-                        firstName = parts[0] || '';
-                        if (parts.length > 1) {
-                            lastName = parts.slice(1).join(' ');
-                        }
-                    }
+            if (idInput) idInput.value = id;
+            if (firstInput) firstInput.value = firstName;
+            if (lastInput) lastInput.value = lastName;
+            if (usernameInput) usernameInput.value = username;
+            if (roleSelect) roleSelect.value = role;
+            if (isActiveInput) isActiveInput.checked = isActive;
+            if (newPassInput) newPassInput.value = '';
+            if (confirmPassInput) confirmPassInput.value = '';
 
-                    var modalBody = editModal;
-                    var idInput = modalBody.querySelector('input[name="Id"]');
-                    var firstInput = modalBody.querySelector('input[name="FirstName"]');
-                    var lastInput = modalBody.querySelector('input[name="LastName"]');
-                    var usernameInput = modalBody.querySelector('input[name="Username"]');
-                    var roleSelect = modalBody.querySelector('select[name="RoleType"]');
-                    var isActiveInput = modalBody.querySelector('input[name="IsActive"]');
-                    var newPassInput = modalBody.querySelector('input[name="NewPassword"]');
-                    var confirmPassInput = modalBody.querySelector('input[name="ConfirmPassword"]');
-
-                    if (idInput) idInput.value = id;
-                    if (firstInput) firstInput.value = firstName;
-                    if (lastInput) lastInput.value = lastName;
-                    if (usernameInput) usernameInput.value = username;
-                    if (roleSelect) roleSelect.value = role;
-                    if (isActiveInput) isActiveInput.checked = isActive;
-                    if (newPassInput) newPassInput.value = '';
-                    if (confirmPassInput) confirmPassInput.value = '';
-                });
-            }
-        })();
+            var modal = new bootstrap.Modal(editModal);
+            modal.show();
+        }
+    </script>
     </script>
 }

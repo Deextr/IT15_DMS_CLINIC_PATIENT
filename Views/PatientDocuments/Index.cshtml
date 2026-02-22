@@ -56,10 +56,12 @@
                     <label class="form-label">Document Type</label>
                     <select name="documentType" class="form-select">
                         <option value="">All</option>
-                        <option value="Medical Record" selected="@(Model.DocumentTypeFilter == "Medical Record" ? "selected" : null)">Medical Record</option>
-                        <option value="Lab Result" selected="@(Model.DocumentTypeFilter == "Lab Result" ? "selected" : null)">Lab Result</option>
-                        <option value="Prescription" selected="@(Model.DocumentTypeFilter == "Prescription" ? "selected" : null)">Prescription</option>
-                        <option value="Other" selected="@(Model.DocumentTypeFilter == "Other" ? "selected" : null)">Other</option>
+                        <option value="Medical History" selected="@(Model.DocumentTypeFilter == "Medical History" ? "selected" : null)">Medical History</option>
+                        <option value="Examination Reports" selected="@(Model.DocumentTypeFilter == "Examination Reports" ? "selected" : null)">Examination Reports</option>
+                        <option value="Lab Reports" selected="@(Model.DocumentTypeFilter == "Lab Reports" ? "selected" : null)">Lab Reports</option>
+                        <option value="Imaging Reports" selected="@(Model.DocumentTypeFilter == "Imaging Reports" ? "selected" : null)">Imaging Reports</option>
+                        <option value="Prescription Records" selected="@(Model.DocumentTypeFilter == "Prescription Records" ? "selected" : null)">Prescription Records</option>
+                        <option value="Others" selected="@(Model.DocumentTypeFilter == "Others" ? "selected" : null)">Others</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -79,7 +81,7 @@
                             <th style="width: 13%;">Uploaded By</th>
                             <th style="width: 13%;">Upload Date</th>
                             <th style="width: 10%;">Status</th>
-                            <th style="width: 22%;">Actions</th>
+                            <th style="width: 22%;" class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -105,11 +107,19 @@
                                         <span class="badge bg-secondary">@doc.Status</span>
                                     </td>
                                     <td>
-                                        <div class="d-flex gap-1 flex-wrap">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="viewDocument(@doc.DocumentID, '@doc.DocumentName')">View</button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editDocumentModal" onclick="openEditModal(@doc.DocumentID, '@doc.DocumentName', '@doc.DocumentType')">Edit</button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showVersionHistory(@doc.DocumentID, '@doc.DocumentName')">Version</button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary">Archive</button>
+                                        <div class="d-flex gap-1 flex-wrap justify-content-center">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="View Document" onclick="viewDocument(@doc.DocumentID, '@doc.DocumentName')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Document" data-bs-target="#editDocumentModal" onclick="openEditModal(@doc.DocumentID, '@doc.DocumentName', '@doc.DocumentType')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Version History" onclick="showVersionHistory(@doc.DocumentID, '@doc.DocumentName')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive Document" onclick="showArchiveConfirmModal(@doc.DocumentID, '@doc.DocumentName')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -121,22 +131,25 @@
 
             @if (Model.TotalPages > 1)
             {
-                <nav class="mt-3">
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link" asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter">Previous</a>
-                        </li>
-                        @for (var i = 1; i <= Model.TotalPages; i++)
-                        {
-                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                                <a class="page-link" asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter">@i</a>
-                            </li>
-                        }
-                        <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link" asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+                <!-- Table Footer with Pagination - Standardized Style -->
+                <div class="table-footer">
+                    <div class="table-footer-left">
+                        <span class="text-muted small">Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
+                    </div>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav">
+                            <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                            <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
+                            <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                            <a asp-action="Index" asp-controller="PatientDocuments" asp-route-patientId="@Model.Patient.PatientID" asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-documentType="@Model.DocumentTypeFilter"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                        </nav>
+                    </div>
+                </div>
             }
         </div>
     </div>
@@ -182,10 +195,12 @@
                             <label class="form-label">Document Type</label>
                             <select id="editDocumentType" name="DocumentType" class="form-select" required>
                                 <option value="">Select document type</option>
-                                <option value="Medical Record">Medical Record</option>
-                                <option value="Lab Result">Lab Result</option>
-                                <option value="Prescription">Prescription</option>
-                                <option value="Other">Other</option>
+                                <option value="Medical History">Medical History</option>
+                                <option value="Examination Reports">Examination Reports</option>
+                                <option value="Lab Reports">Lab Reports</option>
+                                <option value="Imaging Reports">Imaging Reports</option>
+                                <option value="Prescription Records">Prescription Records</option>
+                                <option value="Others">Others</option>
                             </select>
                         </div>
                         <div class="col-12" id="editOtherTypeContainer" style="display: none;">
@@ -205,20 +220,166 @@
 
 <!-- Version History Modal -->
 <div class="modal fade" id="versionHistoryModal" tabindex="-1" aria-labelledby="versionHistoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content ocean-modal">
-            <div class="modal-header">
-                <div>
-                    <h5 class="modal-title mb-0" id="versionHistoryModalLabel">Document Version History</h5>
-                    <p class="text-muted mb-0 mt-1" id="versionHistoryDocumentName"></p>
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <div class="d-flex align-items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <div>
+                        <h6 class="modal-title mb-0 fw-semibold" id="versionHistoryModalLabel">Version History</h6>
+                        <small class="opacity-75" id="versionHistoryDocumentName"></small>
+                    </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="versionHistoryModalBody">
+            <div class="modal-body p-4" id="versionHistoryModalBody">
                 <p class="text-muted">Loading version history...</p>
             </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Confirmation Modal -->
+<div class="modal fade" id="archiveConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2" style="width: 20px; height: 20px;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                        <rect x="1" y="3" width="22" height="5"></rect>
+                        <line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Confirm Archive
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to archive this document?</p>
+                <div class="alert alert-info">
+                    <strong>Document:</strong> <span id="archiveDocName"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Archive Reason <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="archiveReasonInput" class="form-control" maxlength="200" placeholder="Enter reason for archiving...">
+                </div>
+                <p class="text-muted small mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    The document and all its versions will be moved to the Archive module. A retention policy will be applied automatically.
+                </p>
+            </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmArchiveBtn" onclick="confirmArchiveDocument()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; vertical-align: text-bottom;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                        <rect x="1" y="3" width="22" height="5"></rect>
+                        <line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive Document
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Version Confirmation Modal -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    Restore Version
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to restore this version?</p>
+                <div class="p-3 rounded" style="background: var(--color-surface-soft); border: 1px solid var(--color-border-soft);">
+                    <div class="row small">
+                        <div class="col-4 text-muted">Version</div>
+                        <div class="col-8 fw-semibold" id="restoreVersionNumber"></div>
+                        <div class="col-4 text-muted mt-1">Date</div>
+                        <div class="col-8 fw-semibold mt-1" id="restoreVersionDate"></div>
+                        <div class="col-4 text-muted mt-1">Document</div>
+                        <div class="col-8 fw-semibold mt-1" id="restoreDocName"></div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    A new version will be created from this restored version. No data will be lost.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background: var(--color-primary);" id="confirmRestoreBtn" onclick="confirmRestoreVersion()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; vertical-align: text-bottom;">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path>
+                    </svg>
+                    Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Version Confirmation Modal -->
+<div class="modal fade" id="archiveVersionConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive Version
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to archive this version?</p>
+                <div class="p-3 rounded" style="background: var(--color-surface-soft); border: 1px solid var(--color-border-soft);">
+                    <div class="row small">
+                        <div class="col-4 text-muted">Document</div>
+                        <div class="col-8 fw-semibold" id="archiveVersionDocName"></div>
+                        <div class="col-4 text-muted mt-1">Version</div>
+                        <div class="col-8 fw-semibold mt-1" id="archiveVersionNumber"></div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label small">Archive Reason <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="archiveVersionReasonInput" class="form-control form-control-sm" maxlength="200" placeholder="Enter reason for archiving...">
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    This version will be removed from Version History and moved to the Archive module.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background: var(--color-primary);" id="confirmArchiveVersionBtn" onclick="confirmArchiveVersion()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; vertical-align: text-bottom;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive
+                </button>
             </div>
         </div>
     </div>
@@ -245,10 +406,12 @@
                             <label class="form-label">Document Type</label>
                             <select name="DocumentType" id="documentTypeSelect" class="form-select" required>
                                 <option value="">Select document type</option>
-                                <option value="Medical Record">Medical Record</option>
-                                <option value="Lab Result">Lab Result</option>
-                                <option value="Prescription">Prescription</option>
-                                <option value="Other">Other</option>
+                                <option value="Medical History">Medical History</option>
+                                <option value="Examination Reports">Examination Reports</option>
+                                <option value="Lab Reports">Lab Reports</option>
+                                <option value="Imaging Reports">Imaging Reports</option>
+                                <option value="Prescription Records">Prescription Records</option>
+                                <option value="Others">Others</option>
                             </select>
                         </div>
                         <div class="col-12" id="otherTypeContainer" style="display: none;">
@@ -273,15 +436,34 @@
 
 @section Scripts {
     <script>
+        // Initialize Bootstrap tooltips on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
         (function () {
-            // Document type conditional field for Upload
+            // ─── State Variables ───
+            let currentArchiveDocId = null;
+            let currentArchiveDocName = null;
+            let currentRestoreVersionId = null;
+            let currentRestoreDocId = null;
+            let currentVersionHistoryDocId = null;
+            let currentArchiveVersionId = null;
+            let currentArchiveVersionDocId = null;
+            let currentArchiveVersionDocName = null;
+            let currentArchiveVersionNumber = null;
+
+            // ─── Document type conditional fields ───
             var documentTypeSelect = document.getElementById('documentTypeSelect');
             var otherTypeContainer = document.getElementById('otherTypeContainer');
             var otherDocumentType = document.getElementById('otherDocumentType');
 
             if (documentTypeSelect && otherTypeContainer) {
                 documentTypeSelect.addEventListener('change', function () {
-                    if (this.value === 'Other') {
+                    if (this.value === 'Others') {
                         otherTypeContainer.style.display = 'block';
                         otherDocumentType.setAttribute('required', 'required');
                     } else {
@@ -292,14 +474,13 @@
                 });
             }
 
-            // Document type conditional field for Edit
             var editDocumentType = document.getElementById('editDocumentType');
             var editOtherTypeContainer = document.getElementById('editOtherTypeContainer');
             var editOtherDocumentType = document.getElementById('editOtherDocumentType');
 
             if (editDocumentType && editOtherTypeContainer) {
                 editDocumentType.addEventListener('change', function () {
-                    if (this.value === 'Other') {
+                    if (this.value === 'Others') {
                         editOtherTypeContainer.style.display = 'block';
                         editOtherDocumentType.setAttribute('required', 'required');
                     } else {
@@ -310,7 +491,30 @@
                 });
             }
 
-            // View Document Modal
+            // ─── Notification Helper ───
+            function showNotification(message, type) {
+                type = type || 'info';
+                var container = document.getElementById('notification-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'notification-container';
+                    container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 99999;';
+                    document.body.appendChild(container);
+                }
+                var alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+                var icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+                var notification = document.createElement('div');
+                notification.className = 'alert ' + alertClass + ' alert-dismissible fade show';
+                notification.style.cssText = 'min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+                notification.innerHTML = '<strong>' + icon + '</strong> ' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                container.appendChild(notification);
+                setTimeout(function () {
+                    notification.classList.remove('show');
+                    setTimeout(function () { notification.remove(); }, 150);
+                }, 5000);
+            }
+
+            // ─── View Document Modal ───
             window.viewDocument = function (documentId, documentName) {
                 var modal = document.getElementById('viewDocumentModal');
                 var modalTitle = document.getElementById('viewDocumentModalLabel');
@@ -324,7 +528,6 @@
                 var bsModal = new bootstrap.Modal(modal);
                 bsModal.show();
 
-                // Fetch file info
                 fetch('/PatientDocuments/GetFileInfo?id=' + encodeURIComponent(documentId))
                     .then(function (response) {
                         if (!response.ok) throw new Error('Failed to load document info');
@@ -332,7 +535,6 @@
                     })
                     .then(function (data) {
                         if (!modalBody) return;
-
                         if (data.isImage) {
                             modalBody.innerHTML = '<img src="' + data.filePath + '" alt="' + (documentName || 'Document') + '" class="img-fluid" style="max-height: 70vh;" />';
                         } else if (data.isPdf) {
@@ -341,14 +543,51 @@
                             modalBody.innerHTML = '<div class="alert alert-info"><p>This file type cannot be previewed. Please download the file to view it.</p><p class="mb-0"><strong>File:</strong> ' + (documentName || 'Document') + '<br><strong>Type:</strong> ' + (data.fileExtension || 'Unknown') + '</p></div>';
                         }
                     })
-                    .catch(function (error) {
+                    .catch(function () {
                         if (modalBody) {
                             modalBody.innerHTML = '<div class="alert alert-danger">Failed to load document. Please try again.</div>';
                         }
                     });
             };
 
-            // Edit Document Modal
+            // ─── View Version Document ───
+            window.viewVersionDocument = function (versionId, documentName) {
+                var modal = document.getElementById('viewDocumentModal');
+                var modalTitle = document.getElementById('viewDocumentModalLabel');
+                var modalBody = document.getElementById('viewDocumentModalBody');
+                var downloadLink = document.getElementById('viewDocumentDownloadLink');
+
+                if (modalTitle) modalTitle.textContent = documentName || 'View Document Version';
+                if (modalBody) modalBody.innerHTML = '<p class="text-muted mb-0">Loading document version...</p>';
+                if (downloadLink) downloadLink.href = '/PatientDocuments/DownloadVersion?versionId=' + encodeURIComponent(versionId);
+
+                var bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                fetch('/PatientDocuments/GetVersionFileInfo?versionId=' + encodeURIComponent(versionId))
+                    .then(function (response) {
+                        if (!response.ok) throw new Error('Failed to load version info');
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (!data.success || !modalBody) return;
+                        if (modalTitle) modalTitle.textContent = documentName ? documentName + ' (' + data.version + ')' : 'View Document Version';
+                        if (data.isImage) {
+                            modalBody.innerHTML = '<img src="' + data.filePath + '" alt="' + (documentName || 'Document') + '" class="img-fluid" style="max-height: 70vh;" />';
+                        } else if (data.isPdf) {
+                            modalBody.innerHTML = '<iframe src="' + data.filePath + '" width="100%" height="500px" style="border: none;"></iframe>';
+                        } else {
+                            modalBody.innerHTML = '<div class="alert alert-info"><p>This file type cannot be previewed. Please download the file to view it.</p><p class="mb-0"><strong>Version:</strong> ' + data.version + '<br><strong>Type:</strong> ' + (data.fileExtension || 'Unknown') + '</p></div>';
+                        }
+                    })
+                    .catch(function () {
+                        if (modalBody) {
+                            modalBody.innerHTML = '<div class="alert alert-danger">Failed to load document version. Please try again.</div>';
+                        }
+                    });
+            };
+
+            // ─── Edit Document Modal ───
             window.openEditModal = function (documentId, documentName, documentType) {
                 var idInput = document.getElementById('editDocumentId');
                 var titleInput = document.getElementById('editDocumentTitle');
@@ -359,12 +598,11 @@
                 if (idInput) idInput.value = documentId;
                 if (titleInput) titleInput.value = documentName || '';
 
-                // Handle "Other - xxx" document types
-                if (documentType && documentType.startsWith('Other - ')) {
-                    if (typeSelect) typeSelect.value = 'Other';
+                if (documentType && documentType.startsWith('Others - ')) {
+                    if (typeSelect) typeSelect.value = 'Others';
                     if (otherContainer) otherContainer.style.display = 'block';
                     if (otherInput) {
-                        otherInput.value = documentType.substring(8);
+                        otherInput.value = documentType.substring(9);
                         otherInput.setAttribute('required', 'required');
                     }
                 } else {
@@ -377,65 +615,71 @@
                 }
             };
 
-            // Version History Modal
+            // ─── Version History Modal ───
             window.showVersionHistory = function (documentId, documentName) {
                 var modal = document.getElementById('versionHistoryModal');
-                var modalLabel = document.getElementById('versionHistoryModalLabel');
                 var docNameEl = document.getElementById('versionHistoryDocumentName');
                 var modalBody = document.getElementById('versionHistoryModalBody');
 
-                if (modalLabel) modalLabel.textContent = 'Document Version History';
+                currentVersionHistoryDocId = documentId;
                 if (docNameEl) docNameEl.textContent = documentName || '';
-                if (modalBody) modalBody.innerHTML = '<p class="text-muted">Loading version history...</p>';
+                if (modalBody) modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-3 mb-0">Loading version history...</p></div>';
 
                 var bsModal = new bootstrap.Modal(modal);
                 bsModal.show();
 
-                // Fetch version history
                 fetch('/PatientDocuments/GetVersionHistory?id=' + encodeURIComponent(documentId))
                     .then(function (response) {
-                        if (!response.ok) {
-                            console.error('Version history fetch failed:', response.status, response.statusText);
-                            throw new Error('Failed to load version history: ' + response.status);
-                        }
+                        if (!response.ok) throw new Error('Failed to load version history: ' + response.status);
                         return response.json();
                     })
                     .then(function (data) {
-                        console.log('Version history data:', data);
                         if (!modalBody) return;
 
                         if (!data.versions || data.versions.length === 0) {
-                            modalBody.innerHTML = '<p class="text-muted">No version history available.</p>';
+                            modalBody.innerHTML = '<div class="text-center py-4 text-muted">No version history available.</div>';
                             return;
                         }
 
+                        var docName = data.documentTitle || documentName || 'Document';
+                        var docId = data.documentId || documentId;
+                        var safeDocName = docName.replace(/'/g, "\\'");
+
                         var html = '<div class="version-timeline">';
                         data.versions.forEach(function (version, index) {
+                            var isCurrent = version.isCurrent || index === 0;
                             var isLast = index === data.versions.length - 1;
-                            html += '<div class="d-flex gap-3">';
-                            html += '  <div class="d-flex flex-column align-items-center">';
-                            html += '    <div class="rounded-circle bg-secondary" style="width: 12px; height: 12px;"></div>';
-                            if (!isLast) {
-                                html += '    <div class="bg-secondary" style="width: 2px; flex-grow: 1; margin-top: 4px;"></div>';
-                            }
-                            html += '  </div>';
-                            html += '  <div class="flex-grow-1 pb-4">';
-                            html += '    <div class="bg-light border rounded p-3">';
-                            html += '      <div class="d-flex justify-content-between align-items-center mb-2">';
-                            html += '        <div class="d-flex align-items-center gap-2">';
-                            html += '          <span class="badge bg-secondary">' + version.version + '</span>';
-                            html += '          <span>' + version.modifiedBy + '</span>';
-                            html += '        </div>';
-                            html += '        <span class="text-muted small">' + version.dateModified + '</span>';
-                            html += '      </div>';
-                            html += '      <p class="text-muted small mb-2">' + (version.notes || 'No notes') + '</p>';
-                            html += '      <div class="d-flex gap-2">';
-                            html += '        <button class="btn btn-sm btn-outline-secondary" onclick="viewVersionDocument(' + version.versionID + ', \'' + (documentName || 'Document').replace(/'/g, "\\'") + '\')">View</button>';
-                            html += '        <a href="/PatientDocuments/DownloadVersion?versionId=' + version.versionID + '" class="btn btn-sm btn-outline-secondary">Download</a>';
-                            if (index > 0) {
-                                html += '        <button class="btn btn-sm btn-outline-secondary">Restore</button>';
+
+                            html += '<div class="version-item ' + (isCurrent ? 'version-current' : '') + '">';
+                            html += '  <div class="version-marker ' + (isCurrent ? 'bg-primary' : '') + '"></div>';
+                            html += '  <div class="version-content">';
+                            html += '    <div class="version-header">';
+                            html += '      <div class="d-flex align-items-center gap-2">';
+                            html += '        <span class="version-number">' + version.version + '</span>';
+                            if (isCurrent) {
+                                html += '        <span class="badge bg-success" style="font-size:0.7rem;">Active</span>';
+                            } else {
+                                html += '        <span class="badge bg-secondary" style="font-size:0.7rem;">Inactive</span>';
                             }
                             html += '      </div>';
+                            html += '      <span class="version-date">' + version.dateModified + '</span>';
+                            html += '    </div>';
+                            html += '    <div class="version-meta">Modified by ' + version.modifiedBy + ' &bull; ' + (version.notes || 'No notes') + '</div>';
+                            html += '    <div class="version-actions">';
+                            html += '      <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="View" onclick="viewVersionDocument(' + version.versionID + ', \'' + safeDocName + '\')">';
+                            html += '        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+                            html += '      </button>';
+                            html += '      <a href="/PatientDocuments/DownloadVersion?versionId=' + version.versionID + '" class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Download">';
+                            html += '        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+                            html += '      </a>';
+                            if (!isCurrent) {
+                                html += '      <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Restore" onclick="showRestoreConfirmModal(' + version.versionID + ', \'' + version.version + '\', \'' + version.dateModified + '\', \'' + safeDocName + '\', ' + docId + ')">';
+                                html += '        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+                                html += '      </button>';
+                            }
+                            html += '      <button class="btn btn-version-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive" onclick="showArchiveVersionConfirmModal(' + version.versionID + ', ' + docId + ', \'' + safeDocName + '\', \'' + version.version + '\')">';
+                            html += '        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>';
+                            html += '      </button>';
                             html += '    </div>';
                             html += '  </div>';
                             html += '</div>';
@@ -443,13 +687,210 @@
                         html += '</div>';
 
                         modalBody.innerHTML = html;
+                        // Initialize tooltips
+                        modalBody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                            new bootstrap.Tooltip(el);
+                        });
                     })
-                    .catch(function (error) {
+                    .catch(function () {
                         if (modalBody) {
                             modalBody.innerHTML = '<div class="alert alert-danger">Failed to load version history. Please try again.</div>';
                         }
                     });
             };
+
+            // ─── Archive Confirmation Modal ───
+            window.showArchiveConfirmModal = function (documentId, documentName) {
+                currentArchiveDocId = documentId;
+                currentArchiveDocName = documentName;
+                var docNameEl = document.getElementById('archiveDocName');
+                var reasonInput = document.getElementById('archiveReasonInput');
+                if (docNameEl) docNameEl.textContent = documentName || '';
+                if (reasonInput) reasonInput.value = '';
+                var archiveModal = new bootstrap.Modal(document.getElementById('archiveConfirmModal'));
+                archiveModal.show();
+            };
+
+            // ─── Confirm Archive Document ───
+            window.confirmArchiveDocument = function () {
+                if (!currentArchiveDocId) return;
+                var confirmBtn = document.getElementById('confirmArchiveBtn');
+                var originalText = confirmBtn.innerHTML;
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Archiving...';
+
+                var reason = (document.getElementById('archiveReasonInput') || {}).value || '';
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+                fetch('/PatientDocuments/ArchiveDocumentAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token ? token.value : ''
+                    },
+                    body: JSON.stringify({ documentId: currentArchiveDocId, archiveReason: reason })
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (result) {
+                    if (result.success) {
+                        showNotification(result.message || 'Document archived successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('archiveConfirmModal')).hide();
+                        var versionModal = bootstrap.Modal.getInstance(document.getElementById('versionHistoryModal'));
+                        if (versionModal) versionModal.hide();
+                        // Reload page to refresh the document list
+                        setTimeout(function () { location.reload(); }, 1000);
+                    } else {
+                        showNotification(result.message || 'Failed to archive document.', 'error');
+                    }
+                })
+                .catch(function () {
+                    showNotification('An error occurred while archiving the document.', 'error');
+                })
+                .finally(function () {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                    currentArchiveDocId = null;
+                    currentArchiveDocName = null;
+                });
+            };
+
+            // ─── Archive Version Confirmation Modal ───
+            window.showArchiveVersionConfirmModal = function (versionId, documentId, documentName, versionNumber) {
+                currentArchiveVersionId = versionId;
+                currentArchiveVersionDocId = documentId;
+                currentArchiveVersionDocName = documentName;
+                currentArchiveVersionNumber = versionNumber;
+                var docNameEl = document.getElementById('archiveVersionDocName');
+                var versionEl = document.getElementById('archiveVersionNumber');
+                var reasonInput = document.getElementById('archiveVersionReasonInput');
+                if (docNameEl) docNameEl.textContent = documentName || '';
+                if (versionEl) versionEl.textContent = versionNumber || '';
+                if (reasonInput) reasonInput.value = '';
+                var modal = new bootstrap.Modal(document.getElementById('archiveVersionConfirmModal'));
+                modal.show();
+            };
+
+            // ─── Confirm Archive Version ───
+            window.confirmArchiveVersion = function () {
+                if (!currentArchiveVersionId || !currentArchiveVersionDocId) return;
+                var confirmBtn = document.getElementById('confirmArchiveVersionBtn');
+                var originalText = confirmBtn.innerHTML;
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Archiving...';
+
+                var reason = (document.getElementById('archiveVersionReasonInput') || {}).value || '';
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+                fetch('/PatientDocuments/ArchiveVersionAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token ? token.value : ''
+                    },
+                    body: JSON.stringify({ versionId: currentArchiveVersionId, documentId: currentArchiveVersionDocId, archiveReason: reason })
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (result) {
+                    if (result.success) {
+                        showNotification(result.message || 'Version archived successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('archiveVersionConfirmModal')).hide();
+                        // Refresh version history
+                        if (currentVersionHistoryDocId) {
+                            var docNameEl = document.getElementById('versionHistoryDocumentName');
+                            var docName = docNameEl ? docNameEl.textContent : 'Document';
+                            showVersionHistory(currentVersionHistoryDocId, docName);
+                        }
+                    } else {
+                        showNotification(result.message || 'Failed to archive version.', 'error');
+                    }
+                })
+                .catch(function () {
+                    showNotification('An error occurred while archiving the version.', 'error');
+                })
+                .finally(function () {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                    currentArchiveVersionId = null;
+                    currentArchiveVersionDocId = null;
+                    currentArchiveVersionDocName = null;
+                    currentArchiveVersionNumber = null;
+                });
+            };
+
+            // ─── Restore Confirmation Modal ───
+            window.showRestoreConfirmModal = function (versionId, versionNumber, versionDate, docName, docId) {
+                currentRestoreVersionId = versionId;
+                currentRestoreDocId = docId;
+                var versionNumEl = document.getElementById('restoreVersionNumber');
+                var versionDateEl = document.getElementById('restoreVersionDate');
+                var docNameEl = document.getElementById('restoreDocName');
+                if (versionNumEl) versionNumEl.textContent = versionNumber;
+                if (versionDateEl) versionDateEl.textContent = versionDate;
+                if (docNameEl) docNameEl.textContent = docName;
+                var restoreModal = new bootstrap.Modal(document.getElementById('restoreConfirmModal'));
+                restoreModal.show();
+            };
+
+            // ─── Confirm Restore Version ───
+            window.confirmRestoreVersion = function () {
+                if (!currentRestoreVersionId || !currentRestoreDocId) return;
+                var confirmBtn = document.getElementById('confirmRestoreBtn');
+                var originalText = confirmBtn.innerHTML;
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Restoring...';
+
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+                fetch('/PatientDocuments/RestoreVersion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token ? token.value : ''
+                    },
+                    body: JSON.stringify({ versionId: currentRestoreVersionId, documentId: currentRestoreDocId })
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (result) {
+                    if (result.success) {
+                        showNotification(result.message || 'Version restored successfully!', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('restoreConfirmModal')).hide();
+                        // Refresh version history
+                        if (currentVersionHistoryDocId) {
+                            var docNameEl = document.getElementById('versionHistoryDocumentName');
+                            var docName = docNameEl ? docNameEl.textContent : 'Document';
+                            showVersionHistory(currentVersionHistoryDocId, docName);
+                        }
+                        // Reload page to update document list
+                        setTimeout(function () { location.reload(); }, 1500);
+                    } else {
+                        showNotification(result.message || 'Failed to restore version.', 'error');
+                    }
+                })
+                .catch(function () {
+                    showNotification('An error occurred while restoring the version.', 'error');
+                })
+                .finally(function () {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                    currentRestoreVersionId = null;
+                    currentRestoreDocId = null;
+                });
+            };
+
+            // ─── Z-index fix: bump confirmation modals above version history ───
+            ['restoreConfirmModal', 'archiveVersionConfirmModal', 'archiveConfirmModal'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('show.bs.modal', function () {
+                        setTimeout(function() {
+                            var backdrops = document.querySelectorAll('.modal-backdrop');
+                            if (backdrops.length > 1) {
+                                backdrops[backdrops.length - 1].style.zIndex = '1065';
+                            }
+                        }, 10);
+                    });
+                }
+            });
         })();
     </script>
 }

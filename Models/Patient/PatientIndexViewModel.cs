@@ -13,7 +13,11 @@ namespace DMS_CPMS.Models.Patient
 
         public int PageNumber { get; set; }
 
+        public int PageSize { get; set; } = 10;
+
         public int TotalPages { get; set; }
+
+        public int TotalCount { get; set; }
 
         // For the create patient modal on the index page
         public CreatePatientViewModel NewPatient { get; set; } = new CreatePatientViewModel();

@@ -60,9 +60,9 @@ namespace DMS_CPMS.Controllers
                 return NotFound();
             }
 
-            // Determine document type (use OtherDocumentType if "Other" is selected)
-            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
-                ? $"Other - {model.OtherDocumentType}"
+            // Determine document type (use OtherDocumentType if "Others" is selected)
+            var documentType = model.DocumentType == "Others" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Others - {model.OtherDocumentType}"
                 : model.DocumentType;
 
             var currentUserId = _userManager.GetUserId(User);
@@ -101,7 +101,7 @@ namespace DMS_CPMS.Controllers
             Data.Models.Patient patient, string? searchTerm, string? documentType, string? status, int page)
         {
             var query = _context.Documents
-                .Where(d => d.PatientID == patient.PatientID)
+                .Where(d => d.PatientID == patient.PatientID && !d.IsArchived)
                 .Include(d => d.UploadedByUser)
                 .Include(d => d.Versions)
                 .AsQueryable();
@@ -114,12 +114,6 @@ namespace DMS_CPMS.Controllers
             if (!string.IsNullOrWhiteSpace(documentType))
             {
                 query = query.Where(d => d.DocumentType == documentType);
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                // Assuming status is stored somewhere or calculated
-                // For now, we'll just filter by active documents
             }
 
             var totalCount = await query.CountAsync();
@@ -242,9 +236,9 @@ namespace DMS_CPMS.Controllers
                 return NotFound();
             }
 
-            // Determine document type (use OtherDocumentType if "Other" is selected)
-            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
-                ? $"Other - {model.OtherDocumentType}"
+            // Determine document type (use OtherDocumentType if "Others" is selected)
+            var documentType = model.DocumentType == "Others" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Others - {model.OtherDocumentType}"
                 : model.DocumentType;
 
             document.DocumentTitle = model.DocumentTitle;
@@ -260,6 +254,7 @@ namespace DMS_CPMS.Controllers
         {
             var document = await _context.Documents
                 .Include(d => d.Versions)
+                .Include(d => d.ArchiveDocuments)
                 .FirstOrDefaultAsync(d => d.DocumentID == id);
 
             if (document == null)
@@ -267,22 +262,202 @@ namespace DMS_CPMS.Controllers
                 return NotFound();
             }
 
-            var versionsList = document.Versions != null
-                ? document.Versions
-                    .OrderByDescending(v => v.VersionNumber)
-                    .Select(v => new
-                    {
-                        versionID = v.VersionID,
-                        version = $"v{v.VersionNumber}.0",
-                        modifiedBy = "Unknown",
-                        dateModified = v.CreatedDate.ToString("yyyy-MM-dd"),
-                        notes = v.VersionNumber == 1 ? "Initial upload" : $"Version {v.VersionNumber} update"
-                    })
-                    .Cast<object>()
-                    .ToList()
-                : new List<object>();
+            // Get IDs of versions that have been archived
+            var archivedVersionIds = document.ArchiveDocuments
+                .Where(a => a.VersionID != null)
+                .Select(a => a.VersionID!.Value)
+                .ToHashSet();
 
-            return Json(new { versions = versionsList });
+            // Filter out archived versions
+            var activeVersions = document.Versions?
+                .Where(v => !archivedVersionIds.Contains(v.VersionID))
+                .ToList() ?? new List<DocumentVersion>();
+
+            var maxVersion = activeVersions.Any()
+                ? activeVersions.Max(v => v.VersionNumber)
+                : 0;
+
+            var versionsList = activeVersions
+                .OrderByDescending(v => v.VersionNumber)
+                .Select(v => new
+                {
+                    versionID = v.VersionID,
+                    version = $"v{v.VersionNumber}.0",
+                    modifiedBy = "Unknown",
+                    dateModified = v.CreatedDate.ToString("yyyy-MM-dd"),
+                    notes = v.VersionNumber == 1 ? "Initial upload" : $"Version {v.VersionNumber} update",
+                    isCurrent = v.VersionNumber == maxVersion
+                })
+                .Cast<object>()
+                .ToList();
+
+            return Json(new
+            {
+                documentId = document.DocumentID,
+                documentTitle = document.DocumentTitle,
+                isDocumentArchived = document.IsArchived,
+                versions = versionsList
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveDocumentAjax([FromBody] ArchiveDocumentAjaxModel model)
+        {
+            if (model == null || model.DocumentId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid request data." });
+            }
+
+            var document = await _context.Documents
+                .Include(d => d.Patient)
+                .FirstOrDefaultAsync(d => d.DocumentID == model.DocumentId);
+
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found." });
+            }
+
+            if (document.IsArchived)
+            {
+                return Json(new { success = false, message = "Document is already archived." });
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            // Look up matching retention policy by document type
+            var policy = await _context.RetentionPolicies
+                .Where(p => p.IsEnabled && p.ModuleName == document.DocumentType)
+                .FirstOrDefaultAsync();
+
+            var archiveDate = DateTime.Today;
+            var retentionUntil = policy != null
+                ? archiveDate.AddMonths(policy.RetentionDurationMonths)
+                : archiveDate.AddYears(5); // default 5 years if no policy
+
+            var archiveReason = !string.IsNullOrWhiteSpace(model.ArchiveReason)
+                ? model.ArchiveReason
+                : "Archived from Version History";
+
+            var archive = new ArchiveDocument
+            {
+                DocumentID = model.DocumentId,
+                UserID = user.Id,
+                ArchiveReason = archiveReason,
+                ArchiveDate = archiveDate,
+                RetentionUntil = retentionUntil
+            };
+
+            document.IsArchived = true;
+
+            _context.ArchiveDocuments.Add(archive);
+            await _context.SaveChangesAsync();
+
+            // Log audit trail
+            await LogAuditTrailAsync(
+                action: "ArchiveDocument",
+                entityType: "Document",
+                entityId: document.DocumentID,
+                details: $"Document '{document.DocumentTitle}' archived by {user.FirstName} {user.LastName}. Reason: {archiveReason}. Retention until {retentionUntil:MMM dd, yyyy}.",
+                userId: user.Id,
+                userName: user.UserName ?? "Unknown",
+                timestamp: DateTime.UtcNow
+            );
+
+            return Json(new
+            {
+                success = true,
+                message = $"Document \"{document.DocumentTitle}\" has been archived. Retention until {retentionUntil:MMM dd, yyyy}."
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperAdmin,Admin,Staff")]
+        public async Task<IActionResult> ArchiveVersionAjax([FromBody] ArchiveVersionAjaxModel model)
+        {
+            if (model == null || model.VersionId <= 0 || model.DocumentId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid request data." });
+            }
+
+            var document = await _context.Documents
+                .Include(d => d.Versions)
+                .Include(d => d.ArchiveDocuments)
+                .FirstOrDefaultAsync(d => d.DocumentID == model.DocumentId);
+
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found." });
+            }
+
+            var version = document.Versions?.FirstOrDefault(v => v.VersionID == model.VersionId);
+            if (version == null)
+            {
+                return Json(new { success = false, message = "Version not found." });
+            }
+
+            // Check if already archived
+            var alreadyArchived = document.ArchiveDocuments
+                .Any(a => a.VersionID == model.VersionId);
+            if (alreadyArchived)
+            {
+                return Json(new { success = false, message = "This version is already archived." });
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            // Retention policy lookup
+            var policy = await _context.RetentionPolicies
+                .Where(p => p.IsEnabled && p.ModuleName == document.DocumentType)
+                .FirstOrDefaultAsync();
+
+            var archiveDate = DateTime.Today;
+            var retentionUntil = policy != null
+                ? archiveDate.AddMonths(policy.RetentionDurationMonths)
+                : archiveDate.AddYears(5);
+
+            var archiveReason = !string.IsNullOrWhiteSpace(model.ArchiveReason)
+                ? model.ArchiveReason
+                : $"Manually archived version v{version.VersionNumber}.0";
+
+            var archive = new ArchiveDocument
+            {
+                DocumentID = model.DocumentId,
+                VersionID = model.VersionId,
+                UserID = user.Id,
+                ArchiveReason = archiveReason,
+                ArchiveDate = archiveDate,
+                RetentionUntil = retentionUntil
+            };
+
+            _context.ArchiveDocuments.Add(archive);
+            await _context.SaveChangesAsync();
+
+            // Log audit trail
+            await LogAuditTrailAsync(
+                action: "ArchiveVersion",
+                entityType: "DocumentVersion",
+                entityId: version.VersionID,
+                details: $"Version v{version.VersionNumber}.0 of '{document.DocumentTitle}' archived by {user.FirstName} {user.LastName}. Reason: {archiveReason}. Retention until {retentionUntil:MMM dd, yyyy}.",
+                userId: user.Id,
+                userName: user.UserName ?? "Unknown",
+                timestamp: DateTime.UtcNow
+            );
+
+            return Json(new
+            {
+                success = true,
+                message = $"Version v{version.VersionNumber}.0 has been archived. Retention until {retentionUntil:MMM dd, yyyy}."
+            });
         }
 
         [HttpGet]
@@ -298,7 +473,7 @@ namespace DMS_CPMS.Controllers
             }
 
             var query = _context.Documents
-                .Where(d => d.PatientID == patientId)
+                .Where(d => d.PatientID == patientId && !d.IsArchived)
                 .Include(d => d.UploadedByUser)
                 .Include(d => d.Versions)
                 .AsQueryable();
@@ -369,8 +544,8 @@ namespace DMS_CPMS.Controllers
                 return Json(new { success = false, message = "Patient not found" });
             }
 
-            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
-                ? $"Other - {model.OtherDocumentType}"
+            var documentType = model.DocumentType == "Others" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Others - {model.OtherDocumentType}"
                 : model.DocumentType;
 
             var currentUserId = _userManager.GetUserId(User);
@@ -418,8 +593,8 @@ namespace DMS_CPMS.Controllers
                 return Json(new { success = false, message = "Document not found" });
             }
 
-            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
-                ? $"Other - {model.OtherDocumentType}"
+            var documentType = model.DocumentType == "Others" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Others - {model.OtherDocumentType}"
                 : model.DocumentType;
 
             document.DocumentTitle = model.DocumentTitle;
@@ -449,8 +624,8 @@ namespace DMS_CPMS.Controllers
             }
 
             // Update document metadata
-            var documentType = model.DocumentType == "Other" && !string.IsNullOrEmpty(model.OtherDocumentType)
-                ? $"Other - {model.OtherDocumentType}"
+            var documentType = model.DocumentType == "Others" && !string.IsNullOrEmpty(model.OtherDocumentType)
+                ? $"Others - {model.OtherDocumentType}"
                 : model.DocumentType;
 
             document.DocumentTitle = model.DocumentTitle;
@@ -487,6 +662,7 @@ namespace DMS_CPMS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var document = await _context.Documents
@@ -515,6 +691,202 @@ namespace DMS_CPMS.Controllers
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Document deleted successfully" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadVersion(int versionId)
+        {
+            var version = await _context.DocumentVersions
+                .Include(v => v.Document)
+                .FirstOrDefaultAsync(v => v.VersionID == versionId);
+
+            if (version == null || version.Document == null)
+            {
+                return NotFound("Version not found.");
+            }
+
+            if (string.IsNullOrEmpty(version.FilePath))
+            {
+                return NotFound("No file found for this version.");
+            }
+
+            var physicalPath = Path.Combine(_environment.WebRootPath, version.FilePath.TrimStart('/'));
+            if (!System.IO.File.Exists(physicalPath))
+            {
+                return NotFound("File not found on server.");
+            }
+
+            var mimeType = GetMimeType(Path.GetExtension(physicalPath));
+            var fileName = $"{version.Document.DocumentTitle}_v{version.VersionNumber}{Path.GetExtension(physicalPath)}";
+
+            return PhysicalFile(physicalPath, mimeType, fileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVersionFileInfo(int versionId)
+        {
+            var version = await _context.DocumentVersions
+                .Include(v => v.Document)
+                .FirstOrDefaultAsync(v => v.VersionID == versionId);
+
+            if (version == null)
+            {
+                return Json(new { success = false, message = "Version not found" });
+            }
+
+            var filePath = version.FilePath;
+            var extension = !string.IsNullOrEmpty(filePath) ? Path.GetExtension(filePath).ToLower() : string.Empty;
+            
+            var isImage = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }.Contains(extension);
+            var isPdf = extension == ".pdf";
+
+            return Json(new 
+            { 
+                success = true, 
+                filePath = filePath,
+                fileExtension = extension,
+                isImage = isImage,
+                isPdf = isPdf,
+                version = $"v{version.VersionNumber}.0"
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperAdmin,Admin,Staff")]
+        public async Task<IActionResult> RestoreVersion([FromBody] RestoreVersionViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Invalid input data" });
+            }
+
+            var document = await _context.Documents
+                .Include(d => d.Versions)
+                .FirstOrDefaultAsync(d => d.DocumentID == model.DocumentId);
+
+            if (document == null)
+            {
+                return Json(new { success = false, message = "Document not found" });
+            }
+
+            var versionToRestore = document.Versions?.FirstOrDefault(v => v.VersionID == model.VersionId);
+            
+            if (versionToRestore == null)
+            {
+                return Json(new { success = false, message = "Version not found" });
+            }
+
+            // Check if this is already the current version
+            var currentVersion = document.Versions?.OrderByDescending(v => v.VersionNumber).FirstOrDefault();
+            if (currentVersion != null && currentVersion.VersionID == model.VersionId)
+            {
+                return Json(new { success = false, message = "This is already the current version" });
+            }
+
+            try
+            {
+                var currentUserId = _userManager.GetUserId(User);
+                var currentUserName = User.Identity?.Name ?? "Unknown";
+                var timestamp = DateTime.UtcNow;
+                
+                // Get the file path of the version to restore
+                var sourceFilePath = versionToRestore.FilePath;
+                
+                if (string.IsNullOrEmpty(sourceFilePath))
+                {
+                    return Json(new { success = false, message = "Version file path is invalid" });
+                }
+
+                var physicalSourcePath = Path.Combine(_environment.WebRootPath, sourceFilePath.TrimStart('/'));
+                
+                if (!System.IO.File.Exists(physicalSourcePath))
+                {
+                    return Json(new { success = false, message = "Version file not found on disk" });
+                }
+
+                // Calculate new version number
+                var newVersionNumber = (currentVersion?.VersionNumber ?? 0) + 1;
+                
+                // Create new version entry for the restored file
+                var extension = Path.GetExtension(sourceFilePath);
+                var uploadsRoot = Path.Combine(_environment.WebRootPath, "uploads", "documents", document.PatientID.ToString(), document.DocumentID.ToString());
+                Directory.CreateDirectory(uploadsRoot);
+                
+                var newFileName = $"v{newVersionNumber}_restored_{Guid.NewGuid()}{extension}";
+                var physicalNewPath = Path.Combine(uploadsRoot, newFileName);
+                
+                // Copy the file to create a new version
+                System.IO.File.Copy(physicalSourcePath, physicalNewPath);
+                
+                var newRelativePath = $"/uploads/documents/{document.PatientID}/{document.DocumentID}/{newFileName}".Replace("\\", "/");
+                
+                // Create new version record
+                var newVersion = new DocumentVersion
+                {
+                    DocumentID = document.DocumentID,
+                    VersionNumber = newVersionNumber,
+                    FilePath = newRelativePath,
+                    CreatedDate = timestamp
+                };
+
+                _context.DocumentVersions.Add(newVersion);
+                
+                // Update document metadata
+                document.UploadDate = timestamp;
+                
+                await _context.SaveChangesAsync();
+
+                // Log to audit trail
+                await LogAuditTrailAsync(
+                    action: "RestoreVersion",
+                    entityType: "DocumentVersion",
+                    entityId: newVersion.VersionID,
+                    details: $"Restored document '{document.DocumentTitle}' to version {versionToRestore.VersionNumber}. New version {newVersionNumber} created by {currentUserName}.",
+                    userId: currentUserId,
+                    userName: currentUserName,
+                    timestamp: timestamp
+                );
+
+                return Json(new 
+                { 
+                    success = true, 
+                    message = "Version restored successfully. The previous version has been preserved as a new historical version.",
+                    newVersionNumber = newVersionNumber
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                Console.Error.WriteLine($"Error restoring version: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while restoring the version. Please try again." });
+            }
+        }
+
+        private async Task LogAuditTrailAsync(string action, string entityType, int entityId, string details, string userId, string userName, DateTime timestamp)
+        {
+            try
+            {
+                var auditLog = new AuditLog
+                {
+                    Action = action,
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    Details = details,
+                    UserId = userId ?? "Unknown",
+                    UserName = userName ?? "Unknown",
+                    Timestamp = timestamp,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
+                };
+
+                _context.AuditLogs.Add(auditLog);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the main operation
+                Console.Error.WriteLine($"Failed to log audit trail: {ex.Message}");
+            }
         }
 
         private static string GetMimeType(string extension)

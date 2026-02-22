@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DMS_CPMS.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Admin")]
+    [Authorize(Roles = "SuperAdmin,Admin,Staff")]
     public class PatientController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -117,6 +117,7 @@ namespace DMS_CPMS.Controllers
             }
 
             var documents = patient.Documents
+                .Where(d => !d.IsArchived)
                 .OrderByDescending(d => d.UploadDate)
                 .Select(d => new DocumentSummaryViewModel
                 {
@@ -150,6 +151,7 @@ namespace DMS_CPMS.Controllers
             }
 
             var documents = patient.Documents
+                .Where(d => !d.IsArchived)
                 .OrderByDescending(d => d.UploadDate)
                 .Select(d => new DocumentSummaryViewModel
                 {

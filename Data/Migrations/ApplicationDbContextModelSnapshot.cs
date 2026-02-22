@@ -129,6 +129,95 @@ namespace DMS_CPMS.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("DMS_CPMS.Data.Models.ArchiveDocument", b =>
+                {
+                    b.Property<int>("ArchiveID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArchiveID"));
+
+                    b.Property<DateTime>("ArchiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchiveReason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("DocumentID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RetentionUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("VersionID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ArchiveID");
+
+                    b.HasIndex("DocumentID");
+
+                    b.HasIndex("UserID");
+
+                    b.HasIndex("VersionID");
+
+                    b.ToTable("ArchiveDocument");
+                });
+
+            modelBuilder.Entity("DMS_CPMS.Data.Models.AuditLog", b =>
+                {
+                    b.Property<int>("AuditLogID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AuditLogID"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("AuditLogID");
+
+                    b.ToTable("AuditLog");
+                });
+
             modelBuilder.Entity("DMS_CPMS.Data.Models.Document", b =>
                 {
                     b.Property<int>("DocumentID")
@@ -146,6 +235,11 @@ namespace DMS_CPMS.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsArchived")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
@@ -229,6 +323,37 @@ namespace DMS_CPMS.Data.Migrations
                     b.HasKey("PatientID");
 
                     b.ToTable("Patient");
+                });
+
+            modelBuilder.Entity("DMS_CPMS.Data.Models.RetentionPolicy", b =>
+                {
+                    b.Property<int>("RetentionPolicyID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RetentionPolicyID"));
+
+                    b.Property<string>("AutoActionAfterExpiry")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("ModuleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("RetentionDurationMonths")
+                        .HasColumnType("int");
+
+                    b.HasKey("RetentionPolicyID");
+
+                    b.ToTable("RetentionPolicy");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -341,6 +466,32 @@ namespace DMS_CPMS.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("DMS_CPMS.Data.Models.ArchiveDocument", b =>
+                {
+                    b.HasOne("DMS_CPMS.Data.Models.Document", "Document")
+                        .WithMany("ArchiveDocuments")
+                        .HasForeignKey("DocumentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DMS_CPMS.Data.Models.ApplicationUser", "ArchivedByUser")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DMS_CPMS.Data.Models.DocumentVersion", "ArchivedVersion")
+                        .WithMany()
+                        .HasForeignKey("VersionID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ArchivedByUser");
+
+                    b.Navigation("ArchivedVersion");
+
+                    b.Navigation("Document");
+                });
+
             modelBuilder.Entity("DMS_CPMS.Data.Models.Document", b =>
                 {
                     b.HasOne("DMS_CPMS.Data.Models.Patient", "Patient")
@@ -424,6 +575,8 @@ namespace DMS_CPMS.Data.Migrations
 
             modelBuilder.Entity("DMS_CPMS.Data.Models.Document", b =>
                 {
+                    b.Navigation("ArchiveDocuments");
+
                     b.Navigation("Versions");
                 });
 

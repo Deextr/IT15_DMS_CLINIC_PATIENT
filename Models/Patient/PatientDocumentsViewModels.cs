@@ -18,7 +18,9 @@ namespace DMS_CPMS.Models.Patient
         
         // Pagination
         public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
         public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; } = 0;
         
         // For creating new document
         public UploadDocumentViewModel NewDocument { get; set; } = new UploadDocumentViewModel();
@@ -109,5 +111,35 @@ namespace DMS_CPMS.Models.Patient
 
         [StringLength(100)]
         public string? VersionNotes { get; set; }
+    }
+
+    public class RestoreVersionViewModel
+    {
+        [Required]
+        public int VersionId { get; set; }
+
+        [Required]
+        public int DocumentId { get; set; }
+    }
+
+    public class ArchiveDocumentAjaxModel
+    {
+        [Required]
+        public int DocumentId { get; set; }
+
+        [StringLength(200)]
+        public string? ArchiveReason { get; set; }
+    }
+
+    public class ArchiveVersionAjaxModel
+    {
+        [Required]
+        public int VersionId { get; set; }
+
+        [Required]
+        public int DocumentId { get; set; }
+
+        [StringLength(200)]
+        public string? ArchiveReason { get; set; }
     }
 }

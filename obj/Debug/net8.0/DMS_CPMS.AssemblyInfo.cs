@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1dad04ad7e42cce5150f7265311762b995629ac0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b169ca092a2b0cad67461ea3c062660ff8bb150")]
 [assembly: System.Reflection.AssemblyProductAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DMS_CPMS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,546 @@
+@model DMS_CPMS.Models.Archive.ArchiveRetentionIndexViewModel
+@{
+    ViewData["Title"] = "Archive & Retention";
+}
+
+<link rel="stylesheet" href="~/css/archive-retention.css" asp-append-version="true" />
+
+<div class="container-fluid archive-module">
+
+    <!-- ═══════════════ TOAST MESSAGES ═══════════════ -->
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            @TempData["StatusMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ═══════════════ TABS ═══════════════ -->
+    <ul class="nav nav-tabs archive-tabs mb-0" id="archiveTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="archived-docs-tab" data-bs-toggle="tab" data-bs-target="#archivedDocsPane" type="button" role="tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>
+                Archived Documents
+                <span class="badge bg-secondary ms-1">@Model.TotalDocuments</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="retention-policy-tab" data-bs-toggle="tab" data-bs-target="#retentionPolicyPane" type="button" role="tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Retention Policies
+                <span class="badge bg-secondary ms-1">@Model.TotalPolicies</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="archiveTabContent">
+
+        <!-- ═════════════ TAB 1: ARCHIVED DOCUMENTS ═════════════ -->
+        <div class="tab-pane fade show active" id="archivedDocsPane" role="tabpanel">
+            <div class="card shadow-sm border-0 rounded-top-0 border-top-0">
+                <div class="card-body">
+                    <!-- Filter bar -->
+                    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Search by document, user, or reason..." value="@Model.SearchTerm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select name="statusFilter" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="Active" selected="@(Model.StatusFilter == "Active")">Active Retention</option>
+                                <option value="Expired" selected="@(Model.StatusFilter == "Expired")">Expired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-secondary me-2">Filter</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">
+                                + Archive
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle mb-0">
+                            <thead class="table-header-ocean">
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Patient</th>
+                                    <th>Archived By</th>
+                                    <th>Reason</th>
+                                    <th>Archive Date</th>
+                                    <th>Retention Until</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ArchivedDocuments.Any())
+                                {
+                                    @foreach (var doc in Model.ArchivedDocuments)
+                                    {
+                                        <tr class="@(!doc.IsWithinRetention ? "archive-row-expired" : "")">
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    @doc.DocumentTitle
+                                                    @if (doc.IsVersionArchive)
+                                                    {
+                                                        <span class="badge bg-info ms-1">v@(doc.VersionNumber).0</span>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">@doc.DocumentType</small>
+                                            </td>
+                                            <td>@doc.PatientName</td>
+                                            <td>@doc.ArchivedByName</td>
+                                            <td><span class="text-muted">@doc.ArchiveReason</span></td>
+                                            <td>@doc.ArchiveDate.ToString("MMM dd, yyyy")</td>
+                                            <td>@doc.RetentionUntil.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <span class="badge @doc.StatusBadgeClass">@doc.StatusText</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    @if (doc.IsWithinRetention)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-success btn-restore"
+                                                                data-archive-id="@doc.ArchiveID"
+                                                                data-doc-title="@doc.DocumentTitle"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Restore"
+                                                                onclick="openRestoreModal(this)">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                                        </button>
+                                                    }
+
+                                                    @if (Model.IsSuperAdmin && !doc.IsWithinRetention)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-danger btn-perm-delete"
+                                                                data-archive-id="@doc.ArchiveID"
+                                                                data-doc-title="@doc.DocumentTitle"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Permanently"
+                                                                onclick="openPermanentDeleteModal(this)">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                        </button>
+                                                    }
+                                                    
+                                                    @if (!doc.IsWithinRetention && !Model.IsSuperAdmin)
+                                                    {
+                                                        <span class="text-muted small">--</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5 text-muted">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-2 opacity-50"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>
+                                            <p class="mb-0 mt-2">No archived documents found</p>
+                                            <small>Archive a document to see it here.</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination - Standardized Style -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        int pageSize = 10;
+                        int startEntry = (Model.PageNumber - 1) * pageSize + 1;
+                        int endEntry = Math.Min(Model.PageNumber * pageSize, Model.TotalDocuments);
+                        <div class="table-footer">
+                            <div class="table-footer-left">
+                                <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
+                            </div>
+                            <div class="table-footer-right">
+                                <nav class="pagination-nav">
+                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })"
+                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })"
+                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                                    <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
+                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })"
+                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })"
+                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                                </nav>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════════ TAB 2: RETENTION POLICIES ═════════════ -->
+        <div class="tab-pane fade" id="retentionPolicyPane" role="tabpanel">
+            <div class="card shadow-sm border-0 rounded-top-0 border-top-0">
+                <div class="card-body">
+                    <!-- Header with Add button -->
+                    <div class="d-flex justify-content-start mb-3">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
+                            + Add Policy
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle mb-0">
+                            <thead class="table-header-ocean">
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Retention Duration</th>
+                                    <th>Auto Action After Expiry</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RetentionPolicies.Any())
+                                {
+                                    @foreach (var policy in Model.RetentionPolicies)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@policy.ModuleName</td>
+                                            <td>@policy.DurationDisplay</td>
+                                            <td>
+                                                @{
+                                                    var actionBadge = policy.AutoActionAfterExpiry switch
+                                                    {
+                                                        "NotifyAdmin" => "bg-warning text-dark",
+                                                        "AutoDelete" => "bg-danger",
+                                                        _ => "bg-secondary"
+                                                    };
+                                                }
+                                                <span class="badge @actionBadge">@policy.ActionDisplay</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(policy.IsEnabled ? "bg-success" : "bg-secondary")">
+                                                    @(policy.IsEnabled ? "Enabled" : "Disabled")
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-edit-policy"
+                                                            data-policy-id="@policy.RetentionPolicyID"
+                                                            data-module-name="@policy.ModuleName"
+                                                            data-duration="@policy.RetentionDurationMonths"
+                                                            data-auto-action="@policy.AutoActionAfterExpiry"
+                                                            data-is-enabled="@policy.IsEnabled.ToString().ToLower()"
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Edit"
+                                                            onclick="openEditPolicyModal(this)">
+                                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </button>
+                                                    <form asp-action="TogglePolicy" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@policy.RetentionPolicyID" />
+                                                        <button type="submit" class="btn btn-sm @(policy.IsEnabled ? "btn-outline-warning" : "btn-outline-success")"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="@(policy.IsEnabled ? "Disable" : "Enable")">
+                                                            @if (policy.IsEnabled)
+                                                            {
+                                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                                                </svg>
+                                                            }
+                                                            else
+                                                            {
+                                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                                                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                                                                </svg>
+                                                            }
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-2 opacity-50"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                            <p class="mb-0 mt-2">No retention policies configured</p>
+                                            <small>Add a policy to get started.</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination - Standardized Style -->
+                    @if (Model.PolicyTotalPages > 1)
+                    {
+                        int policyPageSize = 10;
+                        int policyStartEntry = (Model.PolicyPageNumber - 1) * policyPageSize + 1;
+                        int policyEndEntry = Math.Min(Model.PolicyPageNumber * policyPageSize, Model.TotalPolicies);
+                        <div class="table-footer">
+                            <div class="table-footer-left">
+                                <span class="footer-text">Showing @policyStartEntry to @policyEndEntry of @Model.TotalPolicies entries</span>
+                            </div>
+                            <div class="table-footer-right">
+                                <nav class="pagination-nav">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                            onclick="goToPolicyPage(1)" title="First Page" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&laquo;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                            onclick="goToPolicyPage(@(Model.PolicyPageNumber - 1))" title="Previous" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&lsaquo;</button>
+                                    <span class="pagination-indicator">@Model.PolicyPageNumber / @Model.PolicyTotalPages</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                            onclick="goToPolicyPage(@(Model.PolicyPageNumber + 1))" title="Next" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&rsaquo;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                            onclick="goToPolicyPage(@Model.PolicyTotalPages)" title="Last Page" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&raquo;</button>
+                                </nav>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Archive Document Modal -->
+<div class="modal fade" id="archiveDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Archive a Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="ArchiveDocument" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Search Document</label>
+                        <input type="text" id="archiveDocSearch" class="form-control" placeholder="Type to search active documents..." autocomplete="off" />
+                        <div id="archiveDocResults" class="archive-doc-dropdown"></div>
+                        <input type="hidden" name="DocumentID" id="archiveDocId" />
+                        <div id="archiveDocSelected" class="archive-doc-selected mt-2" style="display:none;">
+                            <span id="archiveDocSelectedText" class="badge bg-primary-subtle text-primary p-2"></span>
+                            <button type="button" id="archiveDocClear" class="btn btn-sm btn-link text-danger p-0 ms-2">Clear</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Archive Reason</label>
+                        <textarea name="ArchiveReason" class="form-control" rows="3" maxlength="100" placeholder="Enter reason for archiving this document..." required></textarea>
+                        <small class="text-muted">Max 100 characters</small>
+                    </div>
+                    <div class="p-3 bg-light rounded">
+                        <small class="text-muted">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            The retention period will be automatically computed based on the configured retention policy for the document type. If no policy exists, a default of 5 years will be applied.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="archiveDocSubmit" disabled>Archive Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Restore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RestoreDocument" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="archiveId" id="restoreArchiveId" />
+                <div class="modal-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-success mb-3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    <p>Are you sure you want to restore<br/><strong id="restoreDocTitle"></strong>?</p>
+                    <small class="text-muted">The document will be moved back to active modules.</small>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Yes, Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+@if (Model.IsSuperAdmin)
+{
+    <div class="modal fade" id="permanentDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content ocean-modal">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Permanent Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-action="PermanentDelete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="archiveId" id="permDeleteArchiveId" />
+                    <div class="modal-body text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-danger mb-3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        <p class="mb-1"><strong class="text-danger">This action cannot be undone.</strong></p>
+                        <p>Permanently delete<br/><strong id="permDeleteDocTitle"></strong>?</p>
+                        <small class="text-muted">All document versions and files will be removed.</small>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Add Policy Modal -->
+<div class="modal fade" id="addPolicyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Retention Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AddPolicy" method="post" id="addPolicyForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="RetentionDurationMonths" id="addPolicyDurationHidden" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Document Type</label>
+                        <select name="ModuleName" class="form-select" required>
+                            <option value="" disabled selected>Select a document type</option>
+                            <option value="Medical History">Medical History</option>
+                            <option value="Examination Reports">Examination Reports</option>
+                            <option value="Lab Reports">Lab Reports</option>
+                            <option value="Imaging Reports">Imaging Reports</option>
+                            <option value="Prescription Records">Prescription Records</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Retention Duration</label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <input type="number" class="form-control" id="addPolicyDurationValue" placeholder="e.g. 5" min="1" max="100" required />
+                            </div>
+                            <div class="col-5">
+                                <select class="form-select" id="addPolicyDurationUnit">
+                                    <option value="months">Months</option>
+                                    <option value="years" selected>Years</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Auto Action After Expiry</label>
+                        <select name="AutoActionAfterExpiry" class="form-select" required>
+                            <option value="ManualReview">Manual Review Required</option>
+                            <option value="NotifyAdmin">Notify Admin</option>
+                            <option value="AutoDelete">Auto Delete</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsEnabled" value="true" id="addPolicyEnabled" checked />
+                        <label class="form-check-label" for="addPolicyEnabled">Enable this policy immediately</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Policy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Policy Modal -->
+<div class="modal fade" id="editPolicyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Retention Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="EditPolicy" method="post" id="editPolicyForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="RetentionPolicyID" id="editPolicyId" />
+                <input type="hidden" name="RetentionDurationMonths" id="editPolicyDurationHidden" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Document Type</label>
+                        <select name="ModuleName" id="editPolicyModuleName" class="form-select" required>
+                            <option value="" disabled>Select a document type</option>
+                            <option value="Medical History">Medical History</option>
+                            <option value="Examination Reports">Examination Reports</option>
+                            <option value="Lab Reports">Lab Reports</option>
+                            <option value="Imaging Reports">Imaging Reports</option>
+                            <option value="Prescription Records">Prescription Records</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Retention Duration</label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <input type="number" class="form-control" id="editPolicyDurationValue" placeholder="e.g. 5" min="1" max="100" required />
+                            </div>
+                            <div class="col-5">
+                                <select class="form-select" id="editPolicyDurationUnit">
+                                    <option value="months">Months</option>
+                                    <option value="years">Years</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Auto Action After Expiry</label>
+                        <select name="AutoActionAfterExpiry" id="editPolicyAutoAction" class="form-select" required>
+                            <option value="ManualReview">Manual Review Required</option>
+                            <option value="NotifyAdmin">Notify Admin</option>
+                            <option value="AutoDelete">Auto Delete</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsEnabled" value="true" id="editPolicyEnabled" />
+                        <label class="form-check-label" for="editPolicyEnabled">Policy Enabled</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Policy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/archive-retention.js" asp-append-version="true"></script>
+}

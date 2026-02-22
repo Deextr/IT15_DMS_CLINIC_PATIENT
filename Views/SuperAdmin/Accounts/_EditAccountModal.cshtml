@@ -26,19 +26,20 @@
                         </div>
                     </div>
 
-                    <div class="mb-3 mt-3">
-                        <label asp-for="Username" class="form-label"></label>
-                        <input asp-for="Username" class="form-control" placeholder="Username" />
-                        <span asp-validation-for="Username" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="RoleType" class="form-label"></label>
-                        <select asp-for="RoleType" class="form-select">
-                            <option value="Admin">Admin</option>
-                            <option value="Staff">Staff</option>
-                        </select>
-                        <span asp-validation-for="RoleType" class="text-danger"></span>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username" class="form-control" placeholder="Username" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RoleType" class="form-label"></label>
+                            <select asp-for="RoleType" class="form-select">
+                                <option value="Admin">Admin</option>
+                                <option value="Staff">Staff</option>
+                            </select>
+                            <span asp-validation-for="RoleType" class="text-danger"></span>
+                        </div>
                     </div>
 
                     <div class="mb-3 form-check">

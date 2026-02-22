@@ -30,9 +30,16 @@ namespace DMS_CPMS.Data.Models
         [DataType(DataType.Date)]
         public DateTime UploadDate { get; set; }
 
+        /// <summary>
+        /// Indicates whether the document has been archived.
+        /// Archived documents are excluded from active modules.
+        /// </summary>
+        public bool IsArchived { get; set; } = false;
+
         // Navigation properties
         public virtual Patient Patient { get; set; }
         public virtual ApplicationUser UploadedByUser { get; set; }
         public virtual ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
+        public virtual ICollection<ArchiveDocument> ArchiveDocuments { get; set; } = new List<ArchiveDocument>();
     }
 }

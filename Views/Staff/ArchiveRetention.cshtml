@@ -1,282 +1,206 @@
+@model DMS_CPMS.Models.Staff.StaffArchiveIndexViewModel
 @{
     ViewData["Title"] = "Document Archive";
 }
 
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-start mb-2">
-        <h5 class="mb-0 text-primary fw-semibold">Document Archive</h5>
-    </div>
+<link rel="stylesheet" href="~/css/staff-archive.css" asp-append-version="true" />
 
-    <div class="card shadow-sm border-0 mb-3">
+<div class="container-fluid archive-module">
+
+    <!-- ═══════════════ TOAST MESSAGES ═══════════════ -->
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            @TempData["StatusMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ═══════════════ ARCHIVED DOCUMENTS ═══════════════ -->
+    <div class="card shadow-sm border-0">
         <div class="card-body">
-            <!-- Search and Filter -->
-            <form class="row g-2 align-items-end mb-3" method="get">
-                <div class="col-md-4">
-                    <label class="form-label">Search Documents</label>
-                    <input type="text" class="form-control" placeholder="Enter patient name or document...">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Document Type</label>
-                    <select class="form-select">
-                        <option value="">All Types</option>
-                        <option>Medical Records</option>
-                        <option>Lab Results</option>
-                        <option>Prescriptions</option>
-                        <option>Imaging</option>
-                        <option>Insurance</option>
-                    </select>
+            <!-- Filter bar -->
+            <form method="get" asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention" class="row g-2 align-items-end mb-3">
+                <div class="col-md-5">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="searchTerm" class="form-control"
+                           placeholder="Search by document, user, or reason..." value="@Model.SearchTerm" />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Status</label>
-                    <select class="form-select">
-                        <option value="">All Status</option>
-                        <option>Ready to Archive</option>
-                        <option>Recently Archived</option>
+                    <select name="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Active" selected="@(Model.StatusFilter == "Active")">Active Retention</option>
+                        <option value="Expired" selected="@(Model.StatusFilter == "Expired")">Expired</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <button type="submit" class="btn btn-secondary me-2">Filter</button>
-                    <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                    <a asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention"
+                       class="btn btn-outline-secondary">Reset</a>
                 </div>
             </form>
 
-            <!-- Documents Ready for Archive -->
-            <h6 class="fw-semibold text-primary mb-3">Documents Ready for Archive</h6>
-            <div class="table-responsive mb-4">
+            <!-- Table -->
+            <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle mb-0">
                     <thead class="table-header-ocean">
                         <tr>
-                            <th style="width: 22%;">Patient Name</th>
-                            <th style="width: 12%;">Patient ID</th>
-                            <th style="width: 20%;">Document</th>
-                            <th style="width: 12%;">Last Accessed</th>
-                            <th style="width: 10%;">Age</th>
-                            <th style="width: 24%;">Actions</th>
+                            <th>Document Name</th>
+                            <th>Patient</th>
+                            <th>Archived By</th>
+                            <th>Reason</th>
+                            <th>Archive Date</th>
+                            <th>Retention Until</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Alice Brown</div>
-                            </td>
-                            <td>P-2023-0892</td>
-                            <td>Annual Physical 2023</td>
-                            <td>Oct 15, 2023</td>
-                            <td>1 year</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">Archive Now</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Charles Johnson</div>
-                            </td>
-                            <td>P-2023-1056</td>
-                            <td>Blood Test - March 2023</td>
-                            <td>Mar 22, 2023</td>
-                            <td>1.5 years</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">Archive Now</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Diana Lee</div>
-                            </td>
-                            <td>P-2022-1458</td>
-                            <td>Prescription - 2022</td>
-                            <td>Aug 5, 2022</td>
-                            <td>2+ years</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">Archive Now</button>
-                            </td>
-                        </tr>
+                        @if (Model.ArchivedDocuments.Any())
+                        {
+                            @foreach (var doc in Model.ArchivedDocuments)
+                            {
+                                <tr class="@(!doc.IsWithinRetention ? "archive-row-expired" : "")">
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @doc.DocumentTitle
+                                            @if (doc.IsVersionArchive)
+                                            {
+                                                <span class="badge bg-info ms-1">v@(doc.VersionNumber).0</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted">@doc.DocumentType</small>
+                                    </td>
+                                    <td>@doc.PatientName</td>
+                                    <td>@doc.ArchivedByName</td>
+                                    <td><span class="text-muted">@doc.ArchiveReason</span></td>
+                                    <td>@doc.ArchiveDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@doc.RetentionUntil.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <span class="badge @doc.StatusBadgeClass">@doc.StatusText</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            @if (doc.IsWithinRetention)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-success btn-restore"
+                                                        data-archive-id="@doc.ArchiveID"
+                                                        data-doc-title="@doc.DocumentTitle"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Restore"
+                                                        onclick="openRestoreModal(this)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small fst-italic">--</span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-2 opacity-50"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>
+                                    <p class="mb-0 mt-2">No archived documents found</p>
+                                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.StatusFilter))
+                                    {
+                                        <small>Try adjusting your filters to see more results.</small>
+                                    }
+                                    else
+                                    {
+                                        <small>There are no archived documents at this time.</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
 
-            <!-- Recently Archived -->
-            <h6 class="fw-semibold text-primary mb-3">Recently Archived</h6>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 22%;">Patient Name</th>
-                            <th style="width: 12%;">Patient ID</th>
-                            <th style="width: 20%;">Document</th>
-                            <th style="width: 16%;">Archived Date</th>
-                            <th style="width: 14%;">Archived By</th>
-                            <th style="width: 16%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Edward Wilson</div>
-                            </td>
-                            <td>P-2023-0678</td>
-                            <td>X-Ray - Chest PA</td>
-                            <td>Feb 10, 2024</td>
-                            <td>staff@dms.com</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#restoreDocumentModal">Restore</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">Fiona Taylor</div>
-                            </td>
-                            <td>P-2023-0923</td>
-                            <td>Insurance Claim Q3 2023</td>
-                            <td>Feb 8, 2024</td>
-                            <td>staff@dms.com</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#restoreDocumentModal">Restore</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">George Miller</div>
-                            </td>
-                            <td>P-2023-0567</td>
-                            <td>Vaccination Record 2023</td>
-                            <td>Feb 5, 2024</td>
-                            <td>staff@dms.com</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#viewArchiveModal">View</button>
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#restoreDocumentModal">Restore</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <nav class="mt-3">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
+            <!-- Pagination - Matching Document Management Modal Style -->
+            @if (Model.TotalPages > 1)
+            {
+                int pageSize = 10;
+                int startEntry = (Model.PageNumber - 1) * pageSize + 1;
+                int endEntry = Math.Min(Model.PageNumber * pageSize, Model.TotalDocuments);
+                <div class="table-footer">
+                    <div class="table-footer-left">
+                        <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
+                    </div>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav">
+                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
+                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })"
+                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                        </nav>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-<!-- View Archive Modal -->
-<div class="modal fade" id="viewArchiveModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+<!-- ═══════════════ RESTORE CONFIRMATION MODAL ═══════════════ -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content ocean-modal">
             <div class="modal-header">
-                <h5 class="modal-title">Document Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title">Confirm Restore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <small class="text-muted d-block">Patient</small>
-                        <div class="fw-semibold">Alice Brown</div>
-                        <small class="text-muted">P-2023-0892</small>
-                    </div>
-                    <div class="col-6">
-                        <small class="text-muted d-block">Document</small>
-                        <div class="fw-semibold">Annual Physical 2023</div>
-                    </div>
-                    <div class="col-6">
-                        <small class="text-muted d-block">Created</small>
-                        <div>Oct 15, 2023</div>
-                    </div>
-                    <div class="col-6">
-                        <small class="text-muted d-block">Last Accessed</small>
-                        <div>Oct 15, 2023</div>
-                        <small class="text-muted">120 days ago</small>
-                    </div>
+            <form asp-area="Staff" asp-controller="Dashboard" asp-action="RestoreDocument" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="archiveId" id="restoreArchiveId" />
+                <div class="modal-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-success mb-3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    <p>Are you sure you want to restore<br /><strong id="restoreDocTitle"></strong>?</p>
+                    <small class="text-muted">The document will be moved back to active modules.</small>
                 </div>
-                <div class="alert alert-light border mt-3">
-                    <small>This document has not been accessed for 120 days and meets criteria for archival.</small>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Yes, Restore</button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">Archive Now</button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Archive Document Modal -->
-<div class="modal fade" id="archiveDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Archive Document</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-light border mb-3">
-                    <small>You are about to archive <strong>1 document</strong>. This will be moved to archive storage.</small>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Archive Reason (Optional)</label>
-                    <select class="form-select">
-                        <option value="">Select reason...</option>
-                        <option>Document older than retention period</option>
-                        <option>Patient request</option>
-                        <option>Administrative cleanup</option>
-                    </select>
-                </div>
-                <div class="mb-0">
-                    <label class="form-label">Notes</label>
-                    <textarea class="form-control" rows="2"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Confirm Archive</button>
-            </div>
-        </div>
-    </div>
-</div>
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
 
-<!-- Restore Document Modal -->
-<div class="modal fade" id="restoreDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Restore Document</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-light border mb-3">
-                    <small>Restore this document to active records?</small>
-                </div>
-                <div class="card border-0 bg-light mb-3">
-                    <div class="card-body py-2">
-                        <h6 class="fw-semibold mb-1">X-Ray - Chest PA</h6>
-                        <small class="text-muted">Patient: Edward Wilson (P-2023-0678)</small>
-                    </div>
-                </div>
-                <div class="mb-0">
-                    <label class="form-label">Reason for Restoration (Optional)</label>
-                    <textarea class="form-control" rows="2"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Restore</button>
-            </div>
-        </div>
-    </div>
-</div>
+        // Open restore modal with data
+        function openRestoreModal(btn) {
+            document.getElementById('restoreArchiveId').value = btn.getAttribute('data-archive-id');
+            document.getElementById('restoreDocTitle').textContent = btn.getAttribute('data-doc-title');
+            var modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+            modal.show();
+        }
+    </script>
+}
