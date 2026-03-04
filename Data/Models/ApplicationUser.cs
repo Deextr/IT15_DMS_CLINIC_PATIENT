@@ -17,5 +17,9 @@ namespace DMS_CPMS.Data.Models
         public bool IsActive { get; set; } = true;
 
         public bool IsArchived { get; set; } = false;
+
+        /// <summary>Relative URL to the user's uploaded profile picture, e.g. /uploads/profile-pictures/abc.jpg</summary>
+        [StringLength(500)]
+        public string? ProfilePictureUrl { get; set; }
     }
 }

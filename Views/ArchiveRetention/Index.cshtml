@@ -102,7 +102,7 @@
                                                     @doc.DocumentTitle
                                                     @if (doc.IsVersionArchive)
                                                     {
-                                                        <span class="badge bg-info ms-1">v@(doc.VersionNumber).0</span>
+                                                        <span class="dash-version-badge ms-1">v@(doc.VersionNumber).0</span>
                                                     }
                                                 </div>
                                                 <small class="text-muted">@doc.DocumentType</small>
@@ -228,19 +228,17 @@
                                             <td class="fw-semibold">@policy.ModuleName</td>
                                             <td>@policy.DurationDisplay</td>
                                             <td>
-                                                @{
-                                                    var actionBadge = policy.AutoActionAfterExpiry switch
-                                                    {
-                                                        "AutoDelete" => "bg-danger",
-                                                        _ => "bg-secondary"
-                                                    };
-                                                }
-                                                <span class="badge @actionBadge">@policy.ActionDisplay</span>
+                                                <span class="badge" style="background-color: #e2e5e9; color: #495057; font-weight: 500;">@policy.ActionDisplay</span>
                                             </td>
                                             <td>
-                                                <span class="badge @(policy.IsEnabled ? "bg-success" : "bg-secondary")">
-                                                    @(policy.IsEnabled ? "Enabled" : "Disabled")
-                                                </span>
+                                                @if (policy.IsEnabled)
+                                                {
+                                                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #198754; display: inline-block;"></span><span style="color: #000;">Enabled</span></span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #6c757d; display: inline-block;"></span><span style="color: #000;">Disabled</span></span>
+                                                }
                                             </td>
                                             <td class="text-center">
                                                 <div class="d-flex justify-content-center gap-1">

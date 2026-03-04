@@ -176,26 +176,41 @@ namespace DMS_CPMS.Services
             var docsMonthly = allDocuments.Count(d => d.UploadDate.Date >= today.AddMonths(-1).AddDays(1));
 
             // Documents per Patient
+            // Filter by document UploadDate (not patient VisitedAt) so the date range
+            // correctly scopes which documents are counted.  For export (allRows=true)
+            // we always include every patient so no records are silently omitted.
             var allPatients = await _context.Patients
                 .Include(p => p.Documents)
                 .ToListAsync();
 
-            var filteredPatients = allPatients.AsEnumerable();
-            if (from.HasValue) filteredPatients = filteredPatients.Where(p => p.VisitedAt >= from.Value);
-            if (to.HasValue) filteredPatients = filteredPatients.Where(p => p.VisitedAt < to.Value.AddDays(1));
-
-            var docsPerPatientAll = filteredPatients
-                .OrderByDescending(p => p.Documents.Count(d => !d.IsArchived))
-                .ThenBy(p => p.LastName)
-                .Select(p => new DocumentsPerPatientRow
+            var docsPerPatientAll = allPatients
+                .Select(p =>
                 {
-                    PatientID = p.PatientID,
-                    PatientName = p.FirstName + " " + p.LastName,
-                    TotalDocuments = p.Documents.Count(d => !d.IsArchived),
-                    DocumentTypes = p.Documents.Where(d => !d.IsArchived)
-                        .Select(d => d.DocumentType).Distinct().Any()
-                        ? string.Join(", ", p.Documents.Where(d => !d.IsArchived)
-                            .Select(d => d.DocumentType).Distinct())
+                    // Apply date filter to individual documents, not to the patient row
+                    var patientDocs = p.Documents
+                        .Where(d => !d.IsArchived)
+                        .Where(d => !from.HasValue || d.UploadDate >= from.Value)
+                        .Where(d => !to.HasValue   || d.UploadDate < to.Value.AddDays(1))
+                        .ToList();
+
+                    // For export (allRows) include every patient; for the paginated view
+                    // only include patients that have at least one document in range.
+                    return new
+                    {
+                        Patient = p,
+                        Docs = patientDocs
+                    };
+                })
+                .Where(x => allRows || x.Docs.Count > 0)
+                .OrderByDescending(x => x.Docs.Count)
+                .ThenBy(x => x.Patient.LastName)
+                .Select(x => new DocumentsPerPatientRow
+                {
+                    PatientID = x.Patient.PatientID,
+                    PatientName = x.Patient.FirstName + " " + x.Patient.LastName,
+                    TotalDocuments = x.Docs.Count,
+                    DocumentTypes = x.Docs.Select(d => d.DocumentType).Distinct().Any()
+                        ? string.Join(", ", x.Docs.Select(d => d.DocumentType).Distinct())
                         : "None"
                 })
                 .ToList();
@@ -207,22 +222,30 @@ namespace DMS_CPMS.Services
                 ? docsPerPatientAll
                 : docsPerPatientAll.Skip((page - 1) * PageSize).Take(PageSize).ToList();
 
-            // Documents per Category/Type
-            var docsPerCategory = allDocuments
+            // Build a date-filtered document list for detail tables so that when a
+            // date range is chosen the category/version tables reflect the same window.
+            var filteredDocuments = allDocuments
+                .Where(d => !from.HasValue || d.UploadDate >= from.Value)
+                .Where(d => !to.HasValue   || d.UploadDate < to.Value.AddDays(1))
+                .ToList();
+
+            // Documents per Category/Type — filtered by upload date
+            int filteredTotal = filteredDocuments.Count;
+            var docsPerCategory = filteredDocuments
                 .GroupBy(d => string.IsNullOrWhiteSpace(d.DocumentType) ? "Uncategorized" : d.DocumentType)
                 .Select(g => new DocumentsPerCategoryRow
                 {
                     DocumentType = g.Key,
                     DocumentCount = g.Count(),
-                    Percentage = totalDocsUploaded > 0
-                        ? $"{(g.Count() * 100.0 / totalDocsUploaded):F1}%"
+                    Percentage = filteredTotal > 0
+                        ? $"{(g.Count() * 100.0 / filteredTotal):F1}%"
                         : "0.0%"
                 })
                 .OrderByDescending(r => r.DocumentCount)
                 .ToList();
 
-            // Most Frequently Updated Documents
-            var frequentlyUpdatedQuery = allDocuments
+            // Most Frequently Updated Documents — filtered by upload date
+            var frequentlyUpdatedQuery = filteredDocuments
                 .Where(d => d.Versions.Count > 0)
                 .OrderByDescending(d => d.Versions.Count);
             var frequentlyUpdated = (allRows ? frequentlyUpdatedQuery : frequentlyUpdatedQuery.Take(10))
@@ -241,8 +264,8 @@ namespace DMS_CPMS.Services
                 })
                 .ToList();
 
-            // Version Count per Document
-            var versionCountQuery = allDocuments
+            // Version Count per Document — filtered by upload date
+            var versionCountQuery = filteredDocuments
                 .OrderByDescending(d => d.Versions.Count);
             var versionCounts = (allRows ? versionCountQuery : versionCountQuery.Take(10))
                 .Select(d => new VersionCountRow

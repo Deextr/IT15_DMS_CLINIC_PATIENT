@@ -38,7 +38,7 @@
 
 .archive-tabs .nav-link.active {
     color: var(--color-primary, #006d77);
-    background: #fff;
+    background: linear-gradient(180deg, rgba(0, 109, 119, 0.06) 0%, #fff 100%);
     border-bottom-color: var(--color-primary, #006d77);
     font-weight: 600;
 }

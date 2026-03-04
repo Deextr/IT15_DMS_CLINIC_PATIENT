@@ -65,7 +65,7 @@
                                     <td>@patient.LastName</td>
                                     <td>@age</td>
                                     <td>@patient.Gender</td>
-                                    <td>@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                    <td>@patient.VisitedAt.ToString("MMM dd, yyyy") @patient.VisitedAt.ToString("hh:mm tt")</td>
                                     <td>
                                         <button type="button" class="btn btn-sm me-1"
                                                 style="border: 1px solid var(--color-primary); color: var(--color-primary); background: transparent;"

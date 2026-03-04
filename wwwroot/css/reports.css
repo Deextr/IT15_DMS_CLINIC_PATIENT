@@ -5,7 +5,7 @@
 
 /* Report section card header */
 .report-section-header {
-    background: var(--color-primary, #006d77);
+    background: linear-gradient(135deg, #008a99 0%, var(--color-primary, #006d77) 55%, #005660 100%);
     color: #fff;
     padding: 12px 16px;
     display: flex;

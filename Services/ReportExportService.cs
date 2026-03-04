@@ -96,6 +96,9 @@ namespace DMS_CPMS.Services
 
         /// <summary>
         /// Generate an Excel (.xlsx) byte array from report data.
+        /// Each report type is written as a single worksheet with clearly labelled
+        /// sections separated by blank rows, so ALL data is immediately visible on
+        /// one sheet — no hidden tabs to discover.
         /// </summary>
         public byte[] GenerateExcel(string reportKey, object data)
         {
@@ -106,25 +109,36 @@ namespace DMS_CPMS.Services
                 case "All":
                     var all = (AllReportsExportData)data;
                     if (all.PatientSummary != null)
-                        BuildPatientSummaryExcel(workbook, all.PatientSummary);
+                        BuildPatientSummarySheet(workbook, all.PatientSummary);
                     if (all.DocumentActivity != null)
-                        BuildDocumentActivityExcel(workbook, all.DocumentActivity);
+                        BuildDocumentActivitySheet(workbook, all.DocumentActivity);
                     if (all.AuditLogs != null)
-                        BuildAuditLogsExcel(workbook, all.AuditLogs);
+                        BuildAuditLogsSheet(workbook, all.AuditLogs);
                     break;
+
                 case "PatientSummary":
-                    BuildPatientSummaryExcel(workbook, (PatientSummaryReport)data);
+                    BuildPatientSummarySheet(workbook, (PatientSummaryReport)data);
                     break;
+
                 case "DocumentActivity":
-                    BuildDocumentActivityExcel(workbook, (DocumentActivityReport)data);
+                    BuildDocumentActivitySheet(workbook, (DocumentActivityReport)data);
                     break;
+
                 case "AuditLogs":
-                    BuildAuditLogsExcel(workbook, (AuditLogsReportData)data);
+                    BuildAuditLogsSheet(workbook, (AuditLogsReportData)data);
                     break;
+
                 default:
-                    var ws = workbook.Worksheets.Add("Report");
-                    ws.Cell(1, 1).Value = "No data available for this report.";
+                    var wsDefault = workbook.Worksheets.Add("Report");
+                    wsDefault.Cell(1, 1).Value = "No data available for this report.";
                     break;
+            }
+
+            // Ensure the workbook has at least one sheet (ClosedXML requirement)
+            if (!workbook.Worksheets.Any())
+            {
+                var wsFallback = workbook.Worksheets.Add("Report");
+                wsFallback.Cell(1, 1).Value = "No data available.";
             }
 
             using var stream = new MemoryStream();
@@ -132,97 +146,208 @@ namespace DMS_CPMS.Services
             return stream.ToArray();
         }
 
-        private void BuildPatientSummaryExcel(XLWorkbook wb, PatientSummaryReport rpt)
+        // ─────────────────────────────────────────────────────────────────────
+        //  Per-report sheet builders — each writes ONE sheet with all sections
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void BuildPatientSummarySheet(XLWorkbook wb, PatientSummaryReport rpt)
         {
-            // Summary sheet
-            var ws1 = wb.Worksheets.Add("Patient Summary");
-            ws1.Cell(1, 1).Value = "Metric";
-            ws1.Cell(1, 2).Value = "Value";
-            StyleHeader(ws1, 1, 2);
-            ws1.Cell(2, 1).Value = "Total Registered Patients"; ws1.Cell(2, 2).Value = rpt.TotalRegisteredPatients;
-            ws1.Cell(3, 1).Value = "New Patients — Today"; ws1.Cell(3, 2).Value = rpt.NewPatientsDaily;
-            ws1.Cell(4, 1).Value = "New Patients — Last 7 Days"; ws1.Cell(4, 2).Value = rpt.NewPatientsWeekly;
-            ws1.Cell(5, 1).Value = "New Patients — Last 30 Days"; ws1.Cell(5, 2).Value = rpt.NewPatientsMonthly;
-            ws1.Columns().AdjustToContents();
+            var ws = wb.Worksheets.Add("Patient Summary");
+            int row = 1;
 
-            // Age Distribution sheet
-            var ws2 = wb.Worksheets.Add("Age Distribution");
-            WriteExcelTable(ws2, rpt.AgeDistribution,
-                new[] { "Age Group", "Count", "Percentage" },
-                (r, row) => { ws2.Cell(row, 1).Value = r.AgeGroup; ws2.Cell(row, 2).Value = r.Count; ws2.Cell(row, 3).Value = r.Percentage; });
+            // ── Overview ──
+            row = WriteSheetSectionHeader(ws, row, "PATIENT SUMMARY OVERVIEW", 2);
+            ws.Cell(row, 1).Value = "Metric";
+            ws.Cell(row, 2).Value = "Value";
+            StyleSectionHeader(ws, row, 2);
+            row++;
+            ws.Cell(row, 1).Value = "Total Registered Patients";   ws.Cell(row++, 2).Value = rpt.TotalRegisteredPatients;
+            ws.Cell(row, 1).Value = "New Patients — Today";         ws.Cell(row++, 2).Value = rpt.NewPatientsDaily;
+            ws.Cell(row, 1).Value = "New Patients — Last 7 Days";   ws.Cell(row++, 2).Value = rpt.NewPatientsWeekly;
+            ws.Cell(row, 1).Value = "New Patients — Last 30 Days";  ws.Cell(row++, 2).Value = rpt.NewPatientsMonthly;
+            row++; // blank separator
 
-            // Gender Distribution sheet
-            var ws3 = wb.Worksheets.Add("Gender Distribution");
-            WriteExcelTable(ws3, rpt.GenderDistribution,
-                new[] { "Gender", "Count", "Percentage" },
-                (r, row) => { ws3.Cell(row, 1).Value = r.Gender; ws3.Cell(row, 2).Value = r.Count; ws3.Cell(row, 3).Value = r.Percentage; });
+            // ── Age Distribution ──
+            var ageHeaders = new[] { "Age Group", "Count", "Percentage" };
+            row = WriteSheetSectionHeader(ws, row, "AGE DISTRIBUTION", ageHeaders.Length);
+            WriteInlineHeaders(ws, row, ageHeaders); row++;
+            foreach (var r in rpt.AgeDistribution ?? new())
+            {
+                ws.Cell(row, 1).Value = r.AgeGroup;
+                ws.Cell(row, 2).Value = r.Count;
+                ws.Cell(row, 3).Value = r.Percentage;
+                row++;
+            }
+            if (!(rpt.AgeDistribution?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+            row++; // blank separator
 
-            // Recently Active Patients sheet
-            var ws4 = wb.Worksheets.Add("Recently Active Patients");
-            WriteExcelTable(ws4, rpt.RecentlyActivePatients,
-                new[] { "ID", "Patient Name", "Gender", "Last Visit", "Documents" },
-                (r, row) => { ws4.Cell(row, 1).Value = r.PatientID; ws4.Cell(row, 2).Value = r.PatientName; ws4.Cell(row, 3).Value = r.Gender; ws4.Cell(row, 4).Value = r.LastVisitDate; ws4.Cell(row, 5).Value = r.TotalDocuments; });
-        }
+            // ── Gender Distribution ──
+            var genderHeaders = new[] { "Gender", "Count", "Percentage" };
+            row = WriteSheetSectionHeader(ws, row, "GENDER DISTRIBUTION", genderHeaders.Length);
+            WriteInlineHeaders(ws, row, genderHeaders); row++;
+            foreach (var r in rpt.GenderDistribution ?? new())
+            {
+                ws.Cell(row, 1).Value = r.Gender;
+                ws.Cell(row, 2).Value = r.Count;
+                ws.Cell(row, 3).Value = r.Percentage;
+                row++;
+            }
+            if (!(rpt.GenderDistribution?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+            row++; // blank separator
 
-        private void BuildDocumentActivityExcel(XLWorkbook wb, DocumentActivityReport rpt)
-        {
-            // Summary sheet
-            var ws1 = wb.Worksheets.Add("Document Summary");
-            ws1.Cell(1, 1).Value = "Metric";
-            ws1.Cell(1, 2).Value = "Value";
-            StyleHeader(ws1, 1, 2);
-            ws1.Cell(2, 1).Value = "Total Documents Uploaded"; ws1.Cell(2, 2).Value = rpt.TotalDocumentsUploaded;
-            ws1.Cell(3, 1).Value = "Documents Uploaded — Today"; ws1.Cell(3, 2).Value = rpt.DocumentsUploadedDaily;
-            ws1.Cell(4, 1).Value = "Documents Uploaded — Last 7 Days"; ws1.Cell(4, 2).Value = rpt.DocumentsUploadedWeekly;
-            ws1.Cell(5, 1).Value = "Documents Uploaded — Last 30 Days"; ws1.Cell(5, 2).Value = rpt.DocumentsUploadedMonthly;
-            ws1.Columns().AdjustToContents();
-
-            // Documents per Patient
-            var ws2 = wb.Worksheets.Add("Documents per Patient");
-            WriteExcelTable(ws2, rpt.DocumentsPerPatient,
-                new[] { "ID", "Patient Name", "Documents", "Document Types" },
-                (r, row) => { ws2.Cell(row, 1).Value = r.PatientID; ws2.Cell(row, 2).Value = r.PatientName; ws2.Cell(row, 3).Value = r.TotalDocuments; ws2.Cell(row, 4).Value = r.DocumentTypes; });
-
-            // Documents per Category
-            var ws3 = wb.Worksheets.Add("Documents per Category");
-            WriteExcelTable(ws3, rpt.DocumentsPerCategory,
-                new[] { "Document Type", "Count", "Percentage" },
-                (r, row) => { ws3.Cell(row, 1).Value = r.DocumentType; ws3.Cell(row, 2).Value = r.DocumentCount; ws3.Cell(row, 3).Value = r.Percentage; });
-
-            // Frequently Updated Documents
-            var ws4 = wb.Worksheets.Add("Frequently Updated");
-            WriteExcelTable(ws4, rpt.FrequentlyUpdatedDocuments,
-                new[] { "ID", "Title", "Type", "Patient", "Versions", "Last Updated" },
-                (r, row) => { ws4.Cell(row, 1).Value = r.DocumentID; ws4.Cell(row, 2).Value = r.DocumentTitle; ws4.Cell(row, 3).Value = r.DocumentType; ws4.Cell(row, 4).Value = r.PatientName; ws4.Cell(row, 5).Value = r.VersionCount; ws4.Cell(row, 6).Value = r.LastUpdated; });
-
-            // Version Count
-            var ws5 = wb.Worksheets.Add("Version Count");
-            WriteExcelTable(ws5, rpt.VersionCounts,
-                new[] { "ID", "Title", "Type", "Patient", "Versions" },
-                (r, row) => { ws5.Cell(row, 1).Value = r.DocumentID; ws5.Cell(row, 2).Value = r.DocumentTitle; ws5.Cell(row, 3).Value = r.DocumentType; ws5.Cell(row, 4).Value = r.PatientName; ws5.Cell(row, 5).Value = r.VersionCount; });
-        }
-
-        private void BuildAuditLogsExcel(XLWorkbook wb, AuditLogsReportData rpt)
-        {
-            var ws = wb.Worksheets.Add("Audit Logs");
-            WriteExcelTable(ws, rpt.Rows,
-                new[] { "Log ID", "User", "Role", "Action", "Document", "Timestamp" },
-                (r, row) => { ws.Cell(row, 1).Value = r.LogID; ws.Cell(row, 2).Value = r.UserFullName; ws.Cell(row, 3).Value = r.Role; ws.Cell(row, 4).Value = r.Action; ws.Cell(row, 5).Value = r.DocumentTitle; ws.Cell(row, 6).Value = r.Timestamp; });
-        }
-
-        private static void WriteExcelTable<T>(IXLWorksheet ws, List<T> rows, string[] headers, Action<T, int> writeRow)
-        {
-            for (int i = 0; i < headers.Length; i++)
-                ws.Cell(1, i + 1).Value = headers[i];
-            StyleHeader(ws, 1, headers.Length);
-
-            for (int i = 0; i < rows.Count; i++)
-                writeRow(rows[i], i + 2);
+            // ── Recently Active Patients ──
+            var rapHeaders = new[] { "Patient ID", "Patient Name", "Gender", "Last Visit Date", "Total Documents" };
+            row = WriteSheetSectionHeader(ws, row, "RECENTLY ACTIVE PATIENTS", rapHeaders.Length);
+            WriteInlineHeaders(ws, row, rapHeaders); row++;
+            foreach (var r in rpt.RecentlyActivePatients ?? new())
+            {
+                ws.Cell(row, 1).Value = r.PatientID;
+                ws.Cell(row, 2).Value = r.PatientName;
+                ws.Cell(row, 3).Value = r.Gender;
+                ws.Cell(row, 4).Value = r.LastVisitDate;
+                ws.Cell(row, 5).Value = r.TotalDocuments;
+                row++;
+            }
+            if (!(rpt.RecentlyActivePatients?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
 
             ws.Columns().AdjustToContents();
         }
 
-        private static void StyleHeader(IXLWorksheet ws, int row, int colCount)
+        private void BuildDocumentActivitySheet(XLWorkbook wb, DocumentActivityReport rpt)
+        {
+            var ws = wb.Worksheets.Add("Document Activity");
+            int row = 1;
+
+            // ── Overview ──
+            row = WriteSheetSectionHeader(ws, row, "DOCUMENT ACTIVITY OVERVIEW", 2);
+            ws.Cell(row, 1).Value = "Metric";
+            ws.Cell(row, 2).Value = "Value";
+            StyleSectionHeader(ws, row, 2);
+            row++;
+            ws.Cell(row, 1).Value = "Total Documents Uploaded";            ws.Cell(row++, 2).Value = rpt.TotalDocumentsUploaded;
+            ws.Cell(row, 1).Value = "Documents Uploaded — Today";           ws.Cell(row++, 2).Value = rpt.DocumentsUploadedDaily;
+            ws.Cell(row, 1).Value = "Documents Uploaded — Last 7 Days";     ws.Cell(row++, 2).Value = rpt.DocumentsUploadedWeekly;
+            ws.Cell(row, 1).Value = "Documents Uploaded — Last 30 Days";    ws.Cell(row++, 2).Value = rpt.DocumentsUploadedMonthly;
+            row++;
+
+            // ── Documents per Patient ──
+            var dppHeaders = new[] { "Patient ID", "Patient Name", "Total Documents", "Document Types" };
+            row = WriteSheetSectionHeader(ws, row, "DOCUMENTS PER PATIENT", dppHeaders.Length);
+            WriteInlineHeaders(ws, row, dppHeaders); row++;
+            foreach (var r in rpt.DocumentsPerPatient ?? new())
+            {
+                ws.Cell(row, 1).Value = r.PatientID;
+                ws.Cell(row, 2).Value = r.PatientName;
+                ws.Cell(row, 3).Value = r.TotalDocuments;
+                ws.Cell(row, 4).Value = r.DocumentTypes;
+                row++;
+            }
+            if (!(rpt.DocumentsPerPatient?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+            row++;
+
+            // ── Documents per Category ──
+            var dpcHeaders = new[] { "Document Type", "Count", "Percentage" };
+            row = WriteSheetSectionHeader(ws, row, "DOCUMENTS PER CATEGORY / TYPE", dpcHeaders.Length);
+            WriteInlineHeaders(ws, row, dpcHeaders); row++;
+            foreach (var r in rpt.DocumentsPerCategory ?? new())
+            {
+                ws.Cell(row, 1).Value = r.DocumentType;
+                ws.Cell(row, 2).Value = r.DocumentCount;
+                ws.Cell(row, 3).Value = r.Percentage;
+                row++;
+            }
+            if (!(rpt.DocumentsPerCategory?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+            row++;
+
+            // ── Most Frequently Updated Documents ──
+            var fuHeaders = new[] { "Document ID", "Document Title", "Type", "Patient", "Versions", "Last Updated" };
+            row = WriteSheetSectionHeader(ws, row, "MOST FREQUENTLY UPDATED DOCUMENTS", fuHeaders.Length);
+            WriteInlineHeaders(ws, row, fuHeaders); row++;
+            foreach (var r in rpt.FrequentlyUpdatedDocuments ?? new())
+            {
+                ws.Cell(row, 1).Value = r.DocumentID;
+                ws.Cell(row, 2).Value = r.DocumentTitle;
+                ws.Cell(row, 3).Value = r.DocumentType;
+                ws.Cell(row, 4).Value = r.PatientName;
+                ws.Cell(row, 5).Value = r.VersionCount;
+                ws.Cell(row, 6).Value = r.LastUpdated;
+                row++;
+            }
+            if (!(rpt.FrequentlyUpdatedDocuments?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+            row++;
+
+            // ── Version Count per Document ──
+            var vcHeaders = new[] { "Document ID", "Document Title", "Type", "Patient", "Versions" };
+            row = WriteSheetSectionHeader(ws, row, "VERSION COUNT PER DOCUMENT", vcHeaders.Length);
+            WriteInlineHeaders(ws, row, vcHeaders); row++;
+            foreach (var r in rpt.VersionCounts ?? new())
+            {
+                ws.Cell(row, 1).Value = r.DocumentID;
+                ws.Cell(row, 2).Value = r.DocumentTitle;
+                ws.Cell(row, 3).Value = r.DocumentType;
+                ws.Cell(row, 4).Value = r.PatientName;
+                ws.Cell(row, 5).Value = r.VersionCount;
+                row++;
+            }
+            if (!(rpt.VersionCounts?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; row++; }
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private void BuildAuditLogsSheet(XLWorkbook wb, AuditLogsReportData rpt)
+        {
+            var ws = wb.Worksheets.Add("Audit Logs");
+            int row = 1;
+
+            var headers = new[] { "Log ID", "User", "Role", "Action", "Document", "Timestamp" };
+            row = WriteSheetSectionHeader(ws, row, "AUDIT LOG ENTRIES", headers.Length);
+            WriteInlineHeaders(ws, row, headers); row++;
+            foreach (var r in rpt.Rows ?? new())
+            {
+                ws.Cell(row, 1).Value = r.LogID;
+                ws.Cell(row, 2).Value = r.UserFullName;
+                ws.Cell(row, 3).Value = r.Role;
+                ws.Cell(row, 4).Value = r.Action;
+                ws.Cell(row, 5).Value = r.DocumentTitle;
+                ws.Cell(row, 6).Value = r.Timestamp;
+                row++;
+            }
+            if (!(rpt.Rows?.Any() ?? false)) { ws.Cell(row, 1).Value = "No data available."; }
+
+            ws.Columns().AdjustToContents();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Helpers
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Writes a full-width merged section title banner and returns the next row index.
+        /// </summary>
+        private static int WriteSheetSectionHeader(IXLWorksheet ws, int row, string title, int colSpan)
+        {
+            // Merge cells across the data width for the section banner
+            var mergeRange = ws.Range(row, 1, row, Math.Max(colSpan, 1));
+            mergeRange.Merge();
+            mergeRange.FirstCell().Value = title;
+            mergeRange.Style.Font.Bold = true;
+            mergeRange.Style.Font.FontSize = 11;
+            mergeRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#004e57");
+            mergeRange.Style.Font.FontColor = XLColor.White;
+            mergeRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            mergeRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            return row + 1;
+        }
+
+        /// <summary>Writes column header row with teal background.</summary>
+        private static void WriteInlineHeaders(IXLWorksheet ws, int row, string[] headers)
+        {
+            for (int i = 0; i < headers.Length; i++)
+                ws.Cell(row, i + 1).Value = headers[i];
+            StyleSectionHeader(ws, row, headers.Length);
+        }
+
+        private static void StyleSectionHeader(IXLWorksheet ws, int row, int colCount)
         {
             var headerRange = ws.Range(row, 1, row, colCount);
             headerRange.Style.Font.Bold = true;
@@ -230,6 +355,10 @@ namespace DMS_CPMS.Services
             headerRange.Style.Font.FontColor = XLColor.White;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
         }
+
+        // Keep legacy alias so existing callers compile without change
+        private static void StyleHeader(IXLWorksheet ws, int row, int colCount)
+            => StyleSectionHeader(ws, row, colCount);
 
         private static void WriteCsv<T>(StringBuilder sb, List<T> rows, string[] headers, Func<T, string[]> rowSelector)
         {
