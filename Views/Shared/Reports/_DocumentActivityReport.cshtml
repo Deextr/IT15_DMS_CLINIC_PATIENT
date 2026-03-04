@@ -1,0 +1,193 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    var rpt = Model.DocumentActivity!;
+}
+
+<!-- ═══════════════════════════════════════════════════
+     DOCUMENT ACTIVITY REPORT
+     ═══════════════════════════════════════════════════ -->
+<div class="report-section mb-4">
+    <div class="report-section-header">
+        <h6 class="fw-bold mb-0">Document Activity Report</h6>
+        <small>Document uploads, categories, and version tracking</small>
+    </div>
+
+    <div style="padding: 16px;">
+
+        <!-- Document Overview Metrics -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Document Overview</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Metric</th>
+                        <th style="width: 50%;">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Total Documents Uploaded</td>
+                        <td><strong>@rpt.TotalDocumentsUploaded</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Documents Uploaded — Today</td>
+                        <td><strong>@rpt.DocumentsUploadedDaily</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Documents Uploaded — Last 7 Days</td>
+                        <td><strong>@rpt.DocumentsUploadedWeekly</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Documents Uploaded — Last 30 Days</td>
+                        <td><strong>@rpt.DocumentsUploadedMonthly</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Documents per Patient -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Documents per Patient</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">ID</th>
+                        <th>Patient Name</th>
+                        <th style="width: 12%;">Documents</th>
+                        <th>Document Types</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.DocumentsPerPatient.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">No document data found for the selected period.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.DocumentsPerPatient)
+                        {
+                            <tr>
+                                <td>@row.PatientID</td>
+                                <td>@row.PatientName</td>
+                                <td>@row.TotalDocuments</td>
+                                <td><small>@row.DocumentTypes</small></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @await Html.PartialAsync("~/Views/Shared/Reports/_ReportPagination.cshtml",
+            new ViewDataDictionary(ViewData) {
+                { "PageNumber", rpt.PageNumber }, { "TotalPages", rpt.TotalPages },
+                { "TotalCount", rpt.TotalCount }, { "PageSize", rpt.PageSize },
+                { "Area", Model.Area }, { "Report", Model.SelectedReport },
+                { "DatePreset", Model.DatePreset }, { "DateFrom", Model.DateFrom }, { "DateTo", Model.DateTo }
+            })
+
+        <!-- Documents per Category / Type -->
+        <p class="fw-semibold mb-2 mt-3" style="font-size: 0.85rem; color: #374151;">Documents per Category / Type</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document Type</th>
+                        <th style="width: 20%;">Count</th>
+                        <th style="width: 20%;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.DocumentsPerCategory.Any())
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">No document categories found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.DocumentsPerCategory)
+                        {
+                            <tr>
+                                <td>@row.DocumentType</td>
+                                <td>@row.DocumentCount</td>
+                                <td>@row.Percentage</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Most Frequently Updated Documents -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Most Frequently Updated Documents</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 6%;">ID</th>
+                        <th>Document Title</th>
+                        <th>Type</th>
+                        <th>Patient</th>
+                        <th style="width: 10%;">Versions</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.FrequentlyUpdatedDocuments.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-3">No document version data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.FrequentlyUpdatedDocuments)
+                        {
+                            <tr>
+                                <td>@row.DocumentID</td>
+                                <td>@row.DocumentTitle</td>
+                                <td>@row.DocumentType</td>
+                                <td>@row.PatientName</td>
+                                <td>@row.VersionCount</td>
+                                <td>@row.LastUpdated</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Version Count per Document -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Version Count per Document</p>
+        <div class="table-responsive mb-3">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 6%;">ID</th>
+                        <th>Document Title</th>
+                        <th>Type</th>
+                        <th>Patient</th>
+                        <th style="width: 12%;">Versions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.VersionCounts.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">No version data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.VersionCounts)
+                        {
+                            <tr>
+                                <td>@row.DocumentID</td>
+                                <td>@row.DocumentTitle</td>
+                                <td>@row.DocumentType</td>
+                                <td>@row.PatientName</td>
+                                <td>@row.VersionCount</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

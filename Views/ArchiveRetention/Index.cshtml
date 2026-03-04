@@ -41,6 +41,13 @@
                 <span class="badge bg-secondary ms-1">@Model.TotalPolicies</span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="archived-accounts-tab" data-bs-toggle="tab" data-bs-target="#archivedAccountsPane" type="button" role="tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Archived Accounts
+                <span class="badge bg-secondary ms-1">@Model.TotalArchivedAccounts</span>
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content" id="archiveTabContent">
@@ -51,7 +58,7 @@
                 <div class="card-body">
                     <!-- Filter bar -->
                     <form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Search</label>
                             <input type="text" name="searchTerm" class="form-control" placeholder="Search by document, user, or reason..." value="@Model.SearchTerm" />
                         </div>
@@ -63,21 +70,16 @@
                                 <option value="Expired" selected="@(Model.StatusFilter == "Expired")">Expired</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-secondary me-2">Filter</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#archiveDocumentModal">
-                                + Archive
-                            </button>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Reset</a>
                         </div>
                     </form>
 
                     <!-- Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle mb-0">
-                            <thead class="table-header-ocean">
+                    <div class="table-responsive" id="archived-docs-table">
+                        <table class="table documents-table align-middle mb-0">
+                            <thead>
                                 <tr>
                                     <th>Document Name</th>
                                     <th>Patient</th>
@@ -111,7 +113,14 @@
                                             <td>@doc.ArchiveDate.ToString("MMM dd, yyyy")</td>
                                             <td>@doc.RetentionUntil.ToString("MMM dd, yyyy")</td>
                                             <td>
-                                                <span class="badge @doc.StatusBadgeClass">@doc.StatusText</span>
+                                                @if (doc.IsWithinRetention)
+                                                {
+                                                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #198754; display: inline-block;"></span><span style="color: #000;">@doc.StatusText</span></span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #6c757d; display: inline-block;"></span><span style="color: #000;">@doc.StatusText</span></span>
+                                                }
                                             </td>
                                             <td class="text-center">
                                                 <div class="d-flex justify-content-center gap-1">
@@ -161,30 +170,29 @@
                     </div>
 
                     <!-- Pagination - Standardized Style -->
-                    @if (Model.TotalPages > 1)
-                    {
-                        int pageSize = 10;
-                        int startEntry = (Model.PageNumber - 1) * pageSize + 1;
+                    @{
+                        int pageSize = 8;
+                        int startEntry = Model.TotalDocuments > 0 ? (Model.PageNumber - 1) * pageSize + 1 : 0;
                         int endEntry = Math.Min(Model.PageNumber * pageSize, Model.TotalDocuments);
-                        <div class="table-footer">
-                            <div class="table-footer-left">
-                                <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
-                            </div>
-                            <div class="table-footer-right">
-                                <nav class="pagination-nav">
-                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })"
-                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
-                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })"
-                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
-                                    <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
-                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })"
-                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
-                                    <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })"
-                                       class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
-                                </nav>
-                            </div>
-                        </div>
                     }
+                    <div class="table-footer">
+                        <div class="table-footer-left">
+                            <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
+                        </div>
+                        <div class="table-footer-right">
+                            <nav class="pagination-nav">
+                                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })#archived-docs-table"
+                                   class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })#archived-docs-table"
+                                   class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                                <span class="pagination-indicator">@Model.PageNumber / @Math.Max(Model.TotalPages, 1)</span>
+                                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })#archived-docs-table"
+                                   class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })#archived-docs-table"
+                                   class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                            </nav>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -201,8 +209,8 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle mb-0">
-                            <thead class="table-header-ocean">
+                        <table class="table documents-table align-middle mb-0">
+                            <thead>
                                 <tr>
                                     <th>Document Type</th>
                                     <th>Retention Duration</th>
@@ -223,7 +231,6 @@
                                                 @{
                                                     var actionBadge = policy.AutoActionAfterExpiry switch
                                                     {
-                                                        "NotifyAdmin" => "bg-warning text-dark",
                                                         "AutoDelete" => "bg-danger",
                                                         _ => "bg-secondary"
                                                     };
@@ -291,30 +298,121 @@
                     </div>
 
                     <!-- Pagination - Standardized Style -->
-                    @if (Model.PolicyTotalPages > 1)
-                    {
-                        int policyPageSize = 10;
-                        int policyStartEntry = (Model.PolicyPageNumber - 1) * policyPageSize + 1;
+                    @{
+                        int policyPageSize = 8;
+                        int policyStartEntry = Model.TotalPolicies > 0 ? (Model.PolicyPageNumber - 1) * policyPageSize + 1 : 0;
                         int policyEndEntry = Math.Min(Model.PolicyPageNumber * policyPageSize, Model.TotalPolicies);
-                        <div class="table-footer">
-                            <div class="table-footer-left">
-                                <span class="footer-text">Showing @policyStartEntry to @policyEndEntry of @Model.TotalPolicies entries</span>
-                            </div>
-                            <div class="table-footer-right">
-                                <nav class="pagination-nav">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
-                                            onclick="goToPolicyPage(1)" title="First Page" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&laquo;</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
-                                            onclick="goToPolicyPage(@(Model.PolicyPageNumber - 1))" title="Previous" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&lsaquo;</button>
-                                    <span class="pagination-indicator">@Model.PolicyPageNumber / @Model.PolicyTotalPages</span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
-                                            onclick="goToPolicyPage(@(Model.PolicyPageNumber + 1))" title="Next" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&rsaquo;</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
-                                            onclick="goToPolicyPage(@Model.PolicyTotalPages)" title="Last Page" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&raquo;</button>
-                                </nav>
-                            </div>
-                        </div>
                     }
+                    <div class="table-footer">
+                        <div class="table-footer-left">
+                            <span class="footer-text">Showing @policyStartEntry to @policyEndEntry of @Model.TotalPolicies entries</span>
+                        </div>
+                        <div class="table-footer-right">
+                            <nav class="pagination-nav">
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToPolicyPage(1)" title="First Page" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&laquo;</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToPolicyPage(@(Model.PolicyPageNumber - 1))" title="Previous" @(Model.PolicyPageNumber <= 1 ? "disabled" : "")>&lsaquo;</button>
+                                <span class="pagination-indicator">@Model.PolicyPageNumber / @Math.Max(Model.PolicyTotalPages, 1)</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToPolicyPage(@(Model.PolicyPageNumber + 1))" title="Next" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&rsaquo;</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToPolicyPage(@Model.PolicyTotalPages)" title="Last Page" @(Model.PolicyPageNumber >= Model.PolicyTotalPages ? "disabled" : "")>&raquo;</button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════════ TAB 3: ARCHIVED ACCOUNTS ═════════════ -->
+        <div class="tab-pane fade" id="archivedAccountsPane" role="tabpanel">
+            <div class="card shadow-sm border-0 rounded-top-0 border-top-0">
+                <div class="card-body">
+                    <!-- Filter bar -->
+                    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+                        <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                        <div class="col-md-6">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="accountSearchTerm" class="form-control" placeholder="Search by name or username..." value="@Model.AccountSearchTerm" />
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Reset</a>
+                        </div>
+                    </form>
+
+                    <!-- Table -->
+                    <div class="table-responsive" id="archived-accounts-table">
+                        <table class="table documents-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%;">Username</th>
+                                    <th style="width: 30%;">Full Name</th>
+                                    <th style="width: 20%;">Role</th>
+                                    <th style="width: 20%;" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ArchivedAccounts.Any())
+                                {
+                                    @foreach (var acct in Model.ArchivedAccounts)
+                                    {
+                                        <tr>
+                                            <td>@acct.Username</td>
+                                            <td>@acct.FullName</td>
+                                            <td><span style="color: var(--color-primary); font-weight: 700;">@acct.Role</span></td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-success"
+                                                        data-account-id="@acct.Id"
+                                                        data-account-name="@acct.FullName"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Restore Account"
+                                                        onclick="openRestoreAccountModal(this)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-muted">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-2 opacity-50"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                            <p class="mb-0 mt-2">No archived accounts found</p>
+                                            <small>Archived accounts will appear here.</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination - Standardized Style -->
+                    @{
+                        int acctPageSize = 8;
+                        int acctStartEntry = Model.TotalArchivedAccounts > 0 ? (Model.AccountPageNumber - 1) * acctPageSize + 1 : 0;
+                        int acctEndEntry = Math.Min(Model.AccountPageNumber * acctPageSize, Model.TotalArchivedAccounts);
+                    }
+                    <div class="table-footer">
+                        <div class="table-footer-left">
+                            <span class="footer-text">Showing @acctStartEntry to @acctEndEntry of @Model.TotalArchivedAccounts entries</span>
+                        </div>
+                        <div class="table-footer-right">
+                            <nav class="pagination-nav">
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToAccountPage(1)" title="First Page" @(Model.AccountPageNumber <= 1 ? "disabled" : "")>&laquo;</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToAccountPage(@(Model.AccountPageNumber - 1))" title="Previous" @(Model.AccountPageNumber <= 1 ? "disabled" : "")>&lsaquo;</button>
+                                <span class="pagination-indicator">@Model.AccountPageNumber / @Math.Max(Model.AccountTotalPages, 1)</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToAccountPage(@(Model.AccountPageNumber + 1))" title="Next" @(Model.AccountPageNumber >= Model.AccountTotalPages ? "disabled" : "")>&rsaquo;</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn"
+                                        onclick="goToAccountPage(@Model.AccountTotalPages)" title="Last Page" @(Model.AccountPageNumber >= Model.AccountTotalPages ? "disabled" : "")>&raquo;</button>
+                            </nav>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -323,48 +421,6 @@
 </div>
 
 <!-- ═══════════════ MODALS ═══════════════ -->
-
-<!-- Archive Document Modal -->
-<div class="modal fade" id="archiveDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content ocean-modal">
-            <div class="modal-header">
-                <h5 class="modal-title">Archive a Document</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form asp-action="ArchiveDocument" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Search Document</label>
-                        <input type="text" id="archiveDocSearch" class="form-control" placeholder="Type to search active documents..." autocomplete="off" />
-                        <div id="archiveDocResults" class="archive-doc-dropdown"></div>
-                        <input type="hidden" name="DocumentID" id="archiveDocId" />
-                        <div id="archiveDocSelected" class="archive-doc-selected mt-2" style="display:none;">
-                            <span id="archiveDocSelectedText" class="badge bg-primary-subtle text-primary p-2"></span>
-                            <button type="button" id="archiveDocClear" class="btn btn-sm btn-link text-danger p-0 ms-2">Clear</button>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Archive Reason</label>
-                        <textarea name="ArchiveReason" class="form-control" rows="3" maxlength="100" placeholder="Enter reason for archiving this document..." required></textarea>
-                        <small class="text-muted">Max 100 characters</small>
-                    </div>
-                    <div class="p-3 bg-light rounded">
-                        <small class="text-muted">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            The retention period will be automatically computed based on the configured retention policy for the document type. If no policy exists, a default of 5 years will be applied.
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="archiveDocSubmit" disabled>Archive Document</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Restore Confirmation Modal -->
 <div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
@@ -432,8 +488,7 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="RetentionDurationMonths" id="addPolicyDurationHidden" />
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Document Type</label>
+                    <div class="infield mb-3">
                         <select name="ModuleName" class="form-select" required>
                             <option value="" disabled selected>Select a document type</option>
                             <option value="Medical History">Medical History</option>
@@ -443,30 +498,37 @@
                             <option value="Prescription Records">Prescription Records</option>
                             <option value="Others">Others</option>
                         </select>
+                        <label class="infield-label">Document Type</label>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Retention Duration</label>
+                        <label class="form-label fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--color-text-muted); font-weight: 600;">Retention Duration</label>
                         <div class="row g-2">
                             <div class="col-7">
-                                <input type="number" class="form-control" id="addPolicyDurationValue" placeholder="e.g. 5" min="1" max="100" required />
+                                <div class="infield">
+                                    <input type="number" class="form-control" id="addPolicyDurationValue" min="1" max="100" required />
+                                    <label class="infield-label" for="addPolicyDurationValue">Value</label>
+                                </div>
                             </div>
                             <div class="col-5">
-                                <select class="form-select" id="addPolicyDurationUnit">
-                                    <option value="months">Months</option>
-                                    <option value="years" selected>Years</option>
-                                </select>
+                                <div class="infield">
+                                    <select class="form-select" id="addPolicyDurationUnit">
+                                        <option value="months">Months</option>
+                                        <option value="years" selected>Years</option>
+                                    </select>
+                                    <label class="infield-label" for="addPolicyDurationUnit">Unit</label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Auto Action After Expiry</label>
+                    <div class="infield mb-3">
                         <select name="AutoActionAfterExpiry" class="form-select" required>
                             <option value="ManualReview">Manual Review Required</option>
-                            <option value="NotifyAdmin">Notify Admin</option>
                             <option value="AutoDelete">Auto Delete</option>
                         </select>
+                        <label class="infield-label">Auto Action After Expiry</label>
                     </div>
                     <div class="form-check mb-3">
+                        <input type="hidden" name="IsEnabled" value="false" />
                         <input class="form-check-input" type="checkbox" name="IsEnabled" value="true" id="addPolicyEnabled" checked />
                         <label class="form-check-label" for="addPolicyEnabled">Enable this policy immediately</label>
                     </div>
@@ -493,8 +555,7 @@
                 <input type="hidden" name="RetentionPolicyID" id="editPolicyId" />
                 <input type="hidden" name="RetentionDurationMonths" id="editPolicyDurationHidden" />
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Document Type</label>
+                    <div class="infield mb-3">
                         <select name="ModuleName" id="editPolicyModuleName" class="form-select" required>
                             <option value="" disabled>Select a document type</option>
                             <option value="Medical History">Medical History</option>
@@ -504,30 +565,37 @@
                             <option value="Prescription Records">Prescription Records</option>
                             <option value="Others">Others</option>
                         </select>
+                        <label class="infield-label" for="editPolicyModuleName">Document Type</label>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Retention Duration</label>
+                        <label class="form-label fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--color-text-muted); font-weight: 600;">Retention Duration</label>
                         <div class="row g-2">
                             <div class="col-7">
-                                <input type="number" class="form-control" id="editPolicyDurationValue" placeholder="e.g. 5" min="1" max="100" required />
+                                <div class="infield">
+                                    <input type="number" class="form-control" id="editPolicyDurationValue" min="1" max="100" required />
+                                    <label class="infield-label" for="editPolicyDurationValue">Value</label>
+                                </div>
                             </div>
                             <div class="col-5">
-                                <select class="form-select" id="editPolicyDurationUnit">
-                                    <option value="months">Months</option>
-                                    <option value="years">Years</option>
-                                </select>
+                                <div class="infield">
+                                    <select class="form-select" id="editPolicyDurationUnit">
+                                        <option value="months">Months</option>
+                                        <option value="years">Years</option>
+                                    </select>
+                                    <label class="infield-label" for="editPolicyDurationUnit">Unit</label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Auto Action After Expiry</label>
+                    <div class="infield mb-3">
                         <select name="AutoActionAfterExpiry" id="editPolicyAutoAction" class="form-select" required>
                             <option value="ManualReview">Manual Review Required</option>
-                            <option value="NotifyAdmin">Notify Admin</option>
                             <option value="AutoDelete">Auto Delete</option>
                         </select>
+                        <label class="infield-label" for="editPolicyAutoAction">Auto Action After Expiry</label>
                     </div>
                     <div class="form-check mb-3">
+                        <input type="hidden" name="IsEnabled" value="false" />
                         <input class="form-check-input" type="checkbox" name="IsEnabled" value="true" id="editPolicyEnabled" />
                         <label class="form-check-label" for="editPolicyEnabled">Policy Enabled</label>
                     </div>
@@ -541,6 +609,69 @@
     </div>
 </div>
 
+<!-- Restore Account Confirmation Modal -->
+<div class="modal fade" id="restoreAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Restore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RestoreAccount" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="restoreAccountId" />
+                <div class="modal-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-success mb-3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    <p>Are you sure you want to restore<br/><strong id="restoreAccountName"></strong>?</p>
+                    <small class="text-muted">The account will be moved back to the accounts list. Note: the account will remain deactivated and will need to be manually activated.</small>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Yes, Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/archive-retention.js" asp-append-version="true"></script>
+    <script>
+        function openRestoreAccountModal(btn) {
+            var id = btn.getAttribute('data-account-id');
+            var name = btn.getAttribute('data-account-name');
+            document.getElementById('restoreAccountId').value = id || '';
+            document.getElementById('restoreAccountName').textContent = name || '';
+            var modal = new bootstrap.Modal(document.getElementById('restoreAccountModal'));
+            modal.show();
+        }
+
+        function goToAccountPage(page) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('accountPage', page);
+            url.hash = '#archived-accounts-table';
+            // Activate the accounts tab on page load
+            url.searchParams.set('activeTab', 'accounts');
+            window.location.href = url.toString();
+        }
+
+        // Auto-activate correct tab based on URL param
+        document.addEventListener('DOMContentLoaded', function () {
+            var url = new URL(window.location.href);
+            var activeTab = url.searchParams.get('activeTab');
+            if (activeTab === 'accounts') {
+                var tab = document.getElementById('archived-accounts-tab');
+                if (tab) new bootstrap.Tab(tab).show();
+            } else if (activeTab === 'policies') {
+                var tab = document.getElementById('retention-policy-tab');
+                if (tab) new bootstrap.Tab(tab).show();
+            }
+            // Also activate if accountSearchTerm is present
+            var acctSearch = url.searchParams.get('accountSearchTerm');
+            if (acctSearch) {
+                var tab = document.getElementById('archived-accounts-tab');
+                if (tab) new bootstrap.Tab(tab).show();
+            }
+        });
+    </script>
 }

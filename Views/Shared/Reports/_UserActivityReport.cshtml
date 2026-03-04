@@ -1,0 +1,199 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    var rpt = Model.UserActivity!;
+}
+
+<!-- ═══════════════════════════════════════════════════
+     USER / ACCOUNT ACTIVITY REPORT
+     ═══════════════════════════════════════════════════ -->
+<div class="report-section mb-4">
+    <div class="report-section-header">
+        <h6 class="fw-bold mb-0">User / Account Activity Report</h6>
+        <small>User accounts, login history, and action tracking</small>
+    </div>
+
+    <div style="padding: 16px;">
+
+        <!-- Active User Counts -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Active User Counts</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Metric</th>
+                        <th style="width: 50%;">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Active Admin Users</td>
+                        <td><strong>@rpt.TotalAdminUsers</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Active Staff Users</td>
+                        <td><strong>@rpt.TotalStaffUsers</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Total Active Users</td>
+                        <td><strong>@rpt.TotalActiveUsers</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Total Inactive Users</td>
+                        <td><strong>@rpt.TotalInactiveUsers</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Login Activity -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Login Activity</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.LoginActivity.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">No login activity found for the selected period.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.LoginActivity)
+                        {
+                            <tr>
+                                <td>@row.FullName</td>
+                                <td>@row.Role</td>
+                                <td>@row.Action</td>
+                                <td>@row.Timestamp</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @await Html.PartialAsync("~/Views/Shared/Reports/_ReportPagination.cshtml",
+            new ViewDataDictionary(ViewData) {
+                { "PageNumber", rpt.PageNumber }, { "TotalPages", rpt.TotalPages },
+                { "TotalCount", rpt.TotalCount }, { "PageSize", rpt.PageSize },
+                { "Area", Model.Area }, { "Report", Model.SelectedReport },
+                { "DatePreset", Model.DatePreset }, { "DateFrom", Model.DateFrom }, { "DateTo", Model.DateTo }
+            })
+
+        <!-- Last Login per User -->
+        <p class="fw-semibold mb-2 mt-3" style="font-size: 0.85rem; color: #374151;">Last Login per User</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.LastLoginPerUser.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">No user data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.LastLoginPerUser)
+                        {
+                            <tr>
+                                <td>@row.FullName</td>
+                                <td>@row.Role</td>
+                                <td>@row.AccountStatus</td>
+                                <td>@row.LastLogin</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Actions Performed -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Actions Performed</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th style="width: 10%;">Count</th>
+                        <th>Last Performed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.ActionsPerformed.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">No action data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.ActionsPerformed)
+                        {
+                            <tr>
+                                <td>@row.FullName</td>
+                                <td>@row.Role</td>
+                                <td>@row.Action</td>
+                                <td>@row.Count</td>
+                                <td>@row.LastPerformed</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Most Active Staff -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Most Active Staff</p>
+        <div class="table-responsive mb-3">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 6%;">Rank</th>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th style="width: 10%;">Total Actions</th>
+                        <th style="width: 8%;">Uploads</th>
+                        <th style="width: 8%;">Edits</th>
+                        <th style="width: 8%;">Deletes</th>
+                        <th>Last Activity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.MostActiveStaff.Any())
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-3">No staff activity data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.MostActiveStaff)
+                        {
+                            <tr>
+                                <td>@row.Rank</td>
+                                <td>@row.FullName</td>
+                                <td>@row.Role</td>
+                                <td>@row.TotalActions</td>
+                                <td>@row.Uploads</td>
+                                <td>@row.Edits</td>
+                                <td>@row.Deletes</td>
+                                <td>@row.LastActivity</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

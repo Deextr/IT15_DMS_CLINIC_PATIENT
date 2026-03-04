@@ -9,32 +9,28 @@ namespace DMS_CPMS.Data.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AuditLogID { get; set; }
+        public int LogID { get; set; }
+
+        public int? DocumentID { get; set; }
+
+        [StringLength(450)]
+        public string? UserID { get; set; }
+
+        [StringLength(50)]
+        public string? Role { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [StringLength(100)]
         public string Action { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(50)]
-        public string EntityType { get; set; } = string.Empty;
-
-        [Required]
-        public int EntityId { get; set; }
-
-        [StringLength(500)]
-        public string Details { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string UserId { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string UserName { get; set; } = string.Empty;
 
         [Required]
         public DateTime Timestamp { get; set; }
 
-        [StringLength(50)]
-        public string IpAddress { get; set; } = string.Empty;
+        // Navigation properties
+        [ForeignKey("DocumentID")]
+        public virtual Document? Document { get; set; }
+
+        [ForeignKey("UserID")]
+        public virtual ApplicationUser? User { get; set; }
     }
 }

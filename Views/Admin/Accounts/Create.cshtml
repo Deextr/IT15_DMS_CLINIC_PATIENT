@@ -20,43 +20,41 @@
             <form asp-area="Admin" asp-action="Create" asp-controller="Accounts" method="post" novalidate>
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
 
-                <div class="mb-3">
-                    <label asp-for="FirstName" class="form-label"></label>
-                    <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+                <div class="infield mb-3">
+                    <input asp-for="FirstName" class="form-control" />
+                    <label asp-for="FirstName" class="infield-label"></label>
                     <span asp-validation-for="FirstName" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="LastName" class="form-label"></label>
-                    <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+                <div class="infield mb-3">
+                    <input asp-for="LastName" class="form-control" />
+                    <label asp-for="LastName" class="infield-label"></label>
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
 
                 <input type="hidden" asp-for="RoleType" value="Staff" />
 
-                <div class="mb-3">
-                    <label class="form-label">Role Type</label>
+                <div class="infield mb-3">
                     <input class="form-control" value="Staff" disabled />
+                    <label class="infield-label">Role Type</label>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Username" class="form-label"></label>
-                    <input asp-for="Username" class="form-control" placeholder="Enter unique username" />
+                <div class="infield mb-3">
+                    <input asp-for="Username" class="form-control" />
+                    <label asp-for="Username" class="infield-label"></label>
                     <span asp-validation-for="Username" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label"></label>
-                    <input asp-for="Password" class="form-control" placeholder="Enter strong password" />
-                    <small class="form-text text-muted">
-                        Minimum 8 characters, with uppercase, lowercase, number, and special character.
-                    </small>
+                <div class="infield mb-3">
+                    <input asp-for="Password" class="form-control" data-password-hint="true" />
+                    <label asp-for="Password" class="infield-label"></label>
                     <span asp-validation-for="Password" class="text-danger"></span>
+                    <small class="password-hint">Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="ConfirmPassword" class="form-label"></label>
-                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Re-enter password" />
+                <div class="infield mb-3">
+                    <input asp-for="ConfirmPassword" class="form-control" />
+                    <label asp-for="ConfirmPassword" class="infield-label"></label>
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
 

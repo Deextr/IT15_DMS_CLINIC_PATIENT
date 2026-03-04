@@ -73,3 +73,7 @@ wwwroot\uploads\documents\1\3\v2_e83cd60c-8613-433b-90b3-b21aea6439da.pdf
 wwwroot\uploads\documents\2\5\v1_78b6bcd2-f591-4a92-942c-ee89ff9a6cac.pdf
 wwwroot\uploads\documents\2\5\v2_40020fa4-66a5-4979-ae70-e3bedada55d2.docx
 wwwroot\uploads\documents\3\4\v1_b192e833-0f2b-47a0-8f3a-e935271317fe.pdf
+wwwroot\js\google-drive-picker.js
+wwwroot\uploads\documents\2\8\v1_eabda37b-da3f-4124-a06c-1d391cbb58a5.docx
+wwwroot\uploads\documents\2\8\v1_eabda37b-da3f-4124-a06c-1d391cbb58a5_preview.pdf
+wwwroot\uploads\documents\4\6\v1_e9c3821c-2211-40f1-8813-2d7a520f8e43.png

@@ -13,11 +13,15 @@ namespace DMS_CPMS.Models.Archive
         // Tab 2 – Retention Policies
         public List<RetentionPolicyViewModel> RetentionPolicies { get; set; } = new();
 
+        // Tab 3 – Archived Accounts
+        public List<ArchivedAccountViewModel> ArchivedAccounts { get; set; } = new();
+
         // Stats
         public int TotalDocuments { get; set; }
         public int ActiveRetentionCount { get; set; }
         public int ExpiredRetentionCount { get; set; }
         public int TotalPolicies { get; set; }
+        public int TotalArchivedAccounts { get; set; }
 
         // Pagination – Archived Documents
         public int PageNumber { get; set; } = 1;
@@ -27,9 +31,14 @@ namespace DMS_CPMS.Models.Archive
         public int PolicyPageNumber { get; set; } = 1;
         public int PolicyTotalPages { get; set; }
 
+        // Pagination – Archived Accounts
+        public int AccountPageNumber { get; set; } = 1;
+        public int AccountTotalPages { get; set; }
+
         // Filters
         public string? SearchTerm { get; set; }
         public string? StatusFilter { get; set; } // "Active", "Expired", or null/all
+        public string? AccountSearchTerm { get; set; }
 
         // Document types (for policy modal dropdown)
         public List<string> DocumentTypes { get; set; } = new();
@@ -101,7 +110,6 @@ namespace DMS_CPMS.Models.Archive
 
         public string ActionDisplay => AutoActionAfterExpiry switch
         {
-            "NotifyAdmin" => "Notify Admin",
             "AutoDelete" => "Auto Delete",
             "ManualReview" => "Manual Review",
             _ => AutoActionAfterExpiry
@@ -124,6 +132,15 @@ namespace DMS_CPMS.Models.Archive
         [Required(ErrorMessage = "Auto action is required.")]
         public string AutoActionAfterExpiry { get; set; } = "ManualReview";
 
-        public bool IsEnabled { get; set; } = true;
+        public bool IsEnabled { get; set; }
+    }
+
+    // ───────────────────── Archived Account display ─────────────────────
+    public class ArchivedAccountViewModel
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
     }
 }

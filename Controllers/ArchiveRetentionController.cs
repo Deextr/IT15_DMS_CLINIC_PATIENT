@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Archive;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +17,22 @@ namespace DMS_CPMS.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private const int PageSize = 10;
+        private readonly IAuditLogService _auditLogService;
+        private const int PageSize = 8;
 
         public ArchiveRetentionController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IAuditLogService auditLogService)
         {
             _context = context;
             _userManager = userManager;
+            _auditLogService = auditLogService;
         }
 
         // ─────────────────────── INDEX (main page) ───────────────────────
         [HttpGet]
-        public async Task<IActionResult> Index(string? searchTerm, string? statusFilter, int page = 1, int policyPage = 1)
+        public async Task<IActionResult> Index(string? searchTerm, string? statusFilter, int page = 1, int policyPage = 1, int accountPage = 1, string? accountSearchTerm = null, string? activeTab = null)
         {
             var isSuperAdmin = User.IsInRole("SuperAdmin");
 
@@ -119,6 +123,42 @@ namespace DMS_CPMS.Controllers
                 "Others"
             };
 
+            // ── Archived Accounts (paginated) ──
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+            var staffUsers = await _userManager.GetUsersInRoleAsync("Staff");
+            var archivedAccountsQuery = adminUsers
+                .Select(u => (User: u, Role: "Admin"))
+                .Concat(staffUsers.Select(u => (User: u, Role: "Staff")))
+                .GroupBy(x => x.User.Id)
+                .Select(g => g.First())
+                .Where(x => x.User.IsArchived)
+                .Select(x => new ArchivedAccountViewModel
+                {
+                    Id = x.User.Id,
+                    Username = x.User.UserName ?? "",
+                    FullName = $"{x.User.FirstName ?? ""} {x.User.LastName ?? ""}".Trim(),
+                    Role = x.Role
+                })
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(accountSearchTerm))
+            {
+                var acctTerm = accountSearchTerm.Trim().ToLower();
+                archivedAccountsQuery = archivedAccountsQuery.Where(a =>
+                    a.Username.ToLower().Contains(acctTerm) ||
+                    a.FullName.ToLower().Contains(acctTerm));
+            }
+
+            var totalArchivedAccounts = archivedAccountsQuery.Count();
+            var accountTotalPages = (int)Math.Ceiling(totalArchivedAccounts / (double)PageSize);
+            accountPage = Math.Max(1, Math.Min(accountPage, Math.Max(1, accountTotalPages)));
+
+            var archivedAccounts = archivedAccountsQuery
+                .OrderBy(a => a.Username)
+                .Skip((accountPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
             var model = new ArchiveRetentionIndexViewModel
             {
                 ArchivedDocuments = archivedDocs,
@@ -134,7 +174,12 @@ namespace DMS_CPMS.Controllers
                 SearchTerm = searchTerm,
                 StatusFilter = statusFilter,
                 DocumentTypes = documentTypes,
-                IsSuperAdmin = isSuperAdmin
+                IsSuperAdmin = isSuperAdmin,
+                ArchivedAccounts = archivedAccounts,
+                TotalArchivedAccounts = totalArchivedAccounts,
+                AccountPageNumber = accountPage,
+                AccountTotalPages = accountTotalPages,
+                AccountSearchTerm = accountSearchTerm
             };
 
             return View("~/Views/ArchiveRetention/Index.cshtml", model);
@@ -190,6 +235,8 @@ namespace DMS_CPMS.Controllers
             _context.ArchiveDocuments.Add(archive);
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Archive Document", form.DocumentID);
+
             TempData["StatusMessage"] = $"Document \"{document.DocumentTitle}\" has been archived. Retention until {retentionUntil:MMM dd, yyyy}.";
             return RedirectToAction(nameof(Index));
         }
@@ -221,7 +268,17 @@ namespace DMS_CPMS.Controllers
             {
                 var docTitle = archive.Document.DocumentTitle;
                 _context.ArchiveDocuments.Remove(archive);
+
+                // If the document was marked archived because all versions were archived,
+                // clear the flag now that at least one version is being restored.
+                if (archive.Document.IsArchived)
+                {
+                    archive.Document.IsArchived = false;
+                }
+
                 await _context.SaveChangesAsync();
+
+                await _auditLogService.LogAsync("Restore Version", archive.DocumentID);
 
                 TempData["StatusMessage"] = $"Version of \"{docTitle}\" has been restored to version history.";
                 return RedirectToAction(nameof(Index));
@@ -237,6 +294,8 @@ namespace DMS_CPMS.Controllers
             archive.Document.IsArchived = false;
             _context.ArchiveDocuments.Remove(archive);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("Restore Document", archive.DocumentID);
 
             TempData["StatusMessage"] = $"Document \"{archive.Document.DocumentTitle}\" has been restored to active modules.";
             return RedirectToAction(nameof(Index));
@@ -283,6 +342,8 @@ namespace DMS_CPMS.Controllers
                 _context.ArchiveDocuments.Remove(archive);
                 await _context.SaveChangesAsync();
 
+                await _auditLogService.LogAsync("Permanent Delete Version", archive.DocumentID);
+
                 TempData["StatusMessage"] = $"Archived version of \"{archive.Document.DocumentTitle}\" has been permanently deleted.";
                 return RedirectToAction(nameof(Index));
             }
@@ -307,6 +368,8 @@ namespace DMS_CPMS.Controllers
             _context.Documents.Remove(archive.Document);
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Permanent Delete", archive.DocumentID);
+
             TempData["StatusMessage"] = $"Document \"{docTitle}\" has been permanently deleted.";
             return RedirectToAction(nameof(Index));
         }
@@ -319,7 +382,7 @@ namespace DMS_CPMS.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Please fill in all required fields.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             // Check duplicate module name
@@ -328,7 +391,7 @@ namespace DMS_CPMS.Controllers
             if (exists)
             {
                 TempData["ErrorMessage"] = $"A retention policy for \"{form.ModuleName}\" already exists.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             var policy = new RetentionPolicy
@@ -342,8 +405,10 @@ namespace DMS_CPMS.Controllers
             _context.RetentionPolicies.Add(policy);
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Create Retention Policy");
+
             TempData["StatusMessage"] = $"Retention policy \"{form.ModuleName}\" has been created.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { activeTab = "policies" });
         }
 
         // ─────────────────── EDIT RETENTION POLICY ───────────────────────
@@ -354,14 +419,14 @@ namespace DMS_CPMS.Controllers
             if (!ModelState.IsValid || form.RetentionPolicyID == null)
             {
                 TempData["ErrorMessage"] = "Please fill in all required fields.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             var policy = await _context.RetentionPolicies.FindAsync(form.RetentionPolicyID.Value);
             if (policy == null)
             {
                 TempData["ErrorMessage"] = "Policy not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             // Check duplicate (another policy with same module name)
@@ -370,7 +435,7 @@ namespace DMS_CPMS.Controllers
             if (duplicate)
             {
                 TempData["ErrorMessage"] = $"Another policy for \"{form.ModuleName}\" already exists.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             policy.ModuleName = form.ModuleName;
@@ -380,8 +445,10 @@ namespace DMS_CPMS.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Update Retention Policy");
+
             TempData["StatusMessage"] = $"Retention policy \"{form.ModuleName}\" has been updated.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { activeTab = "policies" });
         }
 
         // ─────────────────── TOGGLE POLICY ───────────────────────────────
@@ -393,15 +460,18 @@ namespace DMS_CPMS.Controllers
             if (policy == null)
             {
                 TempData["ErrorMessage"] = "Policy not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { activeTab = "policies" });
             }
 
             policy.IsEnabled = !policy.IsEnabled;
             await _context.SaveChangesAsync();
 
             var state = policy.IsEnabled ? "enabled" : "disabled";
+
+            await _auditLogService.LogAsync("Toggle Retention Policy");
+
             TempData["StatusMessage"] = $"Retention policy \"{policy.ModuleName}\" has been {state}.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { activeTab = "policies" });
         }
 
         // ─────────────────── GET ACTIVE DOCUMENTS (for archive modal) ────
@@ -434,6 +504,39 @@ namespace DMS_CPMS.Controllers
                 .ToListAsync();
 
             return Json(docs);
+        }
+
+        // ─────────────────── RESTORE ARCHIVED ACCOUNT ────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreAccount(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                TempData["ErrorMessage"] = "Account not found.";
+                return RedirectToAction(nameof(Index), new { activeTab = "accounts" });
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Account not found.";
+                return RedirectToAction(nameof(Index), new { activeTab = "accounts" });
+            }
+
+            if (!user.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Account is not archived.";
+                return RedirectToAction(nameof(Index), new { activeTab = "accounts" });
+            }
+
+            user.IsArchived = false;
+            await _userManager.UpdateAsync(user);
+
+            await _auditLogService.LogAsync("Restore Account");
+
+            TempData["StatusMessage"] = $"Account \"{user.UserName}\" has been restored. Note: the account is still deactivated.";
+            return RedirectToAction(nameof(Index), new { activeTab = "accounts" });
         }
     }
 }

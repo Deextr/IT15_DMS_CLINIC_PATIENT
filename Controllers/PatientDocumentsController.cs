@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Patient;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -19,17 +20,23 @@ namespace DMS_CPMS.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly DocumentConversionService _conversionService;
+        private readonly IAuditLogService _auditLogService;
 
         private const int PageSize = 10;
 
         public PatientDocumentsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            DocumentConversionService conversionService,
+            IAuditLogService auditLogService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _conversionService = conversionService;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
@@ -93,6 +100,8 @@ namespace DMS_CPMS.Controllers
 
             _context.DocumentVersions.Add(version);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("Upload Document", document.DocumentID);
 
             return RedirectToAction(nameof(Index), new { patientId = model.PatientID });
         }
@@ -210,6 +219,11 @@ namespace DMS_CPMS.Controllers
             var isImage = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }.Contains(extension);
             var isPdf = extension == ".pdf";
 
+            var previewPath = !isImage && !isPdf
+                ? EnsurePreviewPath(latestVersion.FilePath)
+                : null;
+            var hasPreview = !string.IsNullOrEmpty(previewPath);
+
             return Json(new
             {
                 documentId = document.DocumentID,
@@ -217,7 +231,9 @@ namespace DMS_CPMS.Controllers
                 filePath = latestVersion.FilePath,
                 fileExtension = extension,
                 isImage = isImage,
-                isPdf = isPdf
+                isPdf = isPdf,
+                hasPreview = hasPreview,
+                previewPath = previewPath
             });
         }
 
@@ -358,15 +374,7 @@ namespace DMS_CPMS.Controllers
             await _context.SaveChangesAsync();
 
             // Log audit trail
-            await LogAuditTrailAsync(
-                action: "ArchiveDocument",
-                entityType: "Document",
-                entityId: document.DocumentID,
-                details: $"Document '{document.DocumentTitle}' archived by {user.FirstName} {user.LastName}. Reason: {archiveReason}. Retention until {retentionUntil:MMM dd, yyyy}.",
-                userId: user.Id,
-                userName: user.UserName ?? "Unknown",
-                timestamp: DateTime.UtcNow
-            );
+            await _auditLogService.LogAsync("Archive Document", document.DocumentID);
 
             return Json(new
             {
@@ -440,18 +448,25 @@ namespace DMS_CPMS.Controllers
             };
 
             _context.ArchiveDocuments.Add(archive);
+
+            // If all versions are now archived, mark the entire document as archived
+            var allVersionIds = document.Versions.Select(v => v.VersionID).ToHashSet();
+            var archivedVersionIds = document.ArchiveDocuments
+                .Where(a => a.VersionID.HasValue)
+                .Select(a => a.VersionID!.Value)
+                .ToHashSet();
+            // Include the version being archived right now
+            archivedVersionIds.Add(model.VersionId);
+
+            if (allVersionIds.Count > 0 && allVersionIds.IsSubsetOf(archivedVersionIds))
+            {
+                document.IsArchived = true;
+            }
+
             await _context.SaveChangesAsync();
 
             // Log audit trail
-            await LogAuditTrailAsync(
-                action: "ArchiveVersion",
-                entityType: "DocumentVersion",
-                entityId: version.VersionID,
-                details: $"Version v{version.VersionNumber}.0 of '{document.DocumentTitle}' archived by {user.FirstName} {user.LastName}. Reason: {archiveReason}. Retention until {retentionUntil:MMM dd, yyyy}.",
-                userId: user.Id,
-                userName: user.UserName ?? "Unknown",
-                timestamp: DateTime.UtcNow
-            );
+            await _auditLogService.LogAsync("Archive Version", document.DocumentID);
 
             return Json(new
             {
@@ -575,6 +590,8 @@ namespace DMS_CPMS.Controllers
             _context.DocumentVersions.Add(version);
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Upload Document", document.DocumentID);
+
             return Json(new { success = true, message = "Document uploaded successfully" });
         }
 
@@ -601,6 +618,8 @@ namespace DMS_CPMS.Controllers
             document.DocumentType = documentType;
 
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("Edit Document", document.DocumentID);
 
             return Json(new { success = true, message = "Document updated successfully" });
         }
@@ -657,6 +676,8 @@ namespace DMS_CPMS.Controllers
                 ? "Document updated and new version uploaded successfully"
                 : "Document updated successfully";
 
+            await _auditLogService.LogAsync("Edit Document", document.DocumentID);
+
             return Json(new { success = true, message = message });
         }
 
@@ -687,8 +708,13 @@ namespace DMS_CPMS.Controllers
                 }
             }
 
+            var docTitle = document.DocumentTitle;
+            var docId = document.DocumentID;
+
             _context.Documents.Remove(document);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("Delete Document", docId);
 
             return Json(new { success = true, message = "Document deleted successfully" });
         }
@@ -719,6 +745,8 @@ namespace DMS_CPMS.Controllers
             var mimeType = GetMimeType(Path.GetExtension(physicalPath));
             var fileName = $"{version.Document.DocumentTitle}_v{version.VersionNumber}{Path.GetExtension(physicalPath)}";
 
+            await _auditLogService.LogAsync("Download Document", version.Document.DocumentID);
+
             return PhysicalFile(physicalPath, mimeType, fileName);
         }
 
@@ -740,6 +768,11 @@ namespace DMS_CPMS.Controllers
             var isImage = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }.Contains(extension);
             var isPdf = extension == ".pdf";
 
+            var previewPath = !isImage && !isPdf && !string.IsNullOrEmpty(filePath)
+                ? EnsurePreviewPath(filePath)
+                : null;
+            var hasPreview = !string.IsNullOrEmpty(previewPath);
+
             return Json(new 
             { 
                 success = true, 
@@ -747,6 +780,8 @@ namespace DMS_CPMS.Controllers
                 fileExtension = extension,
                 isImage = isImage,
                 isPdf = isPdf,
+                hasPreview = hasPreview,
+                previewPath = previewPath,
                 version = $"v{version.VersionNumber}.0"
             });
         }
@@ -818,6 +853,12 @@ namespace DMS_CPMS.Controllers
                 
                 // Copy the file to create a new version
                 System.IO.File.Copy(physicalSourcePath, physicalNewPath);
+
+                // Generate PDF preview if this is a convertible document (e.g. .docx)
+                if (DocumentConversionService.CanConvertToPreview(physicalNewPath))
+                {
+                    _conversionService.ConvertToPdfPreview(physicalNewPath);
+                }
                 
                 var newRelativePath = $"/uploads/documents/{document.PatientID}/{document.DocumentID}/{newFileName}".Replace("\\", "/");
                 
@@ -838,15 +879,7 @@ namespace DMS_CPMS.Controllers
                 await _context.SaveChangesAsync();
 
                 // Log to audit trail
-                await LogAuditTrailAsync(
-                    action: "RestoreVersion",
-                    entityType: "DocumentVersion",
-                    entityId: newVersion.VersionID,
-                    details: $"Restored document '{document.DocumentTitle}' to version {versionToRestore.VersionNumber}. New version {newVersionNumber} created by {currentUserName}.",
-                    userId: currentUserId,
-                    userName: currentUserName,
-                    timestamp: timestamp
-                );
+                await _auditLogService.LogAsync("Restore Version", document.DocumentID);
 
                 return Json(new 
                 { 
@@ -860,32 +893,6 @@ namespace DMS_CPMS.Controllers
                 // Log the error
                 Console.Error.WriteLine($"Error restoring version: {ex.Message}");
                 return Json(new { success = false, message = "An error occurred while restoring the version. Please try again." });
-            }
-        }
-
-        private async Task LogAuditTrailAsync(string action, string entityType, int entityId, string details, string userId, string userName, DateTime timestamp)
-        {
-            try
-            {
-                var auditLog = new AuditLog
-                {
-                    Action = action,
-                    EntityType = entityType,
-                    EntityId = entityId,
-                    Details = details,
-                    UserId = userId ?? "Unknown",
-                    UserName = userName ?? "Unknown",
-                    Timestamp = timestamp,
-                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
-                };
-
-                _context.AuditLogs.Add(auditLog);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail the main operation
-                Console.Error.WriteLine($"Failed to log audit trail: {ex.Message}");
             }
         }
 
@@ -909,6 +916,46 @@ namespace DMS_CPMS.Controllers
             };
         }
 
+        private string? EnsurePreviewPath(string relativeFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativeFilePath) || !DocumentConversionService.CanConvertToPreview(relativeFilePath))
+            {
+                return null;
+            }
+
+            var normalizedRelativePath = relativeFilePath.Replace("\\", "/");
+            if (!normalizedRelativePath.StartsWith('/'))
+            {
+                normalizedRelativePath = "/" + normalizedRelativePath.TrimStart('/');
+            }
+
+            var sourcePhysicalPath = Path.Combine(_environment.WebRootPath,
+                normalizedRelativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+            if (!System.IO.File.Exists(sourcePhysicalPath))
+            {
+                return null;
+            }
+
+            var previewRelativePath = DocumentConversionService.GetPreviewRelativePath(normalizedRelativePath);
+            if (!previewRelativePath.StartsWith('/'))
+            {
+                previewRelativePath = "/" + previewRelativePath.TrimStart('/');
+            }
+
+            var previewPhysicalPath = Path.Combine(_environment.WebRootPath,
+                previewRelativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+            if (!System.IO.File.Exists(previewPhysicalPath))
+            {
+                _conversionService.ConvertToPdfPreview(sourcePhysicalPath);
+            }
+
+            return System.IO.File.Exists(previewPhysicalPath)
+                ? previewRelativePath
+                : null;
+        }
+
         private async Task<string> SaveFileAsync(int patientId, int documentId, int versionNumber, IFormFile file)
         {
             var uploadsRoot = Path.Combine(_environment.WebRootPath, "uploads", "documents", patientId.ToString(), documentId.ToString());
@@ -921,6 +968,12 @@ namespace DMS_CPMS.Controllers
             using (var stream = new FileStream(physicalPath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
+            }
+
+            // Generate PDF preview for Word documents
+            if (DocumentConversionService.CanConvertToPreview(physicalPath))
+            {
+                _conversionService.ConvertToPdfPreview(physicalPath);
             }
 
             var relativePath = $"/uploads/documents/{patientId}/{documentId}/{fileName}";

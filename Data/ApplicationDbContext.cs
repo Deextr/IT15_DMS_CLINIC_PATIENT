@@ -35,6 +35,9 @@ namespace DMS_CPMS.Data
                 entity.Property(e => e.IsActive)
                     .IsRequired()
                     .HasDefaultValue(true);
+                entity.Property(e => e.IsArchived)
+                    .IsRequired()
+                    .HasDefaultValue(false);
             });
 
             // Patient configuration
@@ -88,15 +91,35 @@ namespace DMS_CPMS.Data
             // AuditLog configuration
             builder.Entity<AuditLog>(entity =>
             {
-                entity.HasKey(e => e.AuditLogID);
-                entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.EntityType).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.EntityId).IsRequired();
-                entity.Property(e => e.Details).HasMaxLength(500);
-                entity.Property(e => e.UserId).HasMaxLength(100);
-                entity.Property(e => e.UserName).HasMaxLength(100);
-                entity.Property(e => e.Timestamp).IsRequired();
-                entity.Property(e => e.IpAddress).HasMaxLength(50);
+                entity.HasKey(e => e.LogID);
+
+                entity.Property(e => e.Action)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Timestamp)
+                    .IsRequired();
+
+                entity.Property(e => e.UserID)
+                    .HasMaxLength(450);
+
+                entity.Property(e => e.Role)
+                    .HasMaxLength(50);
+
+                entity.HasOne(e => e.Document)
+                    .WithMany()
+                    .HasForeignKey(e => e.DocumentID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_AuditLog_Timestamp");
+                entity.HasIndex(e => e.UserID).HasDatabaseName("IX_AuditLog_UserID");
             });
 
             // Document – IsArchived flag

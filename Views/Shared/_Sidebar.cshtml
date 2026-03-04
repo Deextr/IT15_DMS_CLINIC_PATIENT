@@ -16,17 +16,18 @@
 {
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="sidebar-toggle-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
+            <svg class="sidebar-toggle-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                <polyline points="11 17 6 12 11 7"></polyline>
+                <polyline points="18 17 13 12 18 7"></polyline>
+            </svg>
         </div>
-        <div class="sidebar-logo">
-            <img src="~/images/logo.png" alt="Clinic DMS Logo" class="sidebar-logo-img" />
-        </div>
-        <div class="sidebar-header">
-            <span class="sidebar-title">Clinic DMS</span>
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-text">Navigation</span>
         </div>
         <ul class="sidebar-menu list-unstyled">
             <li class="sidebar-item @(currentController == "Dashboard" && (currentAction == "Index" || currentAction == null) ? "active" : "")">
@@ -155,29 +156,56 @@
                     </a>
                 </li>
 
-                <li class="sidebar-item @(currentAction == "ActivityLogs" ? "active" : "")">
+                <li class="sidebar-item @(currentAction == "AuditLogs" ? "active" : "")">
                     @if (isSuperAdmin)
                     {
-                        <a href="/SuperAdmin/Dashboard/ActivityLogs" class="sidebar-link">
+                        <a href="/SuperAdmin/Dashboard/AuditLogs" class="sidebar-link">
                             <span class="sidebar-link-icon" aria-hidden="true">
                                 <svg viewBox="0 0 20 20" focusable="false">
-                                    <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M10 6v5l3 3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    <path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z" fill="currentColor"/>
+                                    <path d="M10 5v5.5l3.5 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
                                 </svg>
                             </span>
-                            <span class="sidebar-link-text">Activity Logs</span>
+                            <span class="sidebar-link-text">Audit Logs</span>
                         </a>
                     }
                     else if (isAdmin)
                     {
-                        <a href="/Admin/Dashboard/ActivityLogs" class="sidebar-link">
+                        <a href="/Admin/Dashboard/AuditLogs" class="sidebar-link">
                             <span class="sidebar-link-icon" aria-hidden="true">
                                 <svg viewBox="0 0 20 20" focusable="false">
-                                    <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M10 6v5l3 3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    <path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z" fill="currentColor"/>
+                                    <path d="M10 5v5.5l3.5 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
                                 </svg>
                             </span>
-                            <span class="sidebar-link-text">Activity Logs</span>
+                            <span class="sidebar-link-text">Audit Logs</span>
+                        </a>
+                    }
+                </li>
+
+                <li class="sidebar-item @(currentController == "Reports" ? "active" : "")">
+                    @if (isSuperAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Reports", new { area = "SuperAdmin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M3 3v14h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M7 13V9M10 13V7M13 13V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Reports</span>
+                        </a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Reports", new { area = "Admin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M3 3v14h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M7 13V9M10 13V7M13 13V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Reports</span>
                         </a>
                     }
                 </li>
@@ -190,40 +218,69 @@
             const sidebar = document.getElementById('sidebar');
             const desktopToggle = document.getElementById('sidebarToggle');
             const mobileToggle = document.getElementById('mobileMenuToggle');
-            
-            // Create overlay element for mobile slide mode (if needed)
-            let overlay = document.querySelector('.sidebar-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'sidebar-overlay';
-                overlay.id = 'sidebarOverlay';
-                document.body.appendChild(overlay);
+            const openIcon = desktopToggle?.querySelector('.sidebar-toggle-open');
+            const closeIcon = desktopToggle?.querySelector('.sidebar-toggle-close');
+
+            function updateToggleIcon(collapsed) {
+                if (openIcon && closeIcon) {
+                    openIcon.style.display = collapsed ? 'none' : 'block';
+                    closeIcon.style.display = collapsed ? 'block' : 'none';
+                }
             }
-            
-            // Check for saved state (applies to both desktop and mobile)
+
+            // Restore saved state instantly (no transition on page load)
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             if (isCollapsed) {
                 sidebar.classList.add('collapsed');
-            }
-            
-            // Desktop toggle - shrink/expand
-            if (desktopToggle) {
-                desktopToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('collapsed');
-                    const collapsed = sidebar.classList.contains('collapsed');
-                    localStorage.setItem('sidebarCollapsed', collapsed);
+                sidebar.classList.add('no-transition');
+                updateToggleIcon(true);
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        sidebar.classList.remove('no-transition');
+                    });
                 });
             }
-            
-            // Mobile toggle - same shrink/expand behavior
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                updateToggleIcon(collapsed);
+
+                // Animate menu text fade
+                const texts = sidebar.querySelectorAll('.sidebar-link-text, .sidebar-brand-text');
+                if (collapsed) {
+                    texts.forEach(function(el) { el.style.opacity = '0'; });
+                } else {
+                    setTimeout(function() {
+                        texts.forEach(function(el) { el.style.opacity = '1'; });
+                    }, 120);
+                }
+            }
+
+            if (desktopToggle) {
+                desktopToggle.addEventListener('click', toggleSidebar);
+            }
+
             if (mobileToggle && sidebar) {
                 mobileToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('collapsed');
+                    toggleSidebar();
                     const collapsed = sidebar.classList.contains('collapsed');
-                    localStorage.setItem('sidebarCollapsed', collapsed);
                     mobileToggle.setAttribute('aria-expanded', !collapsed);
                 });
             }
+
+            // Tooltip on hover when collapsed
+            sidebar.querySelectorAll('.sidebar-link').forEach(function(link) {
+                link.addEventListener('mouseenter', function() {
+                    if (sidebar.classList.contains('collapsed')) {
+                        const text = link.querySelector('.sidebar-link-text');
+                        if (text) link.setAttribute('title', text.textContent.trim());
+                    } else {
+                        link.removeAttribute('title');
+                    }
+                });
+            });
         })();
     </script>
 }

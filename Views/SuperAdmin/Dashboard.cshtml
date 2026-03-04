@@ -1,9 +1,20 @@
-@{
-    ViewData["Title"] = "SuperAdmin Dashboard";
+@model DMS_CPMS.Models.Admin.AdminDashboardViewModel
+
+@await Html.PartialAsync("~/Views/Shared/_AdminDashboard.cshtml", Model)
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const initialData = {
+            patientsByGender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PatientsByGender)),
+            patientsByAgeGroup: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PatientsByAgeGroup)),
+            newPatientsPerMonth: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.NewPatientsPerMonth)),
+            documentUploadTrend: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentUploadTrend)),
+            documentsByType: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentsByType)),
+            mostUpdatedDocuments: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MostUpdatedDocuments)),
+            recentActivities: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RecentActivities))
+        };
+        const dashArea = 'SuperAdmin';
+    </script>
+    <script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
 }
-
-<div class="container-fluid">
-    <h1 class="mb-3">SuperAdmin Dashboard</h1>
-    <p class="text-muted">Dashboard content will be added here.</p>
-</div>
-

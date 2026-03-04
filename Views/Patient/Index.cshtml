@@ -15,7 +15,7 @@
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
             <form class="row g-2 align-items-end mb-3" method="get">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Search by name</label>
                     <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Enter first or last name" />
                 </div>
@@ -25,18 +25,17 @@
                         <option value="">All</option>
                         <option value="Male" selected="@(Model.GenderFilter == "Male" ? "selected" : null)">Male</option>
                         <option value="Female" selected="@(Model.GenderFilter == "Female" ? "selected" : null)">Female</option>
-                        <option value="Other" selected="@(Model.GenderFilter == "Other" ? "selected" : null)">Other</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-secondary me-2">Filter</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Reset</a>
                 </div>
             </form>
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0">
-                    <thead class="table-header-ocean">
+            <div class="table-responsive" id="patients-table">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th style="width: 18%;">First Name</th>
                             <th style="width: 18%;">Last Name</th>
@@ -68,7 +67,10 @@
                                     <td>@patient.Gender</td>
                                     <td>@patient.VisitedAt.ToString("yyyy-MM-dd hh:mm tt")</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                        <button type="button" class="btn btn-sm me-1"
+                                                style="border: 1px solid var(--color-primary); color: var(--color-primary); background: transparent;"
+                                                onmouseover="this.style.background='var(--color-primary)'; this.style.color='#fff';"
+                                                onmouseout="this.style.background='transparent'; this.style.color='var(--color-primary)';"
                                                 data-patient-id="@patient.PatientID"
                                                 data-first-name="@patient.FirstName"
                                                 data-last-name="@patient.LastName"
@@ -86,7 +88,10 @@
                                             Documents
                                         </button>
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-secondary"
+                                                class="btn btn-sm"
+                                                style="border: 1px solid var(--color-primary); color: var(--color-primary); background: transparent;"
+                                                onmouseover="this.style.background='var(--color-primary)'; this.style.color='#fff';"
+                                                onmouseout="this.style.background='transparent'; this.style.color='var(--color-primary)';"
                                                 data-bs-toggle="tooltip"
                                                 data-bs-placement="top"
                                                 title="Edit Patient"
@@ -107,28 +112,29 @@
                 </table>
             </div>
 
-            @if (Model.TotalPages > 1)
-            {
-                <!-- Table Footer with Pagination - Standardized Style -->
-                <div class="table-footer">
-                    <div class="table-footer-left">
-                        <span class="text-muted small">Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
-                    </div>
-                    <div class="table-footer-right">
-                        <nav class="pagination-nav">
-                            <a asp-action="Index" asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
-                            <a asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
-                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
-                            <a asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
-                            <a asp-action="Index" asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
-                        </nav>
-                    </div>
+            <!-- Table Footer with Pagination - Standardized Style -->
+            <div class="table-footer">
+                <div class="table-footer-left">
+                    <span class="text-muted small">Showing @(Model.TotalCount > 0 ? (Model.PageNumber - 1) * Model.PageSize + 1 : 0) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
                 </div>
-            }
+                <div class="table-footer-right">
+                    <nav class="pagination-nav">
+                        <a asp-action="Index" asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                           asp-fragment="patients-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                        <a asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                           asp-fragment="patients-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                        <span class="pagination-indicator">@Model.PageNumber / @Math.Max(Model.TotalPages, 1)</span>
+                        <a asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                           asp-fragment="patients-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                        <a asp-action="Index" asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-gender="@Model.GenderFilter"
+                           asp-fragment="patients-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -139,6 +145,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/google-drive-picker.js" asp-append-version="true"></script>
     <script>
         // Global variables for document management
         let currentPatientId = null;
@@ -146,6 +153,51 @@
         let currentDocumentPage = 1;
         let documentSearchTerm = '';
         let documentTypeFilter = '';
+
+        // === Nested Modal Protection ===
+        // Prevents the parent Document Management modal from auto-closing
+        // when Bootstrap cleans up state after a nested modal (Upload, Edit, etc.) closes.
+        let _nestedModalActive = false;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Prevent parent modal from being dismissed while a nested modal is transitioning
+            const parentModalEl = document.getElementById('patientDocumentsModal');
+            if (parentModalEl) {
+                parentModalEl.addEventListener('hide.bs.modal', function (e) {
+                    if (_nestedModalActive) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // Track nested modal open/close to manage the protection flag
+            ['nestedUploadModal', 'nestedEditModal', 'nestedViewModal', 'nestedVersionModal',
+             'deleteConfirmModal', 'restoreConfirmModal', 'archiveConfirmModal', 'archiveVersionConfirmModal'
+            ].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('show.bs.modal', () => {
+                        _nestedModalActive = true;
+                    });
+                    el.addEventListener('hidden.bs.modal', () => {
+                        // Restore parent modal state after nested modal closes
+                        const parent = document.getElementById('patientDocumentsModal');
+                        if (parent && parent.classList.contains('show')) {
+                            document.body.classList.add('modal-open');
+                            document.body.style.overflow = 'hidden';
+                            // Ensure at least one backdrop exists for the parent modal
+                            if (!document.querySelector('.modal-backdrop')) {
+                                const bd = document.createElement('div');
+                                bd.className = 'modal-backdrop fade show';
+                                document.body.appendChild(bd);
+                            }
+                        }
+                        // Re-enable parent modal dismissal after transitions settle
+                        setTimeout(() => { _nestedModalActive = false; }, 500);
+                    });
+                }
+            });
+        });
 
         // Open Patient Documents Modal
         function openPatientDocumentsModal(button) {
@@ -500,6 +552,11 @@
             document.getElementById('uploadDocumentForm').reset();
             document.getElementById('uploadOtherTypeContainer').style.display = 'none';
             
+            // Reset Google Drive picker state
+            if (typeof resetUploadModal === 'function') {
+                resetUploadModal();
+            }
+            
             // Add blur effect to main modal
             document.body.classList.add('modal-blur-backdrop');
             
@@ -507,9 +564,16 @@
             uploadModal.show();
         }
 
-        // Handle upload modal close - remove blur effect
-        document.getElementById('nestedUploadModal')?.addEventListener('hidden.bs.modal', function() {
+        // Handle upload modal close - remove blur effect and restore parent modal state
+        document.getElementById('nestedUploadModal')?.addEventListener('hidden.bs.modal', function(e) {
+            e.stopPropagation();
             document.body.classList.remove('modal-blur-backdrop');
+            // Restore parent modal state (Bootstrap removes modal-open when any modal hides)
+            var parentModal = document.getElementById('patientDocumentsModal');
+            if (parentModal && parentModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
         });
 
         // Handle document type change in upload modal
@@ -527,51 +591,8 @@
             }
         });
 
-        // Handle upload form submission
-        document.getElementById('uploadDocumentForm')?.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const form = this;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const normalText = submitBtn.querySelector('.normal-text');
-            const loadingText = submitBtn.querySelector('.loading-text');
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            normalText.style.display = 'none';
-            loadingText.style.display = 'inline';
-            
-            try {
-                const formData = new FormData(form);
-                const response = await fetch('/PatientDocuments/UploadAjax', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        showNotification('Document uploaded successfully!', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('nestedUploadModal')).hide();
-                        loadPatientDocuments(currentPatientId, 1);
-                    } else {
-                        showNotification(result.message || 'Failed to upload document.', 'error');
-                    }
-                } else {
-                    showNotification('Failed to upload document. Please try again.', 'error');
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                showNotification('An error occurred during upload.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                normalText.style.display = 'inline';
-                loadingText.style.display = 'none';
-            }
-        });
+        // Handle upload form submission (supports both device and Google Drive)
+        document.getElementById('uploadDocumentForm')?.addEventListener('submit', handleUploadFormSubmit);
 
         // Edit Modal Functions
         function editDocument(docId, docName, docType) {
@@ -600,9 +621,15 @@
             editModal.show();
         }
 
-        // Handle edit modal close - remove blur effect
-        document.getElementById('nestedEditModal')?.addEventListener('hidden.bs.modal', function() {
+        // Handle edit modal close - remove blur effect and restore parent modal state
+        document.getElementById('nestedEditModal')?.addEventListener('hidden.bs.modal', function(e) {
+            e.stopPropagation();
             document.body.classList.remove('modal-blur-backdrop');
+            var parentModal = document.getElementById('patientDocumentsModal');
+            if (parentModal && parentModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
         });
 
         // Handle document type change in edit modal
@@ -709,6 +736,8 @@
                     body.innerHTML = `<img src="${data.filePath}" alt="${data.documentName}" class="img-fluid" style="max-height: 70vh;">`;
                 } else if (data.isPdf) {
                     body.innerHTML = `<iframe src="${data.filePath}" width="100%" height="500px" frameborder="0"></iframe>`;
+                } else if (data.hasPreview && data.previewPath) {
+                    body.innerHTML = `<iframe src="${data.previewPath}" width="100%" height="500px" frameborder="0"></iframe>`;
                 } else {
                     body.innerHTML = `
                         <div class="text-center py-5">
@@ -736,9 +765,15 @@
             }
         }
 
-        // Handle view modal close - remove blur effect
-        document.getElementById('nestedViewModal')?.addEventListener('hidden.bs.modal', function() {
+        // Handle view modal close - remove blur effect and restore parent modal state
+        document.getElementById('nestedViewModal')?.addEventListener('hidden.bs.modal', function(e) {
+            e.stopPropagation();
             document.body.classList.remove('modal-blur-backdrop');
+            var parentModal = document.getElementById('patientDocumentsModal');
+            if (parentModal && parentModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
         });
 
         // View Version History
@@ -780,7 +815,7 @@
                                     <div class="version-header">
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="version-number">${v.version}</span>
-                                            ${isCurrent ? '<span class="badge bg-success" style="font-size:0.7rem;">Active</span>' : '<span class="badge bg-secondary" style="font-size:0.7rem;">Inactive</span>'}
+                                            ${isCurrent ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background-color:#198754;display:inline-block;"></span><span style="color:#000;font-size:0.8rem;">Active</span></span>' : '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background-color:#6c757d;display:inline-block;"></span><span style="color:#000;font-size:0.8rem;">Inactive</span></span>'}
                                         </div>
                                         <span class="version-date">${v.dateModified}</span>
                                     </div>
@@ -858,6 +893,8 @@
                     modalBody.innerHTML = `<img src="${data.filePath}" alt="${documentName || 'Document'}" class="img-fluid" style="max-height: 70vh;" />`;
                 } else if (data.isPdf) {
                     modalBody.innerHTML = `<iframe src="${data.filePath}" width="100%" height="500px" style="border: none;"></iframe>`;
+                } else if (data.hasPreview && data.previewPath) {
+                    modalBody.innerHTML = `<iframe src="${data.previewPath}" width="100%" height="500px" style="border: none;"></iframe>`;
                 } else {
                     modalBody.innerHTML = `
                         <div class="alert alert-info">
@@ -951,9 +988,15 @@
             restoreDocumentId = null;
         }
 
-        // Handle version modal close - remove blur effect
-        document.getElementById('nestedVersionModal')?.addEventListener('hidden.bs.modal', function() {
+        // Handle version modal close - remove blur effect and restore parent modal state
+        document.getElementById('nestedVersionModal')?.addEventListener('hidden.bs.modal', function(e) {
+            e.stopPropagation();
             document.body.classList.remove('modal-blur-backdrop');
+            var parentModal = document.getElementById('patientDocumentsModal');
+            if (parentModal && parentModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
         });
 
         // ─── Archive Version from Version History ───
@@ -1089,9 +1132,15 @@
             deleteModal.show();
         }
 
-        // Handle delete confirm modal close - remove blur effect
-        document.getElementById('deleteConfirmModal')?.addEventListener('hidden.bs.modal', function() {
+        // Handle delete confirm modal close - remove blur effect and restore parent modal state
+        document.getElementById('deleteConfirmModal')?.addEventListener('hidden.bs.modal', function(e) {
+            e.stopPropagation();
             document.body.classList.remove('modal-blur-backdrop');
+            var parentModal = document.getElementById('patientDocumentsModal');
+            if (parentModal && parentModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
         });
 
         async function confirmDeleteDocument() {
@@ -1202,6 +1251,15 @@
                             backdrops[backdrops.length - 1].style.zIndex = '1065';
                         }
                     }, 10);
+                });
+                // Prevent nested modal close from affecting parent modal
+                el.addEventListener('hidden.bs.modal', function(e) {
+                    e.stopPropagation();
+                    var parentModal = document.getElementById('patientDocumentsModal');
+                    if (parentModal && parentModal.classList.contains('show')) {
+                        document.body.classList.add('modal-open');
+                        document.body.style.overflow = 'hidden';
+                    }
                 });
             }
         });

@@ -1,5 +1,6 @@
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Auth;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +11,16 @@ namespace DMS_CPMS.Controllers.Auth
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuditLogService _auditLogService;
 
-        public LoginController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        public LoginController(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            IAuditLogService auditLogService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
@@ -38,6 +44,9 @@ namespace DMS_CPMS.Controllers.Auth
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user != null && !user.IsActive)
             {
+                var deactRoles = await _userManager.GetRolesAsync(user);
+                await _auditLogService.LogAsync("Login Attempt (Deactivated)", user.Id);
+
                 ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact an administrator.");
                 return View("~/Views/Auth/Login.cshtml", model);
             }
@@ -55,6 +64,10 @@ namespace DMS_CPMS.Controllers.Auth
                 }
 
                 var roles = await _userManager.GetRolesAsync(loggedInUser);
+                var role = roles.FirstOrDefault() ?? "Unknown";
+                var fullName = $"{loggedInUser.FirstName} {loggedInUser.LastName}".Trim();
+
+                await _auditLogService.LogAsync("Login", loggedInUser.Id);
 
                 if (roles.Contains("SuperAdmin"))
                 {
@@ -75,6 +88,17 @@ namespace DMS_CPMS.Controllers.Auth
                 return RedirectToLocal(returnUrl);
             }
 
+            // Failed login attempt
+            if (user != null)
+            {
+                var failRoles = await _userManager.GetRolesAsync(user);
+                await _auditLogService.LogAsync("Failed Login", user.Id);
+            }
+            else
+            {
+                await _auditLogService.LogAsync("Failed Login");
+            }
+
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View("~/Views/Auth/Login.cshtml", model);
         }
@@ -83,6 +107,8 @@ namespace DMS_CPMS.Controllers.Auth
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            await _auditLogService.LogAsync("Logout");
+
             await _signInManager.SignOutAsync();
             return RedirectToAction(nameof(Login));
         }

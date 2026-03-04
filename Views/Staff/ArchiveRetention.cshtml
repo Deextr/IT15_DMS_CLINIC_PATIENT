@@ -30,7 +30,7 @@
         <div class="card-body">
             <!-- Filter bar -->
             <form method="get" asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention" class="row g-2 align-items-end mb-3">
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <label class="form-label">Search</label>
                     <input type="text" name="searchTerm" class="form-control"
                            placeholder="Search by document, user, or reason..." value="@Model.SearchTerm" />
@@ -43,17 +43,17 @@
                         <option value="Expired" selected="@(Model.StatusFilter == "Expired")">Expired</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-secondary me-2">Filter</button>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
                     <a asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention"
-                       class="btn btn-outline-secondary">Reset</a>
+                       class="btn btn-outline-secondary flex-fill">Reset</a>
                 </div>
             </form>
 
             <!-- Table -->
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0">
-                    <thead class="table-header-ocean">
+            <div class="table-responsive" id="staff-archive-table">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th>Document Name</th>
                             <th>Patient</th>
@@ -131,31 +131,30 @@
                 </table>
             </div>
 
-            <!-- Pagination - Matching Document Management Modal Style -->
-            @if (Model.TotalPages > 1)
-            {
-                int pageSize = 10;
-                int startEntry = (Model.PageNumber - 1) * pageSize + 1;
+            <!-- Pagination - Standardized Style -->
+            @{
+                int pageSize = 8;
+                int startEntry = Model.TotalDocuments > 0 ? (Model.PageNumber - 1) * pageSize + 1 : 0;
                 int endEntry = Math.Min(Model.PageNumber * pageSize, Model.TotalDocuments);
-                <div class="table-footer">
-                    <div class="table-footer-left">
-                        <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
-                    </div>
-                    <div class="table-footer-right">
-                        <nav class="pagination-nav">
-                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
-                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
-                            <span class="pagination-indicator">@Model.PageNumber / @Model.TotalPages</span>
-                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
-                            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })"
-                               class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
-                        </nav>
-                    </div>
-                </div>
             }
+            <div class="table-footer">
+                <div class="table-footer-left">
+                    <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
+                </div>
+                <div class="table-footer-right">
+                    <nav class="pagination-nav">
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                        <span class="pagination-indicator">@Model.PageNumber / @Math.Max(Model.TotalPages, 1)</span>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -18,7 +18,7 @@ namespace DMS_CPMS.Areas.Staff.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private const int PageSize = 10;
+        private const int PageSize = 8;
 
         public DashboardController(
             ApplicationDbContext context,
@@ -312,8 +312,7 @@ namespace DMS_CPMS.Areas.Staff.Controllers
         private async Task<List<RecentActivityItem>> GetRecentActivities(DateTime? from, DateTime? to, int count, string userId)
         {
             var query = _context.AuditLogs
-                .Where(a => a.EntityType == "Document" || a.EntityType == "DocumentVersion" || a.EntityType == "ArchiveDocument")
-                .Where(a => a.UserId == userId)
+                .Where(a => a.UserID == userId && a.DocumentID != null)
                 .AsQueryable();
 
             if (from.HasValue && to.HasValue)
@@ -322,6 +321,9 @@ namespace DMS_CPMS.Areas.Staff.Controllers
             }
 
             var logs = await query
+                .Include(a => a.Document)
+                    .ThenInclude(d => d!.Patient)
+                .Include(a => a.User)
                 .OrderByDescending(a => a.Timestamp)
                 .Take(count)
                 .ToListAsync();
@@ -329,44 +331,26 @@ namespace DMS_CPMS.Areas.Staff.Controllers
             var activities = new List<RecentActivityItem>();
             foreach (var log in logs)
             {
-                // Parse document/patient info from details
-                var docName = ExtractBetween(log.Details, "\"", "\"") ?? "Document #" + log.EntityId;
-                var patientName = "";
-
-                // Try to get patient name from the document
-                if (log.EntityType == "Document" || log.EntityType == "DocumentVersion")
-                {
-                    var doc = await _context.Documents
-                        .Include(d => d.Patient)
-                        .FirstOrDefaultAsync(d => d.DocumentID == log.EntityId);
-                    if (doc != null)
-                    {
-                        docName = doc.DocumentTitle;
-                        patientName = doc.Patient.FirstName + " " + doc.Patient.LastName;
-                    }
-                }
-                else if (log.EntityType == "ArchiveDocument")
-                {
-                    var archive = await _context.ArchiveDocuments
-                        .Include(a => a.Document).ThenInclude(d => d.Patient)
-                        .FirstOrDefaultAsync(a => a.ArchiveID == log.EntityId);
-                    if (archive != null)
-                    {
-                        docName = archive.Document.DocumentTitle;
-                        patientName = archive.Document.Patient.FirstName + " " + archive.Document.Patient.LastName;
-                    }
-                }
+                var docName = log.Document?.DocumentTitle ?? "Document #" + log.DocumentID;
+                var patientName = log.Document?.Patient != null
+                    ? $"{log.Document.Patient.FirstName} {log.Document.Patient.LastName}"
+                    : "";
 
                 var action = log.Action switch
                 {
-                    "Create" => "Uploaded",
-                    "Upload" => "Uploaded",
-                    "Update" => "Updated",
-                    "Archive" => "Archived",
-                    "Restore" => "Restored",
-                    "Delete" => "Deleted",
+                    "Upload Document" => "Uploaded",
+                    "Edit Document" => "Updated",
+                    "Archive Document" => "Archived",
+                    "Restore Document" => "Restored",
+                    "Restore Version" => "Restored",
+                    "Delete Document" => "Deleted",
+                    "Download Document" => "Downloaded",
                     _ => log.Action
                 };
+
+                var userName = log.User != null
+                    ? $"{log.User.FirstName} {log.User.LastName}".Trim()
+                    : "Unknown";
 
                 activities.Add(new RecentActivityItem
                 {
@@ -374,21 +358,11 @@ namespace DMS_CPMS.Areas.Staff.Controllers
                     PatientName = patientName,
                     Action = action,
                     Date = log.Timestamp,
-                    PerformedBy = log.UserName
+                    PerformedBy = userName
                 });
             }
 
             return activities;
-        }
-
-        private static string? ExtractBetween(string source, string start, string end)
-        {
-            var startIdx = source.IndexOf(start);
-            if (startIdx < 0) return null;
-            startIdx += start.Length;
-            var endIdx = source.IndexOf(end, startIdx);
-            if (endIdx < 0) return null;
-            return source[startIdx..endIdx];
         }
 
         public async Task<IActionResult> Patients(string? searchTerm, string? gender, int page = 1)
@@ -499,6 +473,14 @@ namespace DMS_CPMS.Areas.Staff.Controllers
             {
                 var docTitle = archive.Document.DocumentTitle;
                 _context.ArchiveDocuments.Remove(archive);
+
+                // If the document was marked archived because all versions were archived,
+                // clear the flag now that at least one version is being restored.
+                if (archive.Document.IsArchived)
+                {
+                    archive.Document.IsArchived = false;
+                }
+
                 await _context.SaveChangesAsync();
 
                 TempData["StatusMessage"] = $"Version of \"{docTitle}\" has been restored to version history.";

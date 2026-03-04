@@ -15,5 +15,7 @@ namespace DMS_CPMS.Data.Models
 
         // Controls whether the user is allowed to log in.
         public bool IsActive { get; set; } = true;
+
+        public bool IsArchived { get; set; } = false;
     }
 }

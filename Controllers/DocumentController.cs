@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Document;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -19,15 +20,21 @@ namespace DMS_CPMS.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly DocumentConversionService _conversionService;
+        private readonly IAuditLogService _auditLogService;
 
         public DocumentController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            DocumentConversionService conversionService,
+            IAuditLogService auditLogService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _conversionService = conversionService;
+            _auditLogService = auditLogService;
         }
 
         [HttpPost]
@@ -72,6 +79,8 @@ namespace DMS_CPMS.Controllers
 
             _context.DocumentVersions.Add(version);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("Upload Document", document.DocumentID);
 
             return RedirectToAction("Details", "Patient", new { id = model.PatientID });
         }
@@ -213,6 +222,8 @@ namespace DMS_CPMS.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            await _auditLogService.LogAsync("Edit Document", document.DocumentID);
+
             return RedirectToAction("ViewDocument", new { id = model.DocumentID });
         }
 
@@ -239,6 +250,8 @@ namespace DMS_CPMS.Controllers
             var contentType = GetContentType(physicalPath);
             var fileName = Path.GetFileName(physicalPath);
 
+            await _auditLogService.LogAsync("Download Document", version.Document.DocumentID);
+
             var fileBytes = await System.IO.File.ReadAllBytesAsync(physicalPath);
             return File(fileBytes, contentType, fileName);
         }
@@ -246,7 +259,7 @@ namespace DMS_CPMS.Controllers
         private bool IsAllowedFileType(string fileName)
         {
             var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            string[] allowed = { ".pdf", ".jpg", ".jpeg", ".png", ".csv" };
+            string[] allowed = { ".pdf", ".jpg", ".jpeg", ".png", ".csv", ".doc", ".docx" };
             return allowed.Contains(extension);
         }
 
@@ -262,6 +275,12 @@ namespace DMS_CPMS.Controllers
             using (var stream = new FileStream(physicalPath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
+            }
+
+            // Generate PDF preview for Word documents
+            if (DocumentConversionService.CanConvertToPreview(physicalPath))
+            {
+                _conversionService.ConvertToPdfPreview(physicalPath);
             }
 
             var relativePath = $"/uploads/documents/{patientId}/{documentId}/{fileName}";

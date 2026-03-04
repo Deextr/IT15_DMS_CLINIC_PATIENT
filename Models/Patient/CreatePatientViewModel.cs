@@ -28,7 +28,12 @@ namespace DMS_CPMS.Models.Patient
         [DataType(DataType.DateTime)]
         public DateTime VisitedAt { get; set; }
 
-        // Optional initial documents to upload for the patient
-        public List<IFormFile>? UploadedFiles { get; set; }
+        // Optional initial document to upload for the patient
+        public IFormFile? UploadedFile { get; set; }
+
+        // Google Drive upload fields
+        public string? DocumentSourceType { get; set; }
+        public string? GoogleDriveFileId { get; set; }
+        public string? GoogleDriveAccessToken { get; set; }
     }
 }

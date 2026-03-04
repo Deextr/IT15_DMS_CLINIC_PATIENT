@@ -21,7 +21,7 @@ namespace DMS_CPMS.Data.Models
         public int RetentionDurationMonths { get; set; }
 
         /// <summary>
-        /// Action to take after retention expires: "NotifyAdmin", "AutoDelete", or "ManualReview".
+        /// Action to take after retention expires: "AutoDelete" or "ManualReview".
         /// </summary>
         [Required]
         [StringLength(50)]

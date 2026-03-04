@@ -13,32 +13,41 @@
                     <input type="hidden" asp-for="PatientID" />
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" />
+                            <div class="infield">
+                                <input asp-for="FirstName" class="form-control" />
+                                <label asp-for="FirstName" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="FirstName" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" />
+                            <div class="infield">
+                                <input asp-for="LastName" class="form-control" />
+                                <label asp-for="LastName" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="LastName" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="BirthDate" class="form-label"></label>
-                            <input asp-for="BirthDate" type="date" class="form-control" />
+                            <div class="infield">
+                                <input asp-for="BirthDate" type="date" class="form-control" />
+                                <label asp-for="BirthDate" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="BirthDate" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="Gender" class="form-label"></label>
-                            <select asp-for="Gender" class="form-select">
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            <div class="infield">
+                                <select asp-for="Gender" class="form-select">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                <label asp-for="Gender" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="Gender" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="VisitedAt" class="form-label"></label>
-                            <input asp-for="VisitedAt" type="datetime-local" class="form-control" />
+                            <div class="infield">
+                                <input asp-for="VisitedAt" type="datetime-local" class="form-control" />
+                                <label asp-for="VisitedAt" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="VisitedAt" class="text-danger"></span>
                         </div>
                     </div>

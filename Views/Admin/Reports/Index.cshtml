@@ -1,0 +1,6 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Reports";
+}
+@await Html.PartialAsync("~/Views/Shared/Reports/_ReportsIndex.cshtml", Model)

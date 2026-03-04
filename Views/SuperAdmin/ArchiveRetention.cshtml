@@ -8,11 +8,11 @@
         <div class="card-body">
             <!-- Filter bar with Add Policy button -->
             <div class="row g-2 align-items-end mb-3">
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <label class="form-label">Search</label>
                     <input type="text" class="form-control" placeholder="Search policies...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Status</label>
                     <select class="form-select">
                         <option value="">All Statuses</option>
@@ -20,12 +20,12 @@
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button type="button" class="btn btn-secondary me-2">Filter</button>
-                    <button type="button" class="btn btn-outline-secondary">Reset</button>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-secondary flex-fill">Filter</button>
+                    <button type="button" class="btn btn-outline-secondary flex-fill">Reset</button>
                 </div>
-                <div class="col-md-2 text-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary flex-fill" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         Add Policy
                     </button>
@@ -33,8 +33,8 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0">
-                    <thead class="table-header-ocean">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th>Policy Name</th>
                             <th>Document Type</th>
@@ -152,12 +152,11 @@
             </div>
             <div class="modal-body">
                 <form id="addPolicyForm">
-                    <div class="mb-3">
-                        <label class="form-label">Policy Name</label>
-                        <input type="text" class="form-control" placeholder="e.g., Medical Records" required>
+                    <div class="infield mb-3">
+                        <input type="text" class="form-control" required>
+                        <label class="infield-label">Policy Name</label>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Document Type</label>
+                    <div class="infield mb-3">
                         <select class="form-select" required>
                             <option value="">Select type...</option>
                             <option>Medical Records</option>
@@ -168,17 +167,28 @@
                             <option>Vaccination Records</option>
                             <option>Consent Forms</option>
                         </select>
+                        <label class="infield-label">Document Type</label>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Retention Period</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" placeholder="e.g., 7" required>
-                            <select class="form-select" style="max-width: 120px;">
-                                <option>Years</option>
-                                <option>Months</option>
-                                <option>Days</option>
-                                <option>Indefinite</option>
-                            </select>
+                        <label class="form-label" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--color-text-muted); font-weight: 600;">Retention Period</label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <div class="infield">
+                                    <input type="number" class="form-control" required>
+                                    <label class="infield-label">Period</label>
+                                </div>
+                            </div>
+                            <div class="col-5">
+                                <div class="infield">
+                                    <select class="form-select">
+                                        <option>Years</option>
+                                        <option>Months</option>
+                                        <option>Days</option>
+                                        <option>Indefinite</option>
+                                    </select>
+                                    <label class="infield-label">Unit</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -189,9 +199,9 @@
                             </label>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="2" placeholder="Policy description..."></textarea>
+                    <div class="infield mb-3">
+                        <textarea class="form-control" rows="2"></textarea>
+                        <label class="infield-label">Description</label>
                     </div>
                 </form>
             </div>

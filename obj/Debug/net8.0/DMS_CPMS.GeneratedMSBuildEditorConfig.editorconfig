@@ -120,16 +120,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQWNjb3VudHNcX0VkaXRTdGFmZk1vZGFsLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/ActivityLogs.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQWN0aXZpdHlMb2dzLmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/ArchiveRetention.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQXJjaGl2ZVJldGVudGlvbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/AuditLogs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQXVkaXRMb2dzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/Dashboard.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/Reports/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUmVwb3J0c1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Admin/_ViewStart.cshtml]
@@ -196,8 +200,44 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGF0aWVudFxfVmlld1N0YXJ0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/AuditLogs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEF1ZGl0TG9ncy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_AuditLogsReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX0F1ZGl0TG9nc1JlcG9ydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_DocumentActivityReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX0RvY3VtZW50QWN0aXZpdHlSZXBvcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_PatientSummaryReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX1BhdGllbnRTdW1tYXJ5UmVwb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_PrintReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX1ByaW50UmVwb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_ReportPagination.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX1JlcG9ydFBhZ2luYXRpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_ReportsIndex.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX1JlcG9ydHNJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/Reports/_UserActivityReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFJlcG9ydHNcX1VzZXJBY3Rpdml0eVJlcG9ydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/_AdminDashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BZG1pbkRhc2hib2FyZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/Shared/_AdminLayout.cshtml]
@@ -276,16 +316,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxBY2NvdW50c1xfRWRpdEFjY291bnRNb2RhbC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/ActivityLogs.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxBY3Rpdml0eUxvZ3MuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/ArchiveRetention.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxBcmNoaXZlUmV0ZW50aW9uLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/AuditLogs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxBdWRpdExvZ3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/Dashboard.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/Reports/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwZXJBZG1pblxSZXBvcnRzXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Dextr/source/repos/DMS_CPMS/DMS_CPMS/Views/SuperAdmin/_ViewStart.cshtml]

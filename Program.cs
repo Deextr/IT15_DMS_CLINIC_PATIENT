@@ -1,6 +1,7 @@
 using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Data.Seeders;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -41,6 +42,25 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 builder.Services.AddControllersWithViews();
+
+// Register HttpContextAccessor for audit logging
+builder.Services.AddHttpContextAccessor();
+
+// Register Audit Log service
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+// Register Google Drive service
+builder.Services.AddSingleton<GoogleDriveService>();
+
+// Register document conversion service (docx → PDF preview)
+builder.Services.AddSingleton<DocumentConversionService>();
+
+// Register Admin Dashboard service
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
+// Register Report services
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IReportExportService, ReportExportService>();
 
 var app = builder.Build();
 

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Patient;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -19,17 +20,23 @@ namespace DMS_CPMS.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly IAuditLogService _auditLogService;
+        private readonly GoogleDriveService _googleDriveService;
 
-        private const int PageSize = 10;
+        private const int PageSize = 8;
 
         public PatientController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            IAuditLogService auditLogService,
+            GoogleDriveService googleDriveService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _auditLogService = auditLogService;
+            _googleDriveService = googleDriveService;
         }
 
         [HttpGet]
@@ -62,17 +69,15 @@ namespace DMS_CPMS.Controllers
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
 
-            if (model.UploadedFiles != null && model.UploadedFiles.Count > 0)
+            await _auditLogService.LogAsync("Create Patient");
+
+            if (model.UploadedFile != null && model.UploadedFile.Length > 0)
             {
                 var currentUserId = _userManager.GetUserId(User);
-                foreach (var file in model.UploadedFiles.Where(f => f != null && f.Length > 0))
-                {
-                    if (!IsAllowedFileType(file.FileName))
-                    {
-                        // Skip invalid file types but continue with others
-                        continue;
-                    }
+                var file = model.UploadedFile;
 
+                if (IsAllowedFileType(file.FileName))
+                {
                     var document = new Document
                     {
                         PatientID = patient.PatientID,
@@ -97,6 +102,53 @@ namespace DMS_CPMS.Controllers
 
                     _context.DocumentVersions.Add(version);
                     await _context.SaveChangesAsync();
+                }
+            }
+            else if (model.DocumentSourceType == "googledrive"
+                     && !string.IsNullOrEmpty(model.GoogleDriveFileId)
+                     && !string.IsNullOrEmpty(model.GoogleDriveAccessToken))
+            {
+                try
+                {
+                    var currentUserId = _userManager.GetUserId(User);
+
+                    var document = new Document
+                    {
+                        PatientID = patient.PatientID,
+                        UploadBy = currentUserId ?? string.Empty,
+                        DocumentTitle = "Google Drive Document",
+                        DocumentType = "Other",
+                        UploadDate = DateTime.UtcNow
+                    };
+
+                    _context.Documents.Add(document);
+                    await _context.SaveChangesAsync();
+
+                    var downloadResult = await _googleDriveService.DownloadFileAsync(
+                        model.GoogleDriveFileId,
+                        model.GoogleDriveAccessToken,
+                        patient.PatientID,
+                        document.DocumentID,
+                        versionNumber: 1);
+
+                    // Update document title from the actual filename
+                    document.DocumentTitle = Path.GetFileNameWithoutExtension(downloadResult.OriginalFileName);
+                    document.DocumentType = Path.GetExtension(downloadResult.OriginalFileName).Trim('.');
+
+                    var version = new DocumentVersion
+                    {
+                        DocumentID = document.DocumentID,
+                        VersionNumber = 1,
+                        FilePath = downloadResult.RelativePath,
+                        CreatedDate = DateTime.UtcNow
+                    };
+
+                    _context.DocumentVersions.Add(version);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    // Google Drive upload failure should not block patient creation
                 }
             }
 
@@ -195,6 +247,8 @@ namespace DMS_CPMS.Controllers
             _context.Patients.Update(patient);
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("Update Patient");
+
             return RedirectToAction(nameof(Details), new { id = model.PatientID });
         }
 
@@ -230,7 +284,9 @@ namespace DMS_CPMS.Controllers
                 SearchTerm = searchTerm,
                 GenderFilter = gender,
                 PageNumber = page,
-                TotalPages = totalPages
+                PageSize = PageSize,
+                TotalPages = totalPages,
+                TotalCount = totalCount
             };
         }
 

@@ -105,6 +105,13 @@
                                                 <img src="@filePath" alt="Document preview" class="img-fluid rounded shadow-sm" />
                                             </div>
                                         }
+                                        else if (DMS_CPMS.Services.DocumentConversionService.CanConvertToPreview(Model.LatestVersion.FilePath))
+                                        {
+                                            var previewPath = Url.Content(DMS_CPMS.Services.DocumentConversionService.GetPreviewRelativePath(Model.LatestVersion.FilePath));
+                                            <div class="ratio ratio-4x3 mb-2 document-preview-frame">
+                                                <iframe src="@previewPath" title="Document preview" loading="lazy"></iframe>
+                                            </div>
+                                        }
                                         else
                                         {
                                             <p class="text-muted">Preview is not available for this file type. Please download instead.</p>
@@ -127,7 +134,7 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover align-middle mb-0">
+                                <table class="table table-hover align-middle mb-0">
                                     <thead class="table-header-ocean">
                                         <tr>
                                             <th scope="col">Version</th>

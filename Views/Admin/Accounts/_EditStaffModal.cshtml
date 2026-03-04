@@ -16,42 +16,41 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" placeholder="First name" />
+                            <div class="infield">
+                                <input asp-for="FirstName" class="form-control" />
+                                <label asp-for="FirstName" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="FirstName" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" placeholder="Last name" />
+                            <div class="infield">
+                                <input asp-for="LastName" class="form-control" />
+                                <label asp-for="LastName" class="infield-label"></label>
+                            </div>
                             <span asp-validation-for="LastName" class="text-danger"></span>
                         </div>
-                    </div>
-
-                    <div class="mb-3 mt-3">
-                        <label asp-for="Username" class="form-label"></label>
-                        <input asp-for="Username" class="form-control" placeholder="Username" />
-                        <span asp-validation-for="Username" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3 form-check">
-                        <input asp-for="IsActive" class="form-check-input" />
-                        <label asp-for="IsActive" class="form-check-label"></label>
-                        <small class="form-text text-muted d-block">Deactivated users cannot log in. You cannot deactivate your own account.</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="NewPassword" class="form-label"></label>
-                        <input asp-for="NewPassword" class="form-control" placeholder="Leave blank to keep current" autocomplete="new-password" />
-                        <small class="form-text text-muted">
-                            Minimum 8 characters, with uppercase, lowercase, number, and special character.
-                        </small>
-                        <span asp-validation-for="NewPassword" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm new password" autocomplete="new-password" />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        <div class="col-12">
+                            <div class="infield">
+                                <input asp-for="Username" class="form-control" />
+                                <label asp-for="Username" class="infield-label"></label>
+                            </div>
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <div class="infield">
+                                <input asp-for="NewPassword" class="form-control" autocomplete="new-password" data-password-hint="true" />
+                                <label asp-for="NewPassword" class="infield-label"></label>
+                            </div>
+                            <span asp-validation-for="NewPassword" class="text-danger"></span>
+                            <small class="password-hint">Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
+                        </div>
+                        <div class="col-12">
+                            <div class="infield">
+                                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                                <label asp-for="ConfirmPassword" class="infield-label"></label>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

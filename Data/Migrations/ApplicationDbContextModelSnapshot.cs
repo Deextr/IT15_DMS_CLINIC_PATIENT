@@ -78,6 +78,11 @@ namespace DMS_CPMS.Data.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsArchived")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -171,49 +176,40 @@ namespace DMS_CPMS.Data.Migrations
 
             modelBuilder.Entity("DMS_CPMS.Data.Models.AuditLog", b =>
                 {
-                    b.Property<int>("AuditLogID")
+                    b.Property<int>("LogID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AuditLogID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("EntityId")
+                    b.Property<int?>("DocumentID")
                         .HasColumnType("int");
 
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
+                    b.Property<string>("Role")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<string>("UserID")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.HasKey("LogID");
 
-                    b.HasKey("AuditLogID");
+                    b.HasIndex("DocumentID");
+
+                    b.HasIndex("Timestamp")
+                        .HasDatabaseName("IX_AuditLog_Timestamp");
+
+                    b.HasIndex("UserID")
+                        .HasDatabaseName("IX_AuditLog_UserID");
 
                     b.ToTable("AuditLog");
                 });
@@ -490,6 +486,23 @@ namespace DMS_CPMS.Data.Migrations
                     b.Navigation("ArchivedVersion");
 
                     b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("DMS_CPMS.Data.Models.AuditLog", b =>
+                {
+                    b.HasOne("DMS_CPMS.Data.Models.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DMS_CPMS.Data.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Document");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DMS_CPMS.Data.Models.Document", b =>

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Models.Accounts;
 using DMS_CPMS.Models.SuperAdmin;
+using DMS_CPMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,15 +15,18 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IAuditLogService _auditLogService;
 
-        private const int PageSize = 10;
+        private const int PageSize = 8;
 
         public AccountsController(
             UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager)
+            RoleManager<ApplicationRole> roleManager,
+            IAuditLogService auditLogService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _auditLogService = auditLogService;
         }
 
         private static string FullName(ApplicationUser u)
@@ -41,6 +45,7 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
                 .Concat(staffUsers.Select(u => (User: u, Role: "Staff")))
                 .GroupBy(x => x.User.Id)
                 .Select(g => g.First())
+                .Where(x => !x.User.IsArchived)
                 .Select(x => new AccountListItemViewModel
                 {
                     Id = x.User.Id,
@@ -168,6 +173,8 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
 
             await _userManager.AddToRoleAsync(user, model.RoleType);
 
+            await _auditLogService.LogAsync("Create Account");
+
             TempData["StatusMessage"] = "Account created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -258,7 +265,7 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
             user.FirstName = model.FirstName ?? "";
             user.LastName = model.LastName ?? "";
             user.Email = $"{model.Username}@example.com";
-            user.IsActive = string.Equals(currentId, model.Id, StringComparison.OrdinalIgnoreCase) ? true : model.IsActive;
+            // IsActive is managed via separate Activate/Deactivate actions, not the edit form
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
@@ -272,7 +279,11 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
             {
                 await _userManager.RemoveFromRoleAsync(user, currentRole);
                 await _userManager.AddToRoleAsync(user, model.RoleType);
+
+                await _auditLogService.LogAsync("Role Change");
             }
+
+            await _auditLogService.LogAsync("Update Account");
 
             TempData["StatusMessage"] = "Account updated successfully.";
             return RedirectToAction(nameof(Index));
@@ -336,7 +347,65 @@ namespace DMS_CPMS.Areas.SuperAdmin.Controllers
             user.IsActive = false;
             await _userManager.UpdateAsync(user);
 
+            await _auditLogService.LogAsync("Deactivate Account");
+
             TempData["StatusMessage"] = "Account has been deactivated. The user will no longer be able to log in.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return RedirectToAction(nameof(Index));
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return RedirectToAction(nameof(Index));
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Any(r => r == "Admin" || r == "Staff"))
+                return RedirectToAction(nameof(Index));
+
+            user.IsActive = true;
+            await _userManager.UpdateAsync(user);
+
+            await _auditLogService.LogAsync("Activate Account");
+
+            TempData["StatusMessage"] = "Account has been activated successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveAccount(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return RedirectToAction(nameof(Index));
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return RedirectToAction(nameof(Index));
+
+            var currentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.Equals(currentId, id, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "You cannot archive your own account.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Any(r => r == "Admin" || r == "Staff"))
+                return RedirectToAction(nameof(Index));
+
+            user.IsArchived = true;
+            user.IsActive = false;
+            await _userManager.UpdateAsync(user);
+
+            await _auditLogService.LogAsync("Archive Account");
+
+            TempData["StatusMessage"] = $"Account \"{user.UserName}\" has been archived.";
             return RedirectToAction(nameof(Index));
         }
     }

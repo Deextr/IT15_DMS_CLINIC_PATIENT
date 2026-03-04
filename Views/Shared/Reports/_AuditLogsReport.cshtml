@@ -1,0 +1,61 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    var rpt = Model.AuditLogs!;
+}
+
+<!-- ═══════════════════════════════════════════════════
+     AUDIT LOGS REPORT
+     ═══════════════════════════════════════════════════ -->
+<div class="report-section mb-4">
+    <div class="report-section-header">
+        <h6 class="fw-bold mb-0">Audit Logs Report</h6>
+        <small>Chronological record of all system actions</small>
+    </div>
+
+    <div style="padding: 16px;">
+
+        <div class="table-responsive">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 6%;">Log ID</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Document</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.Rows.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No audit log entries found for the selected period.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.Rows)
+                        {
+                            <tr>
+                                <td>@row.LogID</td>
+                                <td>@row.UserFullName</td>
+                                <td>@row.Role</td>
+                                <td>@row.Action</td>
+                                <td>@row.DocumentTitle</td>
+                                <td>@row.Timestamp</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @await Html.PartialAsync("~/Views/Shared/Reports/_ReportPagination.cshtml",
+            new ViewDataDictionary(ViewData) {
+                { "PageNumber", rpt.PageNumber }, { "TotalPages", rpt.TotalPages },
+                { "TotalCount", rpt.TotalCount }, { "PageSize", rpt.PageSize },
+                { "Area", Model.Area }, { "Report", Model.SelectedReport },
+                { "DatePreset", Model.DatePreset }, { "DateFrom", Model.DateFrom }, { "DateTo", Model.DateTo }
+            })
+
+    </div>
+</div>
