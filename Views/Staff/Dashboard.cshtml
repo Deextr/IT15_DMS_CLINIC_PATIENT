@@ -1,0 +1,219 @@
+@model DMS_CPMS.Models.Staff.StaffDashboardViewModel
+@{
+    ViewData["Title"] = "Staff Dashboard";
+}
+
+<div class="container-fluid staff-dashboard-v2">
+    <!-- ─── Welcome Header ─── -->
+    <div class="sd-welcome">
+        <h4 class="sd-welcome-title">Welcome back, @Model.StaffFirstName!</h4>
+        <p class="sd-welcome-sub">Here's your work overview for today. What would you like to do?</p>
+    </div>
+
+    <!-- ─── Quick Actions (Top Priority) ─── -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="sd-section-label">Quick Actions</div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <a href="@Url.Action("Patients", "Dashboard", new { area = "Staff" })" class="sd-quick-action" title="Search for a patient">
+                <div class="sd-qa-icon sd-qa-icon-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </div>
+                <span class="sd-qa-label">Search Patient</span>
+                <span class="sd-qa-hint">Find patient records</span>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <a href="@Url.Action("Patients", "Dashboard", new { area = "Staff" })" class="sd-quick-action" title="Upload a document">
+                <div class="sd-qa-icon sd-qa-icon-upload">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <span class="sd-qa-label">Upload Document</span>
+                <span class="sd-qa-hint">Add new files</span>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <a href="@Url.Action("Patients", "Dashboard", new { area = "Staff" })" class="sd-quick-action" title="View documents">
+                <div class="sd-qa-icon sd-qa-icon-view">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                </div>
+                <span class="sd-qa-label">View Documents</span>
+                <span class="sd-qa-hint">Browse all files</span>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff" })" class="sd-quick-action" title="Archive document">
+                <div class="sd-qa-icon sd-qa-icon-archive">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/>
+                    </svg>
+                </div>
+                <span class="sd-qa-label">Document Archive</span>
+                <span class="sd-qa-hint">Manage archived files</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── Notifications / Alerts (if any) ─── -->
+    @if (Model.Notifications.Count > 0)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="sd-section-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-2px;margin-right:4px;">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    Alerts
+                </div>
+                <div class="sd-alerts-panel">
+                    @foreach (var note in Model.Notifications)
+                    {
+                        <div class="sd-alert sd-alert-@note.Type">
+                            <div class="sd-alert-icon">
+                                @if (note.Icon == "clock")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                }
+                                else if (note.Icon == "alert")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                                    </svg>
+                                }
+                            </div>
+                            <span class="sd-alert-text">@note.Message</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ─── Work Summary Panel ─── -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="sd-section-label">Your Work Summary</div>
+            <div class="sd-summary-panel">
+                <div class="sd-summary-item">
+                    <div class="sd-summary-icon sd-summary-icon-today">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="sd-summary-info">
+                        <span class="sd-summary-value">@Model.DocumentsUploadedToday</span>
+                        <span class="sd-summary-label">Uploaded Today</span>
+                    </div>
+                </div>
+                <div class="sd-summary-divider"></div>
+                <div class="sd-summary-item">
+                    <div class="sd-summary-icon sd-summary-icon-week">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                    </div>
+                    <div class="sd-summary-info">
+                        <span class="sd-summary-value">@Model.DocumentsUploadedThisWeek</span>
+                        <span class="sd-summary-label">Uploaded This Week</span>
+                    </div>
+                </div>
+                <div class="sd-summary-divider"></div>
+                <div class="sd-summary-item">
+                    <div class="sd-summary-icon sd-summary-icon-total">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                    </div>
+                    <div class="sd-summary-info">
+                        <span class="sd-summary-value">@Model.TotalDocumentsHandled</span>
+                        <span class="sd-summary-label">Total Documents Handled</span>
+                    </div>
+                </div>
+                <div class="sd-summary-divider"></div>
+                <div class="sd-summary-item">
+                    <div class="sd-summary-icon sd-summary-icon-archived">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/>
+                        </svg>
+                    </div>
+                    <div class="sd-summary-info">
+                        <span class="sd-summary-value">@Model.RecentlyArchivedCount</span>
+                        <span class="sd-summary-label">Recently Archived</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Recent Activity ─── -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="sd-section-label">Recent Activity</div>
+            <div class="sd-activity-card">
+                @if (Model.RecentActivities.Count == 0)
+                {
+                    <div class="sd-empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <p>No recent activity yet.</p>
+                        <span>Your recent document actions will appear here.</span>
+                    </div>
+                }
+                else
+                {
+                    <ul class="sd-activity-list">
+                        @foreach (var item in Model.RecentActivities)
+                        {
+                            var dotClass = item.Action switch
+                            {
+                                "Uploaded" => "sd-dot-upload",
+                                "Updated" => "sd-dot-update",
+                                "Archived" => "sd-dot-archive",
+                                "Restored" => "sd-dot-restore",
+                                "Deleted" => "sd-dot-delete",
+                                "Downloaded" => "sd-dot-download",
+                                _ => "sd-dot-default"
+                            };
+                            var badgeClass = item.Action switch
+                            {
+                                "Uploaded" => "dash-badge-uploaded",
+                                "Updated" => "dash-badge-updated",
+                                "Archived" => "dash-badge-archived",
+                                "Restored" => "dash-badge-restored",
+                                "Deleted" => "dash-badge-deleted",
+                                _ => "dash-badge-default"
+                            };
+                            <li class="sd-activity-item">
+                                <div class="sd-activity-dot @dotClass"></div>
+                                <div class="sd-activity-body">
+                                    <p class="sd-activity-msg">@item.HumanMessage</p>
+                                    <div class="sd-activity-meta">
+                                        <span class="dash-activity-badge @badgeClass">@item.Action</span>
+                                        <span class="sd-activity-time">@item.RelativeTime</span>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

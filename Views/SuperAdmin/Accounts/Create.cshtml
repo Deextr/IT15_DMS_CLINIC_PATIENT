@@ -1,0 +1,75 @@
+@model DMS_CPMS.Models.SuperAdmin.CreateAccountViewModel
+
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-3">Create Account</h1>
+    <p class="text-muted">Use this form to create Admin and Staff accounts.</p>
+
+    @if (TempData["StatusMessage"] is string statusMessage)
+    {
+        <div class="alert alert-success" role="alert">
+            @statusMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-area="SuperAdmin" asp-action="Create" asp-controller="Accounts" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+
+                <div class="infield mb-3">
+                    <input asp-for="FirstName" class="form-control" />
+                    <label asp-for="FirstName" class="infield-label"></label>
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="infield mb-3">
+                    <input asp-for="LastName" class="form-control" />
+                    <label asp-for="LastName" class="infield-label"></label>
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <div class="infield mb-3">
+                    <select asp-for="RoleType" class="form-select">
+                        <option value="Admin">Admin</option>
+                        <option value="Staff">Staff</option>
+                    </select>
+                    <label asp-for="RoleType" class="infield-label"></label>
+                    <span asp-validation-for="RoleType" class="text-danger"></span>
+                </div>
+
+                <div class="infield mb-3">
+                    <input asp-for="Username" class="form-control" />
+                    <label asp-for="Username" class="infield-label"></label>
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="infield mb-3">
+                    <input asp-for="Password" class="form-control" data-password-hint="true" />
+                    <label asp-for="Password" class="infield-label"></label>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                    <small class="password-hint">Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
+                </div>
+
+                <div class="infield mb-3">
+                    <input asp-for="ConfirmPassword" class="form-control" />
+                    <label asp-for="ConfirmPassword" class="infield-label"></label>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <a asp-area="SuperAdmin" asp-controller="Accounts" asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

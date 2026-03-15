@@ -1,0 +1,296 @@
+@model DMS_CPMS.Models.Admin.AdminDashboardViewModel
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "Admin";
+    var isSuperAdmin = area == "SuperAdmin";
+    var roleLabel = isSuperAdmin ? "SuperAdmin" : "Admin";
+    ViewData["Title"] = $"{roleLabel} Dashboard";
+}
+
+<div class="container-fluid admin-dashboard" data-area="@area">
+
+    <!-- ═══════ Date Range Filter Bar ═══════ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dash-filter-bar">
+                <div class="dash-filter-group" role="group" aria-label="Date Range Filter">
+                    <button type="button" class="dash-filter-btn active" data-range="all">All Time</button>
+                    <button type="button" class="dash-filter-btn" data-range="today">Today</button>
+                    <button type="button" class="dash-filter-btn" data-range="weekly">Weekly</button>
+                    <button type="button" class="dash-filter-btn" data-range="monthly">Monthly</button>
+                    <button type="button" class="dash-filter-btn" data-range="yearly">Yearly</button>
+                    <button type="button" class="dash-filter-btn" data-range="custom" id="btnCustomRange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>Custom
+                    </button>
+                </div>
+                <!-- Custom Date Range Fields -->
+                <div class="dash-custom-date-fields" id="customDateFields" style="display:none;">
+                    <div class="dash-date-input">
+                        <label for="customStartDate">From</label>
+                        <input type="date" id="customStartDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="dash-date-input">
+                        <label for="customEndDate">To</label>
+                        <input type="date" id="customEndDate" class="form-control form-control-sm">
+                    </div>
+                    <button type="button" class="dash-apply-btn" id="applyCustomDate">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ 1. KPI Summary Cards ═══════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl col-md-6 col-sm-6">
+            <a href="@Url.Action("Index", "Patient", new { area = "" })" class="dash-kpi-link">
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-icon" style="background:rgba(0,109,119,0.08);color:var(--color-primary);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <div class="dash-kpi-body">
+                    <span class="dash-kpi-number" id="kpiTotalPatients">@Model.TotalPatients.ToString("N0")</span>
+                    <span class="dash-kpi-label">Total Patients</span>
+                </div>
+            </div>
+            </a>
+        </div>
+        <div class="col-xl col-md-6 col-sm-6">
+            <a href="@Url.Action("Index", "Reports", new { area = area, report = "DocumentActivity" })" class="dash-kpi-link">
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-icon" style="background:rgba(0,86,96,0.08);color:var(--color-primary-dark);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                </div>
+                <div class="dash-kpi-body">
+                    <span class="dash-kpi-number" id="kpiTotalDocs">@Model.TotalDocuments.ToString("N0")</span>
+                    <span class="dash-kpi-label">Total Documents</span>
+                </div>
+            </div>
+            </a>
+        </div>
+        <div class="col-xl col-md-6 col-sm-6">
+            <a href="@Url.Action("Index", "ArchiveRetention", new { area = "" })" class="dash-kpi-link">
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-icon" style="background:rgba(131,197,190,0.15);color:var(--color-accent);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>
+                    </svg>
+                </div>
+                <div class="dash-kpi-body">
+                    <span class="dash-kpi-number" id="kpiTotalArchiveDocs">@Model.TotalArchiveDocuments.ToString("N0")</span>
+                    <span class="dash-kpi-label" id="kpiTotalArchiveDocsLabel">Archived All Time</span>
+                </div>
+            </div>
+            </a>
+        </div>
+        <div class="col-xl col-md-6 col-sm-6">
+            <a href="@Url.Action("Index", "Accounts", new { area = area })" class="dash-kpi-link">
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-icon" style="background:rgba(0,109,119,0.08);color:var(--color-primary);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+                <div class="dash-kpi-body">
+                    <span class="dash-kpi-number" id="kpiActiveStaff">@Model.ActiveStaff.ToString("N0")</span>
+                    <span class="dash-kpi-label">Active Staff</span>
+                </div>
+            </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══════ 2. Recent Activity + Quick Actions ═══════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">Recent Activity</h6>
+                    <a href="/@area/Dashboard/AuditLogs" class="dash-view-all-link">View All</a>
+                </div>
+                <div class="dash-activity-body" id="recentActivityContainer">
+                    @if (Model.RecentActivities.Any())
+                    {
+                        <ul class="dash-activity-list">
+                            @foreach (var activity in Model.RecentActivities)
+                            {
+                                <li class="dash-activity-item">
+                                    <div class="dash-activity-dot dash-dot-@activity.ActionType"></div>
+                                    <div class="dash-activity-content">
+                                        <p class="dash-activity-text">@activity.Description</p>
+                                        <span class="dash-activity-time">@activity.TimeAgo</span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="dash-empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--color-text-muted);opacity:0.4;">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            <p>No recent activity</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold">Quick Actions</h6>
+                </div>
+                <div class="dash-quick-actions-body">
+                    <a href="@Url.Action("Index", "Patient", new { area = "" })" class="dash-quick-action-btn">
+                        <div class="dash-qa-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
+                        </div>
+                        <span>Add New Patient</span>
+                    </a>
+                    <a href="@Url.Action("Index", "Patient", new { area = "" })" class="dash-quick-action-btn">
+                        <div class="dash-qa-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <span>Upload Document</span>
+                    </a>
+                    <a href="@Url.Action("Index", "Accounts", new { area = area })" class="dash-quick-action-btn">
+                        <div class="dash-qa-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <span>Manage Accounts</span>
+                    </a>
+                    <a href="@Url.Action("Index", "Reports", new { area = area })" class="dash-quick-action-btn">
+                        <div class="dash-qa-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/><polyline points="18 9 12 15 9 12 3 18"/>
+                            </svg>
+                        </div>
+                        <span>View Reports</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ 3. Patient Overview Charts ═══════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold">Patients by Gender</h6>
+                </div>
+                <div class="dash-chart-body dash-chart-body-sm d-flex align-items-center justify-content-center">
+                    <canvas id="chartGender"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold">Patients by Age Group</h6>
+                </div>
+                <div class="dash-chart-body dash-chart-body-sm">
+                    <canvas id="chartAgeGroup"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold" id="newPatientsChartTitle">New Patients All Time</h6>
+                </div>
+                <div class="dash-chart-body dash-chart-body-sm">
+                    <canvas id="chartNewPatients"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ 4. Document Activity Analytics ═══════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold" id="docTrendTitle">@Model.DocumentTrendTitle</h6>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="dash-doc-stat">
+                            <strong id="kpiDocVersions">@Model.TotalDocumentVersions.ToString("N0")</strong>
+                            <small>versions created</small>
+                        </span>
+                    </div>
+                </div>
+                <div class="dash-chart-body">
+                    <canvas id="chartDocTrend"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold">Documents by Type</h6>
+                </div>
+                <div class="dash-chart-body dash-chart-body-sm">
+                    <canvas id="chartDocTypes"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Updated Documents -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h6 class="mb-0 fw-semibold">Most Updated Documents</h6>
+                </div>
+                <div class="dash-most-updated-body" id="mostUpdatedContainer">
+                    @if (Model.MostUpdatedDocuments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table dash-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Document</th>
+                                        <th>Patient</th>
+                                        <th class="text-center">Versions</th>
+                                        <th>Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var doc in Model.MostUpdatedDocuments)
+                                    {
+                                        <tr>
+                                            <td class="fw-medium">@doc.DocumentTitle</td>
+                                            <td class="text-muted">@doc.PatientName</td>
+                                            <td class="text-center">
+                                                <span class="dash-version-badge">@doc.VersionCount</span>
+                                            </td>
+                                            <td class="text-muted">@doc.LastUpdated.ToString("MMM d, yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dash-empty-state">
+                            <p>No document versions found</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

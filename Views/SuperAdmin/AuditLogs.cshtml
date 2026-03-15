@@ -1,0 +1,6 @@
+@model DMS_CPMS.Models.AuditLog.AuditLogIndexViewModel
+@{
+    Layout = "~/Views/Shared/_SuperAdminLayout.cshtml";
+    ViewData["Title"] = "Audit Logs";
+}
+@await Html.PartialAsync("~/Views/Shared/AuditLogs.cshtml", Model)

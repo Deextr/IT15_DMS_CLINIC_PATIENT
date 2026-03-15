@@ -1,0 +1,31 @@
+@model DeactivateAccountViewModel
+@{
+    ViewData["Title"] = "Deactivate Staff Account";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-3">Deactivate Account</h1>
+
+    <div class="card border-0 shadow-sm" style="max-width: 28rem;">
+        <div class="card-body">
+            <p class="mb-3">Are you sure you want to deactivate this staff account?</p>
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Name</dt>
+                <dd class="col-sm-8">@Model.FullName</dd>
+                <dt class="col-sm-4 text-muted">Username</dt>
+                <dd class="col-sm-8">@Model.Username</dd>
+                <dt class="col-sm-4 text-muted">Role</dt>
+                <dd class="col-sm-8">@Model.Role</dd>
+            </dl>
+            <p class="mt-3 mb-0 text-muted small">This user will not be able to log in. You can reactivate the account later by editing it.</p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0 d-flex gap-2">
+            <form asp-area="Admin" asp-controller="Accounts" asp-action="Deactivate" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger">Deactivate account</button>
+            </form>
+            <a asp-area="Admin" asp-controller="Accounts" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </div>
+</div>

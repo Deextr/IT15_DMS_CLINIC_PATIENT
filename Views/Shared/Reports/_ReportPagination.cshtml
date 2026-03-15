@@ -1,0 +1,62 @@
+@* Pagination partial for report tables *@
+@* Usage: @await Html.PartialAsync("~/Views/Shared/Reports/_ReportPagination.cshtml",
+         new ViewDataDictionary(ViewData) {
+             { "PageNumber", pageNum }, { "TotalPages", totalPages }, { "TotalCount", totalCount },
+             { "PageSize", pageSize }, { "Area", area }, { "Report", report },
+             { "DatePreset", datePreset }, { "DateFrom", dateFrom }, { "DateTo", dateTo }
+         }) *@
+
+@{
+    int pageNumber = (int)ViewData["PageNumber"]!;
+    int totalPages = (int)ViewData["TotalPages"]!;
+    int totalCount = (int)ViewData["TotalCount"]!;
+    int pageSize = (int)ViewData["PageSize"]!;
+    string area = (string)ViewData["Area"]!;
+    string report = (string)ViewData["Report"]!;
+    string datePreset = (string)(ViewData["DatePreset"] ?? "AllTime");
+    string? dateFrom = ViewData["DateFrom"] as string;
+    string? dateTo = ViewData["DateTo"] as string;
+    string fragment = (string)(ViewData["Fragment"] ?? "reportContent");
+
+    int showFrom = totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0;
+    int showTo = Math.Min(pageNumber * pageSize, totalCount);
+}
+
+<div class="table-footer">
+    <div class="table-footer-left">
+        <span class="text-muted small">Showing @showFrom to @showTo of @totalCount entries</span>
+    </div>
+    <div class="table-footer-right">
+        <nav class="pagination-nav">
+            <a asp-area="@area" asp-action="Index" asp-controller="Reports"
+               asp-route-report="@report"
+               asp-route-datePreset="@datePreset" asp-route-dateFrom="@dateFrom" asp-route-dateTo="@dateTo"
+               asp-route-page="1"
+               asp-fragment="@fragment"
+               class="btn btn-sm btn-outline-secondary pagination-btn @(pageNumber <= 1 ? "disabled" : "")"
+               title="First Page">&laquo;</a>
+            <a asp-area="@area" asp-action="Index" asp-controller="Reports"
+               asp-route-report="@report"
+               asp-route-datePreset="@datePreset" asp-route-dateFrom="@dateFrom" asp-route-dateTo="@dateTo"
+               asp-route-page="@(pageNumber - 1)"
+               asp-fragment="@fragment"
+               class="btn btn-sm btn-outline-secondary pagination-btn @(pageNumber <= 1 ? "disabled" : "")"
+               title="Previous">&lsaquo;</a>
+            <span class="pagination-indicator">@pageNumber / @Math.Max(totalPages, 1)</span>
+            <a asp-area="@area" asp-action="Index" asp-controller="Reports"
+               asp-route-report="@report"
+               asp-route-datePreset="@datePreset" asp-route-dateFrom="@dateFrom" asp-route-dateTo="@dateTo"
+               asp-route-page="@(pageNumber + 1)"
+               asp-fragment="@fragment"
+               class="btn btn-sm btn-outline-secondary pagination-btn @(pageNumber >= totalPages ? "disabled" : "")"
+               title="Next">&rsaquo;</a>
+            <a asp-area="@area" asp-action="Index" asp-controller="Reports"
+               asp-route-report="@report"
+               asp-route-datePreset="@datePreset" asp-route-dateFrom="@dateFrom" asp-route-dateTo="@dateTo"
+               asp-route-page="@totalPages"
+               asp-fragment="@fragment"
+               class="btn btn-sm btn-outline-secondary pagination-btn @(pageNumber >= totalPages ? "disabled" : "")"
+               title="Last Page">&raquo;</a>
+        </nav>
+    </div>
+</div>

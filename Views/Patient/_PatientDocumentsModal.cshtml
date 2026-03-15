@@ -1,0 +1,645 @@
+@* Patient Document Management Modal - To be included in Patient/Index.cshtml *@
+@model DMS_CPMS.Models.Patient.PatientDocumentsIndexViewModel
+@using System.Security.Claims
+@{
+    var userRole = User.IsInRole("SuperAdmin") ? "SuperAdmin" : User.IsInRole("Admin") ? "Admin" : User.IsInRole("Staff") ? "Staff" : "User";
+    var canDelete = userRole == "SuperAdmin" || userRole == "Admin";
+}
+
+<!-- Patient Documents Management Modal -->
+<div class="modal fade" id="patientDocumentsModal" tabindex="-1" aria-labelledby="patientDocumentsModalLabel" aria-hidden="true" data-user-role="@userRole">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-scrollable">
+        <div class="modal-content document-management-modal">
+            <!-- Modal Header -->
+            <div class="modal-header document-modal-header">
+                <h5 class="modal-title" id="patientDocumentsModalLabel">Document Management</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body document-modal-body">
+                <!-- Patient Profile Summary (horizontal, no grid lines) -->
+                <div class="patient-info-section">
+                    <h6 class="patient-profile-title">Patient Profile Summary</h6>
+                    <table class="table patient-info-table patient-info-table-borderless">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Sex</th>
+                                <th>Total Documents</th>
+                                <th>Last Visited</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="patientInfoFullName">--</td>
+                                <td id="patientInfoAge">--</td>
+                                <td id="patientInfoSex">--</td>
+                                <td id="patientInfoTotalDocs">0</td>
+                                <td id="patientInfoLastVisit">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Upload button - above table container -->
+                <div class="d-flex justify-content-start mb-2">
+                    <button type="button" class="btn btn-primary" id="uploadDocumentBtn" onclick="openUploadModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Upload Document
+                    </button>
+                </div>
+
+                <!-- Documents: unified container (search + table) - same pattern as Patient Management -->
+                <div class="card shadow-sm border-0 mb-2 documents-unified-card">
+                    <div class="card-body">
+                        <!-- Top section: Search / filter controls -->
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">Search Documents</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="documentSearchInput" class="form-control border-start-0" placeholder="Search by document name...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Document Type</label>
+                                <select id="documentTypeFilter" class="form-select">
+                                    <option value="">All Types</option>
+                                    <option value="Medical History">Medical History</option>
+                                    <option value="Examination Reports">Examination Reports</option>
+                                    <option value="Lab Reports">Lab Reports</option>
+                                    <option value="Imaging Reports">Imaging Reports</option>
+                                    <option value="Prescription Records">Prescription Records</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-secondary btn-sm me-2" onclick="applyDocumentFilters()">
+                                    Apply Filters
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetDocumentFilters()">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bottom section: Table records -->
+                        <div class="table-responsive">
+                            <table class="table documents-table mb-0" id="documentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Document Name</th>
+                                        <th>Type</th>
+                                        <th>Version</th>
+                                        <th>Uploaded By</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsTableBody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div class="empty-state" id="emptyDocumentsState" style="display: none;">
+                            <div class="empty-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <h6>No Documents Found</h6>
+                            <p class="text-muted">This patient has no documents yet. Click "Upload Document" to add one.</p>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div class="loading-state" id="loadingDocumentsState">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading documents...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Footer with Pagination - Below table container, inside modal body -->
+                <div class="table-footer" id="documentsTableFooter">
+                    <div class="table-footer-left">
+                        <span class="footer-text">Show</span>
+                        <select id="entriesPerPage" class="form-select form-select-sm entries-select" onchange="changeEntriesPerPage()">
+                            <option value="5">5</option>
+                            <option value="8" selected>8</option>
+                        </select>
+                        <span class="footer-text">entries</span>
+                    </div>
+                    <div class="table-footer-center">
+                        <span id="entriesInfo" class="footer-text">Showing 0 to 0 of 0 entries</span>
+                    </div>
+                    <div class="table-footer-right">
+                        <nav class="pagination-nav" id="documentsPagination">
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="goToFirstPage()" title="First Page">
+                                <<
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="changeDocumentPage(currentDocumentPage - 1)" title="Previous Page">
+                                <
+                            </button>
+                            <span class="pagination-indicator" id="paginationIndicator">1/1</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="changeDocumentPage(currentDocumentPage + 1)" title="Next Page">
+                                >
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary pagination-btn" onclick="goToLastPage()" title="Last Page">
+                                >>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal (Nested) -->
+<!-- Upload Document Modal (Nested) -->
+<div class="modal fade" id="nestedUploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload New Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadDocumentForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="uploadPatientId" name="PatientID" />
+                <input type="hidden" id="uploadSourceType" value="device" />
+                <input type="hidden" id="googleDriveFileId" />
+                <input type="hidden" id="googleDriveAccessToken" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Document Title <span class="text-danger">*</span></label>
+                            <input type="text" name="DocumentTitle" id="uploadDocumentTitle" class="form-control" required maxlength="100" placeholder="Enter document title">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+                            <select name="DocumentType" id="uploadDocumentType" class="form-select" required>
+                                <option value="">Select document type</option>
+                                <option value="Medical History">Medical History</option>
+                                <option value="Examination Reports">Examination Reports</option>
+                                <option value="Lab Reports">Lab Reports</option>
+                                <option value="Imaging Reports">Imaging Reports</option>
+                                <option value="Prescription Records">Prescription Records</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <div class="col-12" id="uploadOtherTypeContainer" style="display: none;">
+                            <label class="form-label">Specify Type <span class="text-danger">*</span></label>
+                            <input type="text" name="OtherDocumentType" id="uploadOtherDocumentType" class="form-control" maxlength="30" placeholder="Enter custom document type">
+                        </div>
+
+                        <!-- Upload Source Selection -->
+                        <div class="col-12">
+                            <label class="form-label">Upload Source <span class="text-danger">*</span></label>
+                            <div class="upload-source-options">
+                                <!-- Option 1: Device Upload -->
+                                <div class="upload-source-card active" id="sourceDeviceCard" onclick="selectUploadSource('device')">
+                                    <div class="upload-source-radio">
+                                        <input type="radio" name="uploadSource" value="device" checked class="form-check-input" id="sourceDeviceRadio">
+                                    </div>
+                                    <div class="upload-source-content">
+                                        <div class="upload-source-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <span class="upload-source-title">Choose from Device</span>
+                                            <span class="upload-source-desc">Upload from your local storage</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (userRole == "SuperAdmin" || userRole == "Admin")
+                                {
+                                <!-- Option 2: Google Drive -->
+                                <div class="upload-source-card" id="sourceGoogleCard" onclick="selectUploadSource('googledrive')">
+                                    <div class="upload-source-radio">
+                                        <input type="radio" name="uploadSource" value="googledrive" class="form-check-input" id="sourceGoogleRadio">
+                                    </div>
+                                    <div class="upload-source-content">
+                                        <div class="upload-source-icon">
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                                <path d="M12 2L2 19.5h7.5L12 14l2.5 5.5H22L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                                <path d="M7 12.5L2 19.5h20l-5-7H7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <span class="upload-source-title">Choose from Google Drive</span>
+                                            <span class="upload-source-desc">Select a file from your Drive</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Device File Input (shown by default) -->
+                        <div class="col-12" id="deviceFileSection">
+                            <label class="form-label">Select Files <span class="text-danger">*</span></label>
+                            <input type="file" name="UploadedFiles" id="uploadFileInput" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.csv,.txt,.doc,.docx,.xls,.xlsx">
+                            <small class="text-muted d-block mt-1">Allowed: PDF, Images, DOC, DOCX, XLS, XLSX, CSV, TXT &mdash; Max 5 files</small>
+                            <div id="nestedFileValidationMsg" class="text-danger small mt-1" style="display: none;"></div>
+                            <div id="nestedSelectedFilesList" class="mt-2" style="display: none;">
+                                <small class="text-muted fw-semibold">Selected files:</small>
+                                <ul class="list-unstyled mb-0 mt-1" id="nestedSelectedFilesUl"></ul>
+                            </div>
+                        </div>
+
+                        <!-- Google Drive Picker Section (hidden by default) -->
+                        <div class="col-12" id="googleDriveSection" style="display: none;">
+                            <label class="form-label">Google Drive File <span class="text-danger">*</span></label>
+                            <div class="google-drive-picker-area">
+                                <button type="button" class="btn btn-outline-primary w-100" id="googleDrivePickerBtn" onclick="openGoogleDrivePicker()">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    Select from Google Drive
+                                </button>
+                                <!-- Selected file indicator -->
+                                <div class="google-drive-selected-file" id="googleDriveSelectedFile" style="display: none;">
+                                    <div class="selected-file-info">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="me-2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        <span id="googleDriveFileName" class="text-truncate"></span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearGoogleDriveSelection()" title="Remove selection">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Loading state -->
+                                <div class="google-drive-loading" id="googleDriveLoading" style="display: none;">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Connecting to Google Drive...</span>
+                                </div>
+                                <!-- Error state -->
+                                <div class="google-drive-error" id="googleDriveError" style="display: none;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" class="me-1">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <span id="googleDriveErrorMsg"></span>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">Allowed: PDF, Images, DOC, DOCX, XLS, XLSX, CSV, TXT</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">
+                        <span class="normal-text">Upload Document</span>
+                        <span class="loading-text" style="display: none;">
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Uploading...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Document Modal (Nested) -->
+<div class="modal fade" id="nestedEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">Edit Document</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editDocumentForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editDocumentId" name="DocumentID" />
+                <div class="modal-body">
+                    <!-- Document Information Section -->
+                    <div class="edit-section mb-4">
+                        <h6 class="section-subtitle mb-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Document Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Document Title <span class="text-danger">*</span></label>
+                                <input type="text" id="editDocumentTitle" name="DocumentTitle" class="form-control" required maxlength="100">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Document Type <span class="text-danger">*</span></label>
+                                <select id="editDocumentType" name="DocumentType" class="form-select" required>
+                                    <option value="">Select document type</option>
+                                    <option value="Medical History">Medical History</option>
+                                    <option value="Examination Reports">Examination Reports</option>
+                                    <option value="Lab Reports">Lab Reports</option>
+                                    <option value="Imaging Reports">Imaging Reports</option>
+                                    <option value="Prescription Records">Prescription Records</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div class="col-12" id="editOtherTypeContainer" style="display: none;">
+                                <label class="form-label">Specify Type <span class="text-danger">*</span></label>
+                                <input type="text" id="editOtherDocumentType" name="OtherDocumentType" class="form-control" maxlength="30">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version Upload Section -->
+                    <div class="edit-section version-upload-section">
+                        <div class="mb-3">
+                            <label class="form-label">New Version File <span class="text-muted">(Optional)</span></label>
+                            <input type="file" id="editNewVersionFile" name="NewVersionFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.gif,.csv,.txt,.doc,.docx,.xls,.xlsx">
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Version Notes <span class="text-muted">(Optional)</span></label>
+                                <small class="text-muted char-counter" id="versionNotesCounter">0 / 100</small>
+                            </div>
+                            <textarea id="editVersionNotes" name="VersionNotes" class="form-control" rows="2" maxlength="100" placeholder="Describe what changed in this version"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="normal-text">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Changes
+                        </span>
+                        <span class="loading-text" style="display: none;">
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Document Modal (Nested) -->
+<div class="modal fade" id="nestedViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalTitle">View Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0" id="viewModalBody" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted">Loading document...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a id="viewModalDownload" href="#" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download
+                </a>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Version History Modal (Nested) -->
+<div class="modal fade" id="nestedVersionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <div class="d-flex align-items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <div>
+                        <h6 class="modal-title mb-0 fw-semibold">Version History</h6>
+                        <small class="opacity-75" id="versionModalDocName">Document Name</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="versionModalBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border" style="color: var(--color-primary);" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-3 mb-0 small">Loading version history...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    Restore Version
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to restore this version?</p>
+                <div class="p-3 rounded" style="background: var(--color-surface-soft); border: 1px solid var(--color-border-soft);">
+                    <div class="row small">
+                        <div class="col-4 text-muted">Version</div>
+                        <div class="col-8 fw-semibold" id="restoreVersionNumber"></div>
+                        <div class="col-4 text-muted mt-1">Date</div>
+                        <div class="col-8 fw-semibold mt-1" id="restoreVersionDate"></div>
+                        <div class="col-4 text-muted mt-1">Document</div>
+                        <div class="col-8 fw-semibold mt-1" id="restoreDocName"></div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    The current version will be preserved as a new historical version. No data will be lost.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background: var(--color-primary);" id="confirmRestoreBtn" onclick="confirmRestoreVersion()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; vertical-align: text-bottom;">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path>
+                    </svg>
+                    Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Confirmation Modal -->
+<div class="modal fade" id="archiveConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive Document
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to archive this document?</p>
+                <div class="p-3 rounded" style="background: var(--color-surface-soft); border: 1px solid var(--color-border-soft);">
+                    <div class="row small">
+                        <div class="col-4 text-muted">Document</div>
+                        <div class="col-8 fw-semibold" id="archiveDocName"></div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label small">Archive Reason <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="archiveReasonInput" class="form-control form-control-sm" maxlength="200" placeholder="Enter reason for archiving...">
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    The document and all its versions will be moved to the Archive module. A retention policy will be applied automatically.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background: var(--color-primary);" id="confirmArchiveBtn" onclick="confirmArchiveDocument()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; vertical-align: text-bottom;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Version Confirmation Modal -->
+<div class="modal fade" id="archiveVersionConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: var(--color-primary); color: #fff;">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive Version
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to archive this version?</p>
+                <div class="p-3 rounded" style="background: var(--color-surface-soft); border: 1px solid var(--color-border-soft);">
+                    <div class="row small">
+                        <div class="col-4 text-muted">Document</div>
+                        <div class="col-8 fw-semibold" id="archiveVersionDocName"></div>
+                        <div class="col-4 text-muted mt-1">Version</div>
+                        <div class="col-8 fw-semibold mt-1" id="archiveVersionNumber"></div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label small">Archive Reason <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="archiveVersionReasonInput" class="form-control form-control-sm" maxlength="200" placeholder="Enter reason for archiving this version...">
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: text-bottom;">
+                        <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    This version will be removed from Version History and moved to the Archive module.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background: var(--color-primary);" id="confirmArchiveVersionBtn" onclick="confirmArchiveVersion()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; vertical-align: text-bottom;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    Archive
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (canDelete)
+{
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2" style="width: 20px; height: 20px;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete <strong id="deleteDocName"></strong>? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDeleteDocument()">
+                    Delete Document
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}

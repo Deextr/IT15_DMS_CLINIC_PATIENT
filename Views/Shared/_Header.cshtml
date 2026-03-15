@@ -1,0 +1,152 @@
+@using DMS_CPMS.Data.Models
+@using DMS_CPMS.Models.Profile
+@using Microsoft.AspNetCore.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var pageTitle       = ViewData["Title"]?.ToString() ?? "Dashboard";
+
+    ApplicationUser?  currentUser = null;
+    ProfileViewModel? profileVm   = null;
+
+    if (isAuthenticated)
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+        if (currentUser != null)
+        {
+            var roles = await UserManager.GetRolesAsync(currentUser);
+            var role  = roles.FirstOrDefault() ?? "User";
+
+            profileVm = new ProfileViewModel
+            {
+                UserId            = currentUser.Id,
+                Role              = role,
+                Username          = currentUser.UserName ?? string.Empty,
+                FirstName         = currentUser.FirstName,
+                LastName          = currentUser.LastName,
+                ProfilePictureUrl = currentUser.ProfilePictureUrl,
+            };
+        }
+    }
+
+    var fullName    = (profileVm?.CanEditFullName == true)
+                        ? $"{profileVm!.FirstName} {profileVm.LastName}".Trim()
+                        : string.Empty;
+    var displayName = string.IsNullOrWhiteSpace(fullName)
+                        ? (profileVm?.Username ?? User.Identity?.Name ?? "User")
+                        : fullName;
+    var userRole    = profileVm?.Role ?? "User";
+    var avatarSrc   = string.IsNullOrEmpty(profileVm?.ProfilePictureUrl)
+                        ? "/images/default-avatar.svg"
+                        : profileVm!.ProfilePictureUrl;
+
+    // Re-open modal only if there was an error (success closes the modal)
+    var hasMsg = TempData.ContainsKey("ProfileError");
+}
+
+@if (isAuthenticated)
+{
+<header class="global-header" role="banner">
+
+    <!-- Left: hamburger + logo + page title -->
+    <div class="global-header-left">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button"
+                aria-label="Toggle menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <img src="~/images/logo.png" alt="Clinic DMS" class="header-logo" />
+        <span class="header-separator"></span>
+        <h1 class="global-header-title">@pageTitle</h1>
+    </div>
+
+    <!-- Right: avatar + name/role + dropdown -->
+    <div class="global-header-right">
+        @if (profileVm != null)
+        {
+        <div class="dropdown hdr-user-dropdown">
+            <button class="hdr-user-btn dropdown-toggle"
+                    type="button"
+                    id="hdrUserMenu"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+
+                <!-- Circular avatar -->
+                <span class="hdr-avatar">
+                    <img src="@avatarSrc" alt="@displayName"
+                         class="hdr-avatar-img"
+                         onerror="this.onerror=null;this.src='/images/default-avatar.svg'" />
+                </span>
+
+                <!-- Stacked name + role -->
+                <span class="hdr-user-info">
+                    <span class="header-account-name">@displayName</span>
+                    <span class="header-account-role">@userRole</span>
+                </span>
+
+                <!-- Chevron -->
+                <svg class="hdr-caret" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd"
+                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                          clip-rule="evenodd"/>
+                </svg>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end hdr-dropdown-menu"
+                aria-labelledby="hdrUserMenu">
+                <!-- Profile -->
+                <li>
+                    <button class="dropdown-item hdr-dd-item" type="button"
+                            data-bs-toggle="modal" data-bs-target="#profileModal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" class="hdr-dd-icon">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        Profile
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider my-1" /></li>
+                <!-- Logout -->
+                <li>
+                    <form asp-area="" asp-controller="Login" asp-action="Logout" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dropdown-item hdr-dd-item hdr-dd-logout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" class="hdr-dd-icon">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        }
+    </div>
+</header>
+
+<!-- Profile modal injected here – shared across the entire page -->
+@if (profileVm != null)
+{
+    <partial name="_ProfileModal" model="profileVm" />
+}
+
+@if (hasMsg)
+{
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var el = document.getElementById('profileModal');
+        if (el) { new bootstrap.Modal(el).show(); }
+    });
+</script>
+}
+}

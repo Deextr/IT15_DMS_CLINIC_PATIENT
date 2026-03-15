@@ -1,0 +1,407 @@
+﻿@model DMS_CPMS.Models.Profile.ProfileViewModel
+
+@{
+    var successMsg  = TempData["ProfileSuccess"]?.ToString();
+    var errorMsg    = TempData["ProfileError"]?.ToString();
+    var avatarSrc   = string.IsNullOrEmpty(Model.ProfilePictureUrl)
+                        ? "/images/default-avatar.svg"
+                        : Model.ProfilePictureUrl;
+    var fullName    = Model.CanEditFullName
+                        ? $"{Model.FirstName} {Model.LastName}".Trim()
+                        : string.Empty;
+    var displayName = string.IsNullOrWhiteSpace(fullName) ? Model.Username : fullName;
+}
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PROFILE MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="modal fade" id="profileModal" tabindex="-1"
+     aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable pm-dialog">
+        <div class="modal-content pm-content">
+
+            <!-- Header -->
+            <div class="modal-header pm-header">
+                <h5 class="modal-title pm-title" id="profileModalLabel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pm-title-icon">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-0">
+
+                @if (!string.IsNullOrEmpty(successMsg))
+                {
+                    <div class="alert alert-success alert-dismissible pm-alert mb-0" role="alert">
+                        <svg viewBox="0 0 20 20" fill="currentColor" class="pm-alert-icon">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        @successMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(errorMsg))
+                {
+                    <div class="alert alert-danger alert-dismissible pm-alert mb-0" role="alert">
+                        <svg viewBox="0 0 20 20" fill="currentColor" class="pm-alert-icon">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        @errorMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <!-- Client-side validation banner -->
+                <div id="pmClientError" class="pm-alert pm-client-error" role="alert" style="display:none;">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="pm-alert-icon" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <span id="pmClientErrorText"></span>
+                    <button type="button" class="btn-close ms-auto" id="pmClientErrorClose" aria-label="Close"></button>
+                </div>
+
+                <!-- Identity strip -->
+                <div class="pm-identity">
+                    <div class="pm-avatar-wrap" id="pmAvatarWrap">
+                        <img src="@avatarSrc" alt="@displayName" class="pm-avatar-img"
+                             id="pmAvatarPreview"
+                             onerror="this.onerror=null;this.src='/images/default-avatar.svg'" />
+                        <label class="pm-avatar-overlay" for="pmPicInput" title="Change photo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </label>
+                    </div>
+                    <div class="pm-identity-text">
+                        <span class="pm-display-name">@displayName</span>
+                        <span class="pm-role-badge pm-badge-@Model.Role.ToLower()">@Model.Role</span>
+                    </div>
+                </div>
+
+                <!-- Unified form -->
+                <form asp-area="" asp-controller="Profile" asp-action="UpdateProfile"
+                      method="post" enctype="multipart/form-data" id="pmUnifiedForm" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="UserId" value="@Model.UserId" />
+                    <input type="file" id="pmPicInput" name="profilePictureFile"
+                           accept="image/jpeg,image/png,image/gif,image/webp" class="d-none" />
+
+                    <!-- â”€â”€ Personal Information â”€â”€ -->
+                    <div class="pm-section">
+                        <p class="pm-section-title">Personal Information</p>
+
+                        @if (Model.CanEditFullName)
+                        {
+                            <div class="pm-row">
+                                <div class="pm-field">
+                                    <label class="pm-label" for="pmFirstName">
+                                        First Name
+                                    </label>
+                                    <input type="text" id="pmFirstName" name="FirstName"
+                                           class="form-control pm-input"
+                                           value="@Model.FirstName"
+                                           maxlength="100"
+                                           autocomplete="given-name" />
+                                    <span class="pm-field-error" id="errFirstName"></span>
+                                </div>
+                                <div class="pm-field">
+                                    <label class="pm-label" for="pmLastName">
+                                        Last Name
+                                    </label>
+                                    <input type="text" id="pmLastName" name="LastName"
+                                           class="form-control pm-input"
+                                           value="@Model.LastName"
+                                           maxlength="100"
+                                           autocomplete="family-name" />
+                                    <span class="pm-field-error" id="errLastName"></span>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="pm-row">
+                            <div class="pm-field">
+                                <label class="pm-label" for="pmUsername">Username</label>
+                                <input type="text" id="pmUsername" name="Username"
+                                       class="form-control pm-input"
+                                       value="@Model.Username"
+                                       required minlength="3" maxlength="50"
+                                       autocomplete="username"
+                                       pattern="[A-Za-z0-9._\-]+"
+                                       title="Letters, numbers, dots, underscores and hyphens only" />
+                                <span class="pm-field-error" id="errUsername"></span>
+                            </div>
+                            <div class="pm-field">
+                                <label class="pm-label">Role</label>
+                                <div class="pm-readonly">@Model.Role</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="pm-divider" />
+
+                    <!-- â”€â”€ Change Password â”€â”€ -->
+                    <div class="pm-section">
+                        <p class="pm-section-title">Change Password <span style="font-weight:400;font-size:.85em;color:#888;">(Optional)</span></p>
+                        <p style="font-size:.82em;color:#999;margin:-4px 0 8px;">Leave blank to keep your current password.</p>
+
+                        <div class="pm-field">
+                            <label class="pm-label" for="pmCurPwd">Current Password</label>
+                            <div class="pm-pwd-wrap">
+                                <input type="password" id="pmCurPwd" name="CurrentPassword"
+                                       class="form-control pm-input"
+                                       maxlength="128"
+                                       autocomplete="current-password" />
+                                <button type="button" class="pm-pwd-eye" data-target="pmCurPwd" tabindex="-1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pm-eye">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="pm-field-error" id="errCurPwd"></span>
+                        </div>
+
+                        <div class="pm-field">
+                            <label class="pm-label" for="pmNewPwd">New Password</label>
+                            <div class="pm-pwd-wrap">
+                                <input type="password" id="pmNewPwd" name="NewPassword"
+                                       class="form-control pm-input"
+                                       minlength="8" maxlength="128"
+                                       autocomplete="new-password" />
+                                <button type="button" class="pm-pwd-eye" data-target="pmNewPwd" tabindex="-1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pm-eye">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="pm-field-error" id="errNewPwd"></span>
+                        </div>
+                        <div class="pm-field">
+                            <label class="pm-label" for="pmConfPwd">Confirm Password</label>
+                            <div class="pm-pwd-wrap">
+                                <input type="password" id="pmConfPwd" name="ConfirmNewPassword"
+                                       class="form-control pm-input"
+                                       maxlength="128"
+                                       autocomplete="new-password" />
+                                <button type="button" class="pm-pwd-eye" data-target="pmConfPwd" tabindex="-1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pm-eye">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="pm-field-error" id="errConfPwd"></span>
+                        </div>
+                    </div>
+
+                    <div class="pm-footer d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="pm-btn-save">Save Changes</button>
+                    </div>
+                </form>
+
+            </div><!-- /modal-body -->
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    var ALLOWED_EXTS  = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+    /* â”€â”€ Banner helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    var banner    = document.getElementById('pmClientError');
+    var bannerTxt = document.getElementById('pmClientErrorText');
+    var bannerBtn = document.getElementById('pmClientErrorClose');
+    var bannerTmr = null;
+
+    function showBanner(msg) {
+        if (!banner || !bannerTxt) return;
+        bannerTxt.textContent = msg;
+        banner.style.display  = 'flex';
+        banner.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        clearTimeout(bannerTmr);
+        bannerTmr = setTimeout(hideBanner, 6000);
+    }
+    function hideBanner() {
+        if (banner)    banner.style.display = 'none';
+        if (bannerTxt) bannerTxt.textContent = '';
+    }
+    if (bannerBtn) bannerBtn.addEventListener('click', hideBanner);
+
+    /* â”€â”€ Inline field-error helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    function fieldErr(id, msg) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+        var inp = el.previousElementSibling;
+        // previousElementSibling might be the pwd-wrap; find the input
+        var fld = (inp && inp.tagName === 'INPUT') ? inp
+                : (inp && inp.querySelector) ? inp.querySelector('input') : null;
+        if (fld) fld.classList.toggle('pm-input-error', !!msg);
+    }
+    function clearAllErrors() {
+        ['errFirstName','errLastName','errUsername','errCurPwd','errNewPwd','errConfPwd']
+            .forEach(function(id) { fieldErr(id, ''); });
+        hideBanner();
+    }
+
+    /* â”€â”€ Avatar: validate â†’ preview only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    var picInput = document.getElementById('pmPicInput');
+    var preview  = document.getElementById('pmAvatarPreview');
+
+    if (picInput) {
+        picInput.addEventListener('change', function () {
+            var file = this.files[0];
+            if (!file) return;
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                showBanner('Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.');
+                this.value = ''; return;
+            }
+            var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            if (!ALLOWED_EXTS.includes(ext)) {
+                showBanner('Invalid file extension. Please upload a JPG, PNG, GIF, or WebP image.');
+                this.value = ''; return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showBanner('File is too large. Maximum allowed size is 5 MB.');
+                this.value = ''; return;
+            }
+            hideBanner();
+            var reader = new FileReader();
+            reader.onload = function (e) { if (preview) preview.src = e.target.result; };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /* â”€â”€ Form validation on submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    var form     = document.getElementById('pmUnifiedForm');
+    var username = document.getElementById('pmUsername');
+    var curPwd   = document.getElementById('pmCurPwd');
+    var newPwd   = document.getElementById('pmNewPwd');
+    var confPwd  = document.getElementById('pmConfPwd');
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            clearAllErrors();
+            var valid = true;
+
+            /* Username */
+            var uname = (username ? username.value.trim() : '');
+            if (!uname) {
+                fieldErr('errUsername', 'Username is required.');
+                valid = false;
+            } else if (uname.length < 3) {
+                fieldErr('errUsername', 'Username must be at least 3 characters.');
+                valid = false;
+            } else if (uname.length > 50) {
+                fieldErr('errUsername', 'Username cannot exceed 50 characters.');
+                valid = false;
+            } else if (!/^[A-Za-z0-9._\-]+$/.test(uname)) {
+                fieldErr('errUsername', 'Only letters, numbers, dots, underscores and hyphens allowed.');
+                valid = false;
+            }
+
+            /* Password section – only validate when the user fills in a new password */
+            var cur  = curPwd  ? curPwd.value  : '';
+            var nwd  = newPwd  ? newPwd.value  : '';
+            var conf = confPwd ? confPwd.value : '';
+
+            if (nwd || conf) {
+                if (!cur) {
+                    fieldErr('errCurPwd', 'Enter your current password.');
+                    valid = false;
+                }
+                if (!nwd) {
+                    fieldErr('errNewPwd', 'Enter a new password.');
+                    valid = false;
+                } else if (nwd.length < 8) {
+                    fieldErr('errNewPwd', 'New password must be at least 8 characters.');
+                    valid = false;
+                } else if (nwd.length > 128) {
+                    fieldErr('errNewPwd', 'New password cannot exceed 128 characters.');
+                    valid = false;
+                } else if (!/[A-Z]/.test(nwd)) {
+                    fieldErr('errNewPwd', 'Must contain at least one uppercase letter.');
+                    valid = false;
+                } else if (!/[a-z]/.test(nwd)) {
+                    fieldErr('errNewPwd', 'Must contain at least one lowercase letter.');
+                    valid = false;
+                } else if (!/[0-9]/.test(nwd)) {
+                    fieldErr('errNewPwd', 'Must contain at least one digit.');
+                    valid = false;
+                } else if (!/[^A-Za-z0-9]/.test(nwd)) {
+                    fieldErr('errNewPwd', 'Must contain at least one symbol.');
+                    valid = false;
+                }
+                if (!conf) {
+                    fieldErr('errConfPwd', 'Please confirm your new password.');
+                    valid = false;
+                } else if (nwd && conf !== nwd) {
+                    fieldErr('errConfPwd', 'Passwords do not match.');
+                    valid = false;
+                }
+            }
+
+            if (!valid) {
+                e.preventDefault();
+                showBanner('Please fix the errors below before saving.');
+            }
+        });
+    }
+
+    /* â”€â”€ Password visibility toggles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    document.querySelectorAll('.pm-pwd-eye').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var inp = document.getElementById(this.dataset.target);
+            if (!inp) return;
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+            btn.classList.toggle('active');
+        });
+    });
+
+    /* -- Reset modal to original saved values on close ---------------------- */
+    var originalUsername  = @Json.Serialize(Model.Username);
+    var originalFirstName = @Json.Serialize(Model.FirstName);
+    var originalLastName  = @Json.Serialize(Model.LastName);
+    var originalAvatarSrc = @Json.Serialize(avatarSrc);
+
+    var modalEl = document.getElementById('profileModal');
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            clearAllErrors();
+            hideBanner();
+
+            // Restore text fields
+            if (username) username.value = originalUsername;
+
+            var fn = document.getElementById('pmFirstName');
+            var ln = document.getElementById('pmLastName');
+            if (fn) fn.value = originalFirstName;
+            if (ln) ln.value = originalLastName;
+
+            // Clear password fields
+            if (curPwd)  { curPwd.value  = ''; curPwd.type  = 'password'; }
+            if (newPwd)  { newPwd.value  = ''; newPwd.type  = 'password'; }
+            if (confPwd) { confPwd.value = ''; confPwd.type = 'password'; }
+            document.querySelectorAll('.pm-pwd-eye').forEach(function (b) {
+                b.classList.remove('active');
+            });
+
+            // Reset avatar preview
+            if (preview) preview.src = originalAvatarSrc;
+            var picInp = document.getElementById('pmPicInput');
+            if (picInp) picInp.value = '';
+        });
+    }
+}());
+</script>
+

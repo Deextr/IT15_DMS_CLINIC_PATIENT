@@ -1,0 +1,141 @@
+@model DMS_CPMS.Models.AuditLog.AuditLogIndexViewModel
+@{
+    ViewData["Title"] = "Audit Logs";
+    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "SuperAdmin";
+}
+
+<div class="container-fluid">
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <!-- Search & Filters -->
+            <form class="row g-2 align-items-end mb-3" method="get"
+                  asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard">
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control"
+                           placeholder="Search by user, action, or document" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Role</label>
+                    <select name="roleFilter" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="SuperAdmin" selected="@(Model.RoleFilter == "SuperAdmin" ? "selected" : null)">SuperAdmin</option>
+                        <option value="Admin" selected="@(Model.RoleFilter == "Admin" ? "selected" : null)">Admin</option>
+                        <option value="Staff" selected="@(Model.RoleFilter == "Staff" ? "selected" : null)">Staff</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="dateFrom" class="form-control" value="@Model.DateFrom" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="dateTo" class="form-control" value="@Model.DateTo" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+                    <a asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard"
+                       class="btn btn-outline-secondary flex-fill">Reset</a>
+                </div>
+            </form>
+
+            <div class="table-responsive" id="audit-logs-table">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Document ID</th>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Logs.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    No audit log entries found. Try adjusting your search or filter criteria.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var log in Model.Logs)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (log.DocumentID.HasValue)
+                                        {
+                                            <span>@log.DocumentID</span>
+                                            @if (!string.IsNullOrEmpty(log.DocumentTitle))
+                                            {
+                                                <br /><small class="text-muted">@log.DocumentTitle</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>@log.UserFullName</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(log.Role))
+                                        {
+                                            <span style="color: var(--color-primary); font-weight: 700;">@log.Role</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>@log.Action</td>
+                                    <td>@log.FormattedDate @log.FormattedTime</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <!-- Table Footer with Pagination - Standardized Style -->
+            <div class="table-footer">
+                <div class="table-footer-left">
+                    <span class="text-muted small">Showing @(Model.TotalCount > 0 ? (Model.PageNumber - 1) * Model.PageSize + 1 : 0) to @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries</span>
+                </div>
+                <div class="table-footer-right">
+                    <nav class="pagination-nav">
+                        <a asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard"
+                           asp-route-page="1" asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+                           asp-fragment="audit-logs-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")"
+                           title="First Page">&laquo;</a>
+                        <a asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard"
+                           asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+                           asp-fragment="audit-logs-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")"
+                           title="Previous">&lsaquo;</a>
+                        <span class="pagination-indicator">@Model.PageNumber / @Math.Max(Model.TotalPages, 1)</span>
+                        <a asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard"
+                           asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+                           asp-fragment="audit-logs-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")"
+                           title="Next">&rsaquo;</a>
+                        <a asp-area="@area" asp-action="AuditLogs" asp-controller="Dashboard"
+                           asp-route-page="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+                           asp-fragment="audit-logs-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")"
+                           title="Last Page">&raquo;</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

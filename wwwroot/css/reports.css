@@ -1,0 +1,140 @@
+/* ──────────────────────────────────────────────
+   Reports Module Styles
+   Ocean Breeze theme — consistent with site.css
+   ────────────────────────────────────────────── */
+
+/* Report section card header */
+.report-section-header {
+    background: linear-gradient(135deg, #008a99 0%, var(--color-primary, #006d77) 55%, #005660 100%);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: none;
+}
+
+.report-section-header h6 {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.report-section-header small {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.8rem;
+}
+
+/* Report section card */
+.report-section {
+    border: 1px solid var(--color-border-soft, #d1d5db);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.report-section .card-body {
+    padding: 0;
+}
+
+/* Report filter bar enhancements */
+.report-section .card-header + .card-body .table-responsive {
+    margin: 0;
+}
+
+/* Export buttons styling */
+#btnExportPdf,
+#btnExportExcel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    min-width: 70px;
+    justify-content: center;
+}
+
+/* Report tables inner section labels */
+.report-section p.fw-semibold {
+    color: var(--color-primary, #006d77);
+    border-bottom: 2px solid var(--color-primary-light, #83c5be);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+
+/* Table styling improvements */
+.report-section .documents-table {
+    margin-bottom: 0;
+}
+
+.report-section .documents-table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.report-section .documents-table tbody td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+/* Print-friendly styles */
+@media print {
+    .sidebar,
+    .app-header,
+    .sidebar-toggle,
+    #mobileMenuToggle,
+    .no-print,
+    .pagination-nav,
+    .table-footer,
+    #reportFilterForm {
+        display: none !important;
+    }
+
+    .app-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .report-section {
+        page-break-inside: avoid;
+        border: 1px solid #ccc;
+        margin-bottom: 12px;
+    }
+
+    .report-section-header {
+        background: #006d77 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .card {
+        box-shadow: none !important;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .report-section-header {
+        padding: 10px 12px;
+    }
+    
+    #btnExportPdf,
+    #btnExportExcel {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .report-section-header {
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

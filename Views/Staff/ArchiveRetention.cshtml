@@ -1,0 +1,212 @@
+@model DMS_CPMS.Models.Staff.StaffArchiveIndexViewModel
+@{
+    ViewData["Title"] = "Document Archive";
+}
+
+<link rel="stylesheet" href="~/css/staff-archive.css" asp-append-version="true" />
+
+<div class="container-fluid archive-module">
+
+    <!-- ═══════════════ TOAST MESSAGES ═══════════════ -->
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            @TempData["StatusMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ═══════════════ ARCHIVED DOCUMENTS ═══════════════ -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <!-- Filter bar -->
+            <form method="get" asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention" class="row g-2 align-items-end mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="searchTerm" class="form-control"
+                           placeholder="Search by document, user, or reason..." value="@Model.SearchTerm" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Active" selected="@(Model.StatusFilter == "Active" ? "selected" : null)">Active Retention</option>
+                        <option value="Expired" selected="@(Model.StatusFilter == "Expired" ? "selected" : null)">Expired</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-secondary flex-fill">Filter</button>
+                    <a asp-area="Staff" asp-controller="Dashboard" asp-action="ArchiveRetention"
+                       class="btn btn-outline-secondary flex-fill">Reset</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive" id="staff-archive-table">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Document Name</th>
+                            <th>Patient</th>
+                            <th>Archived By</th>
+                            <th>Reason</th>
+                            <th>Archive Date</th>
+                            <th>Retention Until</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ArchivedDocuments.Any())
+                        {
+                            @foreach (var doc in Model.ArchivedDocuments)
+                            {
+                                <tr class="@(!doc.IsWithinRetention ? "archive-row-expired" : "")">
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @doc.DocumentTitle
+                                            @if (doc.IsVersionArchive)
+                                            {
+                                                <span class="dash-version-badge ms-1">v@(doc.VersionNumber).0</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted">@doc.DocumentType</small>
+                                    </td>
+                                    <td>@doc.PatientName</td>
+                                    <td>@doc.ArchivedByName</td>
+                                    <td><span class="text-muted">@doc.ArchiveReason</span></td>
+                                    <td>@doc.ArchiveDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@doc.RetentionUntil.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (doc.IsWithinRetention)
+                                        {
+                                            <span class="status-dot"><span class="status-dot-indicator active"></span><span>@doc.StatusText</span></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-dot"><span class="status-dot-indicator inactive"></span><span>@doc.StatusText</span></span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            @if (doc.IsWithinRetention)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-success btn-restore"
+                                                        data-archive-id="@doc.ArchiveID"
+                                                        data-doc-title="@doc.DocumentTitle"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Restore"
+                                                        onclick="openRestoreModal(this)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">--</span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-2 opacity-50"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>
+                                    <p class="mb-0 mt-2">No archived documents found</p>
+                                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.StatusFilter))
+                                    {
+                                        <small>Try adjusting your filters to see more results.</small>
+                                    }
+                                    else
+                                    {
+                                        <small>There are no archived documents at this time.</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination - Standardized Style -->
+            @{
+                int pageSize = 8;
+                int startEntry = Model.TotalDocuments > 0 ? (Model.PageNumber - 1) * pageSize + 1 : 0;
+                int endEntry = Math.Min(Model.PageNumber * pageSize, Model.TotalDocuments);
+            }
+            <div class="table-footer">
+                <div class="table-footer-left">
+                    <span class="footer-text">Showing @startEntry to @endEntry of @Model.TotalDocuments entries</span>
+                </div>
+                <div class="table-footer-right">
+                    <nav class="pagination-nav">
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="First Page">&laquo;</a>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber <= 1 ? "disabled" : "")" title="Previous">&lsaquo;</a>
+                        <span class="pagination-indicator">@Model.PageNumber / @Math.Max(Model.TotalPages, 1)</span>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Next">&rsaquo;</a>
+                        <a href="@Url.Action("ArchiveRetention", "Dashboard", new { area = "Staff", searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.TotalPages })#staff-archive-table"
+                           class="btn btn-sm btn-outline-secondary pagination-btn @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")" title="Last Page">&raquo;</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ RESTORE CONFIRMATION MODAL ═══════════════ -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Restore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-area="Staff" asp-controller="Dashboard" asp-action="RestoreDocument" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="archiveId" id="restoreArchiveId" />
+                <div class="modal-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-success mb-3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    <p>Are you sure you want to restore<br /><strong id="restoreDocTitle"></strong>?</p>
+                    <small class="text-muted">The document will be moved back to active modules.</small>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Yes, Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Open restore modal with data
+        function openRestoreModal(btn) {
+            document.getElementById('restoreArchiveId').value = btn.getAttribute('data-archive-id');
+            document.getElementById('restoreDocTitle').textContent = btn.getAttribute('data-doc-title');
+            var modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+            modal.show();
+        }
+    </script>
+}

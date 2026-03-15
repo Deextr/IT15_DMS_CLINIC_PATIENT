@@ -1,0 +1,146 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    var rpt = Model.PatientSummary!;
+}
+
+<!-- ═══════════════════════════════════════════════════
+     PATIENT SUMMARY REPORT
+     ═══════════════════════════════════════════════════ -->
+<div class="report-section mb-4">
+    <div class="report-section-header">
+        <h6 class="fw-bold mb-0">Patient Summary Report</h6>
+        <small>Overview of patient registrations and demographics</small>
+    </div>
+
+    <div style="padding: 16px;">
+
+        <!-- Patient Overview Metrics -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Patient Overview</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Total Registered Patients</td>
+                        <td><strong>@rpt.TotalRegisteredPatients</strong></td>
+                    </tr>
+                    <tr>
+                        <td>New Patients — Today</td>
+                        <td><strong>@rpt.NewPatientsDaily</strong></td>
+                    </tr>
+                    <tr>
+                        <td>New Patients — Last 7 Days</td>
+                        <td><strong>@rpt.NewPatientsWeekly</strong></td>
+                    </tr>
+                    <tr>
+                        <td>New Patients — Last 30 Days</td>
+                        <td><strong>@rpt.NewPatientsMonthly</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Age Distribution -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Age Distribution</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Age Group</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.AgeDistribution.Any())
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">No patient data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.AgeDistribution)
+                        {
+                            <tr>
+                                <td>@row.AgeGroup</td>
+                                <td>@row.Count</td>
+                                <td>@row.Percentage</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Gender Distribution -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Gender Distribution</p>
+        <div class="table-responsive mb-4">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Gender</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.GenderDistribution.Any())
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">No patient data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.GenderDistribution)
+                        {
+                            <tr>
+                                <td>@row.Gender</td>
+                                <td>@row.Count</td>
+                                <td>@row.Percentage</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recently Active Patients -->
+        <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #374151;">Recently Active Patients</p>
+        <div class="table-responsive mb-3">
+            <table class="table documents-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient Name</th>
+                        <th>Gender</th>
+                        <th>Last Visit</th>
+                        <th>Documents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!rpt.RecentlyActivePatients.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">No recently active patients found for the selected period.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in rpt.RecentlyActivePatients)
+                        {
+                            <tr>
+                                <td>@row.PatientID</td>
+                                <td>@row.PatientName</td>
+                                <td>@row.Gender</td>
+                                <td>@row.LastVisitDate</td>
+                                <td>@row.TotalDocuments</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

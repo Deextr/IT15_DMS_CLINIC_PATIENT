@@ -1,0 +1,22 @@
+@model DMS_CPMS.Models.Admin.AdminDashboardViewModel
+
+@await Html.PartialAsync("~/Views/Shared/_AdminDashboard.cshtml", Model)
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script>
+        const initialData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            patientsByGender = Model.PatientsByGender,
+            patientsByAgeGroup = Model.PatientsByAgeGroup,
+            newPatientsPerMonth = Model.NewPatientsPerMonth,
+            documentUploadTrend = Model.DocumentUploadTrend,
+            documentsByType = Model.DocumentsByType,
+            mostUpdatedDocuments = Model.MostUpdatedDocuments,
+            recentActivities = Model.RecentActivities,
+            documentTrendTitle = Model.DocumentTrendTitle,
+            totalDocumentVersions = Model.TotalDocumentVersions
+        }, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        const dashArea = 'SuperAdmin';
+    </script>
+    <script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
+}

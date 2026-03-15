@@ -1,0 +1,218 @@
+@using DMS_CPMS.Data.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+}
+
+@if (isAuthenticated)
+{
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+        <div class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+            <svg class="sidebar-toggle-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <svg class="sidebar-toggle-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                <polyline points="11 17 6 12 11 7"></polyline>
+                <polyline points="18 17 13 12 18 7"></polyline>
+            </svg>
+        </div>
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-text">Navigation</span>
+        </div>
+        <ul class="sidebar-menu list-unstyled">
+            <li class="sidebar-item @(currentController == "Dashboard" && (currentAction == "Index" || currentAction == null) ? "active" : "")">
+                @if (isSuperAdmin)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+                else if (isAdmin)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "Admin" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+                else if (isStaff)
+                {
+                    <a href="@Url.Action("Index", "Dashboard", new { area = "Staff" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <rect x="2" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="2" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="2" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                                <rect x="11" y="11" width="7" height="7" rx="1" fill="currentColor"></rect>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Dashboard</span>
+                    </a>
+                }
+            </li>
+
+            @if (isStaff)
+            {
+                <li class="sidebar-item @(currentAction == "Patients" ? "active" : "")">
+                    <a href="/Staff/Dashboard/Patients" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <circle cx="10" cy="6" r="3" fill="currentColor"></circle>
+                                <path d="M4 16c0-2.2 2.2-4 6-4s6 1.8 6 4H4z" fill="currentColor"></path>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Patient Records</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item @(currentAction == "ArchiveRetention" ? "active" : "")">
+                    <a href="/Staff/Dashboard/ArchiveRetention" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 10h4M8 14h4" stroke="currentColor" stroke-width="2"/>
+                                <path d="M2 6h2M2 10h2M2 14h2" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Document Archive</span>
+                    </a>
+                </li>
+            }
+
+            @if (isSuperAdmin || isAdmin)
+            {
+                <li class="sidebar-item @(currentController == "Accounts" ? "active" : "")">
+                    @if (isSuperAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Accounts", new { area = "SuperAdmin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <circle cx="10" cy="6" r="3" fill="currentColor"></circle>
+                                    <path d="M4 16c0-2.2 2.2-4 6-4s6 1.8 6 4H4z" fill="currentColor"></path>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Accounts</span>
+                        </a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Accounts", new { area = "Admin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <circle cx="10" cy="6" r="3" fill="currentColor"></circle>
+                                    <path d="M4 16c0-2.2 2.2-4 6-4s6 1.8 6 4H4z" fill="currentColor"></path>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Accounts</span>
+                        </a>
+                    }
+                </li>
+
+                <li class="sidebar-item @(currentController == "Patient" ? "active" : "")">
+                    <a href="@Url.Action("Index", "Patient", new { area = "" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M10 4.5c-1.8-2.5-6-1.8-6 1.8 0 3.1 4.8 5.8 6 7 1.2-1.2 6-3.9 6-7 0-3.6-4.2-4.3-6-1.8z" fill="currentColor"></path>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Patients</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item @(currentController == "ArchiveRetention" ? "active" : "")">
+                    <a href="@Url.Action("Index", "ArchiveRetention", new { area = "" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 10h4M8 14h4" stroke="currentColor" stroke-width="2"/>
+                                <path d="M2 6h2M2 10h2M2 14h2" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Archive & Retention</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item @(currentAction == "AuditLogs" ? "active" : "")">
+                    @if (isSuperAdmin)
+                    {
+                        <a href="/SuperAdmin/Dashboard/AuditLogs" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z" fill="currentColor"/>
+                                    <path d="M10 5v5.5l3.5 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Audit Logs</span>
+                        </a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a href="/Admin/Dashboard/AuditLogs" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z" fill="currentColor"/>
+                                    <path d="M10 5v5.5l3.5 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Audit Logs</span>
+                        </a>
+                    }
+                </li>
+
+                <li class="sidebar-item @(currentController == "Reports" ? "active" : "")">
+                    @if (isSuperAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Reports", new { area = "SuperAdmin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M3 3v14h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M7 13V9M10 13V7M13 13V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Reports</span>
+                        </a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a href="@Url.Action("Index", "Reports", new { area = "Admin" })" class="sidebar-link">
+                            <span class="sidebar-link-icon" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" focusable="false">
+                                    <path d="M3 3v14h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M7 13V9M10 13V7M13 13V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span class="sidebar-link-text">Reports</span>
+                        </a>
+                    }
+                </li>
+            }
+        </ul>
+    </nav>
+
+
+}
+

@@ -1,0 +1,112 @@
+@model DMS_CPMS.Models.Reports.ReportsIndexViewModel
+@{
+    ViewData["Title"] = "Reports";
+    var area = Model.Area;
+    var sel = Model.SelectedReport;
+    var preset = Model.DatePreset;
+
+    var reportOptions = new Dictionary<string, string>
+    {
+        ["All"] = "All Reports",
+        ["PatientSummary"] = "Patient Summary Report",
+        ["DocumentActivity"] = "Document Activity Report",
+        ["AuditLogs"] = "Audit Logs Report"
+    };
+}
+
+<div class="container-fluid">
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form class="d-flex align-items-end gap-2 flex-wrap mb-3" method="get" id="reportFilterForm"
+                  asp-area="@area" asp-action="Index" asp-controller="Reports">
+                <!-- Report Selection -->
+                <div style="min-width: 200px;">
+                    <label class="form-label">Report</label>
+                    <select name="report" id="reportSelector" class="form-select">
+                        @foreach (var opt in reportOptions)
+                        {
+                            <option value="@opt.Key" selected="@(sel == opt.Key ? "selected" : null)">@opt.Value</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Date Range Preset -->
+                <div style="min-width: 150px;">
+                    <label class="form-label">Date Range</label>
+                    <select name="datePreset" id="datePresetSelector" class="form-select">
+                        <option value="AllTime" selected="@(preset == "AllTime" ? "selected" : null)">All Time</option>
+                        <option value="Today" selected="@(preset == "Today" ? "selected" : null)">Today</option>
+                        <option value="Weekly" selected="@(preset == "Weekly" ? "selected" : null)">Last 7 Days</option>
+                        <option value="Monthly" selected="@(preset == "Monthly" ? "selected" : null)">Last 30 Days</option>
+                        <option value="Yearly" selected="@(preset == "Yearly" ? "selected" : null)">Last Year</option>
+                        <option value="Custom" selected="@(preset == "Custom" ? "selected" : null)">Custom Range</option>
+                    </select>
+                </div>
+
+                <!-- Custom Date Range (hidden by default) -->
+                <div id="customDateFrom" style="display: @(preset == "Custom" ? "block" : "none"); min-width: 140px;">
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="dateFrom" id="dateFromInput" class="form-control" value="@Model.DateFrom" />
+                </div>
+                <div id="customDateTo" style="display: @(preset == "Custom" ? "block" : "none"); min-width: 140px;">
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="dateTo" id="dateToInput" class="form-control" value="@Model.DateTo" />
+                </div>
+
+                <!-- Filter / Reset -->
+                <div class="d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-secondary">Filter</button>
+                    <a asp-area="@area" asp-action="Index" asp-controller="Reports"
+                       class="btn btn-outline-secondary">Reset</a>
+                </div>
+
+                <!-- Export Buttons (pushed to right) -->
+                <div class="d-flex align-items-end gap-2 ms-auto">
+                    <a id="btnExportPdf"
+                       href="@Url.Action("ExportPdf", "Reports", new { area = area, report = sel, datePreset = preset, dateFrom = Model.DateFrom, dateTo = Model.DateTo })"
+                       class="btn d-flex align-items-center gap-2 px-3 py-2 fw-semibold text-white"
+                       style="background:#c0392b; border:none; border-radius:8px; box-shadow:0 2px 6px rgba(192,57,43,.35); min-width:118px; font-size:.85rem; text-decoration:none;"
+                       title="Export as PDF">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+                            <path d="M5.523 12.424q.21-.124.459-.238a8 8 0 0 1-.45.606c-.28.337-.498.516-.635.572l-.035.012a.3.3 0 0 1-.026-.044c-.056-.11-.054-.216.04-.36.106-.165.319-.354.647-.548m2.455-1.647q-.178.037-.356.078a21 21 0 0 0 .5-1.05 12 12 0 0 0 .51.858q-.326.048-.654.114m2.525.939a4 4 0 0 1-.435-.41q.344.007.612.054.317.058.466.197a.2.2 0 0 1 .02.025.24.24 0 0 1-.028.11.28.28 0 0 1-.092.1.33.33 0 0 1-.194.058.92.92 0 0 1-.35-.134ZM8.878 8.884a2 2 0 0 0-.437-.23l.025-.044c.183-.31.45-.555.717-.652a1.3 1.3 0 0 1 .401-.108c.042.023.091.063.129.11.024.03.035.059.034.082-.014.19-.195.37-.476.542a3.1 3.1 0 0 1-.393.3Z"/>
+                            <path fill-rule="evenodd" d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2m5.5 1.5v2a1 1 0 0 0 1 1h2zM4.165 13.668c.09.18.23.343.438.419.207.075.412.04.58-.03.318-.13.635-.436.926-.786.333-.401.683-.927 1.021-1.51a11.7 11.7 0 0 1 1.997-.406c.3.383.61.713.91.95.28.22.603.403.934.417a1.16 1.16 0 0 0 .933-.378c.295-.368.295-.905-.139-1.28-.349-.305-.976-.403-1.485-.378a12 12 0 0 1-.676.06 11 11 0 0 1-.98-1.686c.25-.66.437-1.284.52-1.794.036-.218.055-.426.048-.614a1.2 1.2 0 0 0-.127-.538 1 1 0 0 0-.477-.365c-.202-.043-.41 0-.601.077-.377.15-.576.468-.651.823-.074.34-.04.736.046 1.136.065.315.17.683.308 1.068a12 12 0 0 1-1.062 2.227 7.7 7.7 0 0 0-1.482.645c-.37.22-.699.48-.897.787-.21.326-.275.714-.08 1.102Z"/>
+                        </svg>
+                        Export PDF
+                    </a>
+                    <a id="btnExportExcel"
+                       href="@Url.Action("ExportExcel", "Reports", new { area = area, report = sel, datePreset = preset, dateFrom = Model.DateFrom, dateTo = Model.DateTo })"
+                       class="btn d-flex align-items-center gap-2 px-3 py-2 fw-semibold text-white"
+                       style="background:#1d6f42; border:none; border-radius:8px; box-shadow:0 2px 6px rgba(29,111,66,.35); min-width:130px; font-size:.85rem; text-decoration:none;"
+                       title="Export as Excel">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0;">
+                            <path d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM6.854 15.112 5.154 12.96h-.82l1.904 2.426-1.982 2.574h.836l1.2-1.61 1.2 1.61h.84l-1.985-2.574 1.9-2.426h-.825zm2.293 3v-5h-.76v5zm1.227 0v-5H9.6v5h.774zm.72 0h.752v-2.05h1.24V15.3h-1.24v-1.44h1.408v-.748H11.094z"/>
+                        </svg>
+                        Export Excel
+                    </a>
+                </div>
+            </form>
+
+            <!-- Report Content -->
+            <div id="reportContent">
+                @if (Model.PatientSummary != null)
+                {
+                    <partial name="~/Views/Shared/Reports/_PatientSummaryReport.cshtml" model="Model" />
+                }
+                @if (Model.DocumentActivity != null)
+                {
+                    <partial name="~/Views/Shared/Reports/_DocumentActivityReport.cshtml" model="Model" />
+                }
+                @if (Model.AuditLogs != null)
+                {
+                    <partial name="~/Views/Shared/Reports/_AuditLogsReport.cshtml" model="Model" />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jsPDF for PDF Export (local) -->
+<script src="~/lib/jspdf/jspdf.umd.min.js" asp-append-version="true"></script>
+<script src="~/lib/jspdf/jspdf.plugin.autotable.min.js" asp-append-version="true"></script>
+<script src="~/js/reports.js" asp-append-version="true"></script>

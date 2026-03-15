@@ -1,0 +1,103 @@
+@model DMS_CPMS.Models.Document.AddDocumentViewModel
+
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ocean-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDocumentModalLabel">Add New Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Document" asp-action="Add" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="PatientID" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="infield">
+                                <input asp-for="DocumentTitle" class="form-control" />
+                                <label asp-for="DocumentTitle" class="infield-label"></label>
+                            </div>
+                            <span asp-validation-for="DocumentTitle" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="infield">
+                                <input asp-for="DocumentType" class="form-control" />
+                                <label asp-for="DocumentType" class="infield-label"></label>
+                            </div>
+                            <span asp-validation-for="DocumentType" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">File Upload</label>
+                            <input name="Files" type="file" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.csv,.txt,.doc,.docx,.xls,.xlsx" id="addDocFileInput" />
+                            <span asp-validation-for="File" class="text-danger"></span>
+                            <small class="text-muted d-block">Allowed: PDF, Images, DOC, DOCX, XLS, XLSX, CSV, TXT &mdash; Max 5 files</small>
+                            <div id="addDocFileValidationMsg" class="text-danger small mt-1" style="display: none;"></div>
+                            <div id="addDocSelectedFilesList" class="mt-2" style="display: none;">
+                                <small class="text-muted fw-semibold">Selected files:</small>
+                                <ul class="list-unstyled mb-0 mt-1" id="addDocSelectedFilesUl"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const allowedExts = ['.pdf','.jpg','.jpeg','.png','.gif','.bmp','.webp','.csv','.txt','.doc','.docx','.xls','.xlsx'];
+    const blockedExts = ['.mp4','.avi','.mov','.wmv','.flv','.mkv','.webm','.m4v','.mpg','.mpeg','.3gp','.ogv'];
+    const maxFiles = 5;
+
+    document.getElementById('addDocFileInput')?.addEventListener('change', function() {
+        const validationMsg = document.getElementById('addDocFileValidationMsg');
+        const filesList = document.getElementById('addDocSelectedFilesList');
+        const filesUl = document.getElementById('addDocSelectedFilesUl');
+        const files = this.files;
+
+        if (validationMsg) validationMsg.style.display = 'none';
+        if (filesList) filesList.style.display = 'none';
+        if (filesUl) filesUl.innerHTML = '';
+
+        if (!files || files.length === 0) return;
+
+        if (files.length > maxFiles) {
+            validationMsg.textContent = 'You can upload a maximum of ' + maxFiles + ' files at a time. You selected ' + files.length + '.';
+            validationMsg.style.display = 'block';
+            this.value = '';
+            return;
+        }
+
+        for (var i = 0; i < files.length; i++) {
+            var ext = '.' + files[i].name.split('.').pop().toLowerCase();
+            if (blockedExts.indexOf(ext) >= 0) {
+                validationMsg.textContent = 'Video files are not allowed: "' + files[i].name + '"';
+                validationMsg.style.display = 'block';
+                this.value = '';
+                return;
+            }
+            if (allowedExts.indexOf(ext) < 0) {
+                validationMsg.textContent = 'Unsupported file type "' + ext + '" in "' + files[i].name + '".';
+                validationMsg.style.display = 'block';
+                this.value = '';
+                return;
+            }
+        }
+
+        if (files.length > 1) {
+            for (var i = 0; i < files.length; i++) {
+                var li = document.createElement('li');
+                li.className = 'small text-muted';
+                li.textContent = files[i].name;
+                filesUl.appendChild(li);
+            }
+            filesList.style.display = 'block';
+        }
+    });
+})();
+</script>

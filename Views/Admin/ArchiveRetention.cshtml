@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Document Retention";
+}
+
+<div class="container-fluid">
+    <!-- Retention Policies Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <!-- Filter bar -->
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" placeholder="Search policies...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-secondary flex-fill">Filter</button>
+                    <button type="button" class="btn btn-outline-secondary flex-fill">Reset</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table documents-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Policy Name</th>
+                            <th>Document Type</th>
+                            <th>Retention</th>
+                            <th>Auto-Delete</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold">Medical Records</td>
+                            <td>Patient Medical History</td>
+                            <td>7 years</td>
+                            <td><span class="badge bg-danger">No</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Lab Results</td>
+                            <td>Blood Tests, Urinalysis</td>
+                            <td>5 years</td>
+                            <td><span class="badge bg-danger">No</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Prescriptions</td>
+                            <td>Medication Records</td>
+                            <td>3 years</td>
+                            <td><span class="badge bg-success">Yes</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Imaging Data</td>
+                            <td>X-Rays, MRI, CT Scans</td>
+                            <td>10 years</td>
+                            <td><span class="badge bg-danger">No</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Insurance Claims</td>
+                            <td>Claim Forms & Approvals</td>
+                            <td>5 years</td>
+                            <td><span class="badge bg-success">Yes</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Vaccination Records</td>
+                            <td>Immunization History</td>
+                            <td>Indefinite</td>
+                            <td><span class="badge bg-danger">No</span></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
