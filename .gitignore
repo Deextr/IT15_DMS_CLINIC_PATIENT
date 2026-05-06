@@ -4,4 +4,5 @@ obj/
 *.dll
 *.exe
 *.cache
-appsettings.Development.json
+appsettings.Development.jsongit add .
+git commit -m "Initial clean commit"

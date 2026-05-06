@@ -18,6 +18,8 @@ namespace DMS_CPMS.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ArchiveDocument> ArchiveDocuments { get; set; }
         public DbSet<RetentionPolicy> RetentionPolicies { get; set; }
+        public DbSet<SystemBackup> SystemBackups { get; set; }
+        public DbSet<BackupScheduleSettings> BackupScheduleSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -183,6 +185,24 @@ namespace DMS_CPMS.Data
                 entity.Property(e => e.IsEnabled)
                     .IsRequired()
                     .HasDefaultValue(true);
+            });
+
+            builder.Entity<SystemBackup>(entity =>
+            {
+                entity.HasKey(e => e.SystemBackupId);
+                entity.Property(e => e.FileName).IsRequired().HasMaxLength(260);
+                entity.Property(e => e.StoragePath).IsRequired().HasMaxLength(400);
+                entity.Property(e => e.StorageProvider).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.CreatedByUserId).HasMaxLength(450);
+                entity.Property(e => e.CreatedByRole).HasMaxLength(50);
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                entity.HasIndex(e => e.CreatedUtc).HasDatabaseName("IX_SystemBackup_CreatedUtc");
+            });
+
+            builder.Entity<BackupScheduleSettings>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.StartTimeLocal).IsRequired();
             });
         }
     }

@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-DMS_CPMS-8306d6b1-6766-44d5-a0b3-7b0f63bca7cf</UserSecretsId>
+    <!-- Test project lives under this folder; exclude it from the web app's compile glob -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);DMS_CPMS.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

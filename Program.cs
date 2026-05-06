@@ -2,6 +2,7 @@ using DMS_CPMS.Data;
 using DMS_CPMS.Data.Models;
 using DMS_CPMS.Data.Seeders;
 using DMS_CPMS.Services;
+using DMS_CPMS.Services.BackupRecovery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -85,6 +86,8 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 });
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddMemoryCache();
+
 // Register HttpContextAccessor for audit logging
 builder.Services.AddHttpContextAccessor();
 
@@ -106,6 +109,12 @@ builder.Services.AddScoped<IReportExportService, ReportExportService>();
 
 // Register AWS S3 export storage service
 builder.Services.AddSingleton<IS3ExportStorageService, S3ExportStorageService>();
+
+// Backup & Recovery
+builder.Services.AddSingleton<IBackupCryptoService, BackupCryptoService>();
+builder.Services.AddScoped<IBackupRecoveryService, BackupRecoveryService>();
+builder.Services.AddScoped<IReauthService, ReauthService>();
+builder.Services.AddHostedService<BackupSchedulerHostedService>();
 
 // QuestPDF Community License
 QuestPDF.Settings.License = LicenseType.Community;

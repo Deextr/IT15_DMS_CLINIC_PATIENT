@@ -1,0 +1,276 @@
+@model DMS_CPMS.Models.SystemSettings.BackupRecoveryViewModel
+@{
+    ViewData["Title"] = "Backup & Recovery";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var canAct = Model.IsReauthenticated;
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-end flex-wrap gap-2 mb-2">
+        @if (canAct)
+        {
+            <div class="badge rounded-pill px-3 py-2 bg-success-subtle text-success">
+                Re-authenticated
+            </div>
+        }
+    </div>
+
+    @if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
+    {
+        <div class="alert alert-success">@ok</div>
+    }
+    @if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
+    {
+        <div class="alert alert-danger">@err</div>
+    }
+
+    <div class="row g-3">
+        <div class="col-xl-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="mb-2 fw-semibold">Security Confirmation</h6>
+                    <p class="text-muted mb-3">Confirm your password before creating backups or performing restores.</p>
+
+                    <form asp-action="ConfirmBackupRecoveryPassword" method="post" class="needs-loading">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="ConfirmPassword"></label>
+                            <input class="form-control" asp-for="ConfirmPassword" autocomplete="current-password" />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" style="background:linear-gradient(135deg, #006d77, #83c5be); border:none;">
+                            Confirm Password
+                        </button>
+                    </form>
+                    <div class="small text-muted mt-2">Confirmation remains valid for 5 minutes.</div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="mb-2 fw-semibold">Manual Backup</h6>
+                    <p class="text-muted mb-3">Creates an encrypted backup of the database and uploaded documents.</p>
+                    <form asp-action="CreateBackup" method="post" class="needs-loading">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success w-100" @(canAct ? null : "disabled")>
+                            Create Backup Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="mb-2 fw-semibold">Scheduled Backups</h6>
+                    <p class="text-muted mb-3">Configure automated backups (daily/weekly). Server local time is used.</p>
+
+                    <form asp-action="UpdateBackupSchedule" method="post" class="needs-loading">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" asp-for="ScheduleEnabled" />
+                            <label class="form-check-label" asp-for="ScheduleEnabled"></label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Frequency"></label>
+                            <select class="form-select" asp-for="Frequency" asp-items="Html.GetEnumSelectList<DMS_CPMS.Data.Models.BackupFrequency>()" id="freqSelect"></select>
+                        </div>
+
+                        <div class="mb-3" id="weeklyDayWrap" style="display:none;">
+                            <label class="form-label" asp-for="WeeklyDayOfWeek"></label>
+                            <select class="form-select" asp-for="WeeklyDayOfWeek">
+                                <option value="">Select day</option>
+                                @foreach (var d in Enum.GetValues<DayOfWeek>())
+                                {
+                                    <option value="@d" selected="@(Model.WeeklyDayOfWeek == d)">@d</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="StartTimeLocal"></label>
+                            <input class="form-control" asp-for="StartTimeLocal" placeholder="02:00" inputmode="numeric" />
+                            <div class="form-text">Format: HH:mm (24-hour)</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-outline-primary w-100" @(canAct ? null : "disabled")>
+                            Save Schedule
+                        </button>
+                    </form>
+
+                    <div class="small text-muted mt-3">
+                        <div><strong>Last run:</strong> @(Model.Schedule.LastRunUtc?.ToLocalTime().ToString("MMM d, yyyy HH:mm") ?? "—")</div>
+                        <div><strong>Next run:</strong> @(Model.Schedule.NextRunUtc?.ToLocalTime().ToString("MMM d, yyyy HH:mm") ?? "—")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <h6 class="mb-0 fw-semibold">Backup History</h6>
+                        <div class="text-muted small">Encrypted backups stored in a protected server directory.</div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Filename</th>
+                                    <th class="text-end">Size</th>
+                                    <th>Date created</th>
+                                    <th>Created by</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.History.Any())
+                                {
+                                    foreach (var b in Model.History)
+                                    {
+                                        <tr>
+                                            <td class="fw-medium">@b.FileName</td>
+                                            <td class="text-end text-muted">@((b.SizeBytes / 1024d / 1024d).ToString("0.00")) MB</td>
+                                            <td class="text-muted">@b.CreatedUtc.ToLocalTime().ToString("MMM d, yyyy HH:mm")</td>
+                                            <td class="text-muted">@((b.CreatedByRole ?? "—"))</td>
+                                            <td class="text-end">
+                                                <form asp-action="DownloadBackup" method="post" class="d-inline needs-loading">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@b.SystemBackupId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" @(canAct ? null : "disabled")>Download</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No backups yet.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3 border border-danger-subtle">
+                <div class="card-body">
+                    <h6 class="mb-2 fw-semibold text-danger">Restore (Destructive)</h6>
+                    <div class="alert alert-danger mb-3">
+                        <strong>Warning:</strong> This action will overwrite all current system data and cannot be undone.
+                    </div>
+
+                    <form asp-action="RestoreFromHistory" method="post" class="needs-loading">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label class="form-label">Restore from existing backup</label>
+                                <select class="form-select" name="RestoreBackupId" @(canAct ? null : "disabled")>
+                                    <option value="">Select a backup...</option>
+                                    @foreach (var b in Model.History)
+                                    {
+                                        <option value="@b.SystemBackupId">@b.FileName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-danger w-100" @(canAct ? null : "disabled")>Restore</button>
+                            </div>
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="RestoreAcknowledge" value="true" id="ack1" @(canAct ? null : "disabled") />
+                            <label class="form-check-label" for="ack1">
+                                I understand this will overwrite current system data
+                            </label>
+                        </div>
+                    </form>
+
+                    <hr class="my-4" />
+
+                    <form asp-action="UploadAndRestore" method="post" enctype="multipart/form-data" class="needs-loading">
+                        @Html.AntiForgeryToken()
+                        <label class="form-label">Upload external backup (.enc)</label>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-8">
+                                <input class="form-control" type="file" name="backupFile" id="backupEncFile" accept=".enc" @(canAct ? null : "disabled") />
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-danger w-100" @(canAct ? null : "disabled")>Upload &amp; Restore</button>
+                            </div>
+                        </div>
+                        <div class="form-text text-muted mt-1">Only <strong>.enc</strong> encrypted backup files are accepted.</div>
+                        <div class="text-danger small mt-1 d-none" id="backupEncFileError">Only .enc encrypted backup files are allowed.</div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="restoreAcknowledge" value="true" id="ack2" @(canAct ? null : "disabled") />
+                            <label class="form-check-label" for="ack2">
+                                I understand this will overwrite current system data
+                            </label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background:rgba(0,0,0,0.35); z-index: 2000;">
+                <div class="position-absolute top-50 start-50 translate-middle bg-white rounded-3 shadow p-4 text-center" style="min-width: 280px;">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <div class="fw-semibold">Working…</div>
+                    <div class="text-muted small">Please don’t close the page.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const overlay = document.getElementById('loadingOverlay');
+            document.querySelectorAll('form.needs-loading').forEach(f => {
+                f.addEventListener('submit', () => {
+                    if (overlay) overlay.classList.remove('d-none');
+                });
+            });
+
+            const freq = document.getElementById('freqSelect');
+            const weeklyWrap = document.getElementById('weeklyDayWrap');
+            function syncWeekly() {
+                if (!freq || !weeklyWrap) return;
+                weeklyWrap.style.display = (freq.value === 'Weekly' || freq.value === '2') ? 'block' : 'none';
+            }
+            if (freq) {
+                freq.addEventListener('change', syncWeekly);
+                syncWeekly();
+            }
+
+            const fileInput = document.getElementById('backupEncFile');
+            const fileError = document.getElementById('backupEncFileError');
+            if (fileInput) {
+                fileInput.addEventListener('change', () => {
+                    const f = fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
+                    if (!f) {
+                        fileInput.classList.remove('is-invalid');
+                        if (fileError) fileError.classList.add('d-none');
+                        return;
+                    }
+                    const name = (f.name || '').toLowerCase();
+                    if (!name.endsWith('.enc')) {
+                        fileInput.value = '';
+                        fileInput.classList.add('is-invalid');
+                        if (fileError) fileError.classList.remove('d-none');
+                    } else {
+                        fileInput.classList.remove('is-invalid');
+                        if (fileError) fileError.classList.add('d-none');
+                    }
+                });
+            }
+        })();
+    </script>
+}
+

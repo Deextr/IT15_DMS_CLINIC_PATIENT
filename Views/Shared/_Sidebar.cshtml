@@ -209,6 +209,17 @@
                         </a>
                     }
                 </li>
+
+                <li class="sidebar-item @(currentController == "SystemSettings" ? "active" : "")">
+                    <a href="@Url.Action("BackupRecovery", "SystemSettings", new { area = "" })" class="sidebar-link">
+                        <span class="sidebar-link-icon" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" focusable="false">
+                                <path d="M8.5 2h3l.4 2.1a6.7 6.7 0 0 1 1.7.7l1.8-1 2.1 2.1-1 1.8c.3.6.5 1.1.7 1.7L19 10.5v3l-2.1.4a6.7 6.7 0 0 1-.7 1.7l1 1.8-2.1 2.1-1.8-1a6.7 6.7 0 0 1-1.7.7L11.5 19h-3l-.4-2.1a6.7 6.7 0 0 1-1.7-.7l-1.8 1-2.1-2.1 1-1.8a6.7 6.7 0 0 1-.7-1.7L1 13.5v-3l2.1-.4c.2-.6.4-1.2.7-1.7l-1-1.8L4.9 4.5l1.8 1c.6-.3 1.1-.5 1.7-.7L8.5 2zm1 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="sidebar-link-text">Backup &amp; Recovery</span>
+                    </a>
+                </li>
             }
         </ul>
     </nav>
