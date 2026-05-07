@@ -137,11 +137,15 @@
                                             <td class="text-muted">@b.CreatedUtc.ToLocalTime().ToString("MMM d, yyyy HH:mm")</td>
                                             <td class="text-muted">@((b.CreatedByRole ?? "—"))</td>
                                             <td class="text-end">
-                                                <form asp-action="DownloadBackup" method="post" class="d-inline needs-loading">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@b.SystemBackupId" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" @(canAct ? null : "disabled")>Download</button>
-                                                </form>
+                                                @if (canAct)
+                                                {
+                                                    @* GET avoids POST + loading overlay: file downloads don't navigate, leaving modal stuck forever *@
+                                                    <a asp-controller="SystemSettings" asp-action="DownloadBackup" asp-route-id="@b.SystemBackupId" class="btn btn-sm btn-outline-secondary">Download</a>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Confirm password first">Download</button>
+                                                }
                                             </td>
                                         </tr>
                                     }
@@ -232,6 +236,13 @@
     <script>
         (function () {
             const overlay = document.getElementById('loadingOverlay');
+            function hideOverlay() {
+                if (overlay) overlay.classList.add('d-none');
+            }
+            // Always start clean (fixes stuck modal after GET file download, bfcache, or full reload after restore).
+            document.addEventListener('DOMContentLoaded', hideOverlay);
+            window.addEventListener('pageshow', hideOverlay);
+
             document.querySelectorAll('form.needs-loading').forEach(f => {
                 f.addEventListener('submit', () => {
                     if (overlay) overlay.classList.remove('d-none');

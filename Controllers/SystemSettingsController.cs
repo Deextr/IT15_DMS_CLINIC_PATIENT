@@ -242,8 +242,11 @@ namespace DMS_CPMS.Controllers
             return RedirectToAction(nameof(BackupRecovery));
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        /// <summary>
+        /// GET download (no POST/form overlay issue): browsers navigate away for file responses instead of leaving the SPA stuck behind a modal.
+        /// Authorization + re-auth gate matches destructive ops policy.
+        /// </summary>
+        [HttpGet]
         public async Task<IActionResult> DownloadBackup(int id, CancellationToken cancellationToken)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -261,6 +264,7 @@ namespace DMS_CPMS.Controllers
             if (!System.IO.File.Exists(backup.StoragePath)) return NotFound();
 
             await _audit.LogAsync("System Backup Downloaded", user.Id, details: backup.FileName);
+            // Do not dispose here — FileResult takes ownership and closes the stream after the response completes.
             var stream = new FileStream(backup.StoragePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return File(stream, "application/octet-stream", backup.FileName);
         }

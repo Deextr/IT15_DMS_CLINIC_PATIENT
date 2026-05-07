@@ -24,7 +24,8 @@ namespace DMS_CPMS.Services.BackupRecovery
     public sealed class BackupCryptoService : IBackupCryptoService
     {
         public const string MagicValue = "CLINIXDOCSBK"; // 11 chars
-        private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes(MagicValue + "1"); // 12 bytes total
+        private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes(MagicValue); // 11 bytes total
+        private static readonly string MagicString = Encoding.ASCII.GetString(MagicBytes);
         private const byte CurrentVersion = 1;
         public string FileExtension => ".enc";
 
@@ -65,7 +66,7 @@ namespace DMS_CPMS.Services.BackupRecovery
                     cipherLen = tempCipher.Length;
                 }
 
-                // Write header (Magic(12), Version(1), IV(16), CipherLen(8 LE))
+                // Write header (Magic(11), Version(1), IV(16), CipherLen(8 LE))
                 output.Write(MagicBytes, 0, MagicBytes.Length);
                 output.WriteByte(CurrentVersion);
                 output.Write(iv);
@@ -109,7 +110,6 @@ namespace DMS_CPMS.Services.BackupRecovery
             if (masterKey32Bytes.Length != 32) throw new ArgumentException("Master key must be 32 bytes.", nameof(masterKey32Bytes));
 
             var header = ReadHeader(encryptedFilePath);
-            if (header.Magic != MagicValue + "1") throw new CryptographicException("Invalid backup file signature.");
             if (header.Version != CurrentVersion) throw new CryptographicException("Unsupported backup file version.");
 
             // Validate HMAC, then return a stream that decrypts ciphertext to a temp file, and opens it for reading.
@@ -131,17 +131,20 @@ namespace DMS_CPMS.Services.BackupRecovery
         public BackupFileHeader ReadHeader(string encryptedFilePath)
         {
             using var fs = new FileStream(encryptedFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            if (fs.Length < 12 + 1 + 16 + 8 + 32) throw new InvalidDataException("Backup file is too small.");
+            if (fs.Length < 11 + 1 + 16 + 8 + 32) throw new InvalidDataException("Backup file is too small.");
 
-            var magic = new byte[12];
+            var magic = new byte[MagicBytes.Length];
             fs.ReadExactly(magic, 0, magic.Length);
+            if (!magic.AsSpan().SequenceEqual(MagicBytes))
+                throw new CryptographicException("Invalid backup file signature.");
+
             var version = (byte)fs.ReadByte();
             _ = fs.Read(new byte[16], 0, 16);
             var lenBytes = new byte[8];
             fs.ReadExactly(lenBytes, 0, lenBytes.Length);
             var cipherLen = BitConverter.ToInt64(lenBytes, 0);
 
-            return new BackupFileHeader(Encoding.ASCII.GetString(magic), version, cipherLen);
+            return new BackupFileHeader(MagicString, version, cipherLen);
         }
 
         private static void ValidateHmac(string encryptedFilePath, ReadOnlySpan<byte> masterKey32Bytes)
@@ -154,7 +157,7 @@ namespace DMS_CPMS.Services.BackupRecovery
             {
                 using var fs = new FileStream(encryptedFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var totalLen = fs.Length;
-                if (totalLen < 12 + 1 + 16 + 8 + 32) throw new InvalidDataException("Backup file is too small.");
+                if (totalLen < 11 + 1 + 16 + 8 + 32) throw new InvalidDataException("Backup file is too small.");
 
                 var macOffset = totalLen - 32;
                 using var hmac = new HMACSHA256(macKey.ToArray());
@@ -198,10 +201,10 @@ namespace DMS_CPMS.Services.BackupRecovery
                 var totalLen = fs.Length;
                 var macOffset = totalLen - 32;
 
-                var magic = new byte[12];
+                var magic = new byte[MagicBytes.Length];
                 fs.ReadExactly(magic, 0, magic.Length);
                 var version = (byte)fs.ReadByte();
-                if (Encoding.ASCII.GetString(magic) != MagicValue + "1" || version != CurrentVersion)
+                if (!magic.AsSpan().SequenceEqual(MagicBytes) || version != CurrentVersion)
                     throw new CryptographicException("Invalid backup file header.");
 
                 var iv = new byte[16];
@@ -209,7 +212,7 @@ namespace DMS_CPMS.Services.BackupRecovery
                 var lenBytes = new byte[8];
                 fs.ReadExactly(lenBytes, 0, lenBytes.Length);
                 var cipherLen = BitConverter.ToInt64(lenBytes, 0);
-                if (cipherLen < 0 || (12 + 1 + 16 + 8 + cipherLen + 32) != totalLen)
+                if (cipherLen < 0 || (MagicBytes.Length + 1 + 16 + 8 + cipherLen + 32) != totalLen)
                     throw new InvalidDataException("Backup file length metadata is invalid.");
 
                 Directory.CreateDirectory(Path.GetDirectoryName(outputPlainPath)!);

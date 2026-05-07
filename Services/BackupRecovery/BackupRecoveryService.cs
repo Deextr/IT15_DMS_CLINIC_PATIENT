@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DMS_CPMS.Data;
@@ -69,51 +70,7 @@ namespace DMS_CPMS.Services.BackupRecovery
             try
             {
                 await using var appLock = await AcquireDbAppLockAsync(cancellationToken);
-
-                var nowUtc = DateTime.UtcNow;
-                var stamp = nowUtc.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
-                var fileName = $"{BackupFilePrefix}{stamp}{_crypto.FileExtension}";
-                var backupsDir = GetLocalBackupsDirectory();
-                var outputPath = Path.Combine(backupsDir, fileName);
-
-                var masterKey = GetEncryptionKey();
-
-                // Build plaintext zip into a temp file first to keep encryption streaming-friendly.
-                var tempZipPath = Path.Combine(Path.GetTempPath(), $"clinixdocs_backup_{Guid.NewGuid():N}.zip");
-                try
-                {
-                    await CreatePlainBackupZipAsync(tempZipPath, cancellationToken);
-
-                    await using (var zipStream = new FileStream(tempZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        _crypto.EncryptToFile(zipStream, outputPath, masterKey);
-                    }
-
-                    var fi = new FileInfo(outputPath);
-                    var record = new SystemBackup
-                    {
-                        FileName = fileName,
-                        StorageProvider = "Local",
-                        StoragePath = outputPath,
-                        SizeBytes = fi.Length,
-                        CreatedUtc = nowUtc,
-                        CreatedByUserId = initiatedByUserId,
-                        CreatedByRole = initiatedByRole
-                    };
-
-                    _db.SystemBackups.Add(record);
-                    await _db.SaveChangesAsync(cancellationToken);
-
-                    if (!string.IsNullOrWhiteSpace(initiatedByUserId))
-                        await _audit.LogAsync("System Backup Created", initiatedByUserId, details: fileName);
-                    else
-                        await _audit.LogAsync("System Backup Created", details: fileName);
-                    return record;
-                }
-                finally
-                {
-                    TryDelete(tempZipPath);
-                }
+                return await CreateBackupCoreAsync(initiatedByUserId, initiatedByRole, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -130,6 +87,57 @@ namespace DMS_CPMS.Services.BackupRecovery
             }
         }
 
+        /// <summary>
+        /// Performs backup file creation and DB registration. Caller must already hold <see cref="InProcessGate"/>
+        /// and the DB session app lock (<see cref="AcquireDbAppLockAsync"/>).
+        /// </summary>
+        private async Task<SystemBackup> CreateBackupCoreAsync(string? initiatedByUserId, string? initiatedByRole, CancellationToken cancellationToken)
+        {
+            var nowUtc = DateTime.UtcNow;
+            var stamp = nowUtc.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+            var fileName = $"{BackupFilePrefix}{stamp}{_crypto.FileExtension}";
+            var backupsDir = ResolveWritableLocalBackupDirectory();
+            var outputPath = Path.Combine(backupsDir, fileName);
+
+            var masterKey = GetEncryptionKey();
+
+            var tempZipPath = Path.Combine(Path.GetTempPath(), $"clinixdocs_backup_{Guid.NewGuid():N}.zip");
+            try
+            {
+                await CreatePlainBackupZipAsync(tempZipPath, cancellationToken);
+
+                await using (var zipStream = new FileStream(tempZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    _crypto.EncryptToFile(zipStream, outputPath, masterKey);
+                }
+
+                var fi = new FileInfo(outputPath);
+                var record = new SystemBackup
+                {
+                    FileName = fileName,
+                    StorageProvider = "Local",
+                    StoragePath = outputPath,
+                    SizeBytes = fi.Length,
+                    CreatedUtc = nowUtc,
+                    CreatedByUserId = initiatedByUserId,
+                    CreatedByRole = initiatedByRole
+                };
+
+                _db.SystemBackups.Add(record);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(initiatedByUserId))
+                    await _audit.LogAsync("System Backup Created", initiatedByUserId, details: fileName);
+                else
+                    await _audit.LogAsync("System Backup Created", details: fileName);
+                return record;
+            }
+            finally
+            {
+                TryDelete(tempZipPath);
+            }
+        }
+
         public async Task RestoreFromExistingBackupAsync(int systemBackupId, string initiatedByUserId, string? initiatedByRole, CancellationToken cancellationToken)
         {
             await InProcessGate.WaitAsync(cancellationToken);
@@ -143,8 +151,8 @@ namespace DMS_CPMS.Services.BackupRecovery
                     throw new NotSupportedException("Only local backups are supported by this deployment.");
                 if (!File.Exists(backup.StoragePath)) throw new FileNotFoundException("Backup file is missing from storage.", backup.StoragePath);
 
-                // Automatic pre-restore backup
-                var pre = await CreateBackupAsync(initiatedByUserId, initiatedByRole, cancellationToken);
+                // Pre-restore backup (must use core: outer scope already holds InProcessGate — CreateBackupAsync would deadlock)
+                var pre = await CreateBackupCoreAsync(initiatedByUserId, initiatedByRole, cancellationToken);
                 try
                 {
                     await RestoreFromEncryptedFileAsync(backup.StoragePath, initiatedByUserId, cancellationToken);
@@ -196,7 +204,7 @@ namespace DMS_CPMS.Services.BackupRecovery
                 var nowUtc = DateTime.UtcNow;
                 var stamp = nowUtc.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
                 var fileName = $"{BackupFilePrefix}{stamp}{_crypto.FileExtension}";
-                var backupsDir = GetLocalBackupsDirectory();
+                var backupsDir = ResolveWritableLocalBackupDirectory();
                 var savedPath = Path.Combine(backupsDir, fileName);
 
                 Directory.CreateDirectory(backupsDir);
@@ -227,8 +235,8 @@ namespace DMS_CPMS.Services.BackupRecovery
                 _db.SystemBackups.Add(record);
                 await _db.SaveChangesAsync(cancellationToken);
 
-                // Automatic pre-restore backup
-                var pre = await CreateBackupAsync(initiatedByUserId, initiatedByRole, cancellationToken);
+                // Pre-restore backup (must use core: outer scope already holds InProcessGate — CreateBackupAsync would deadlock)
+                var pre = await CreateBackupCoreAsync(initiatedByUserId, initiatedByRole, cancellationToken);
                 try
                 {
                     await RestoreFromEncryptedFileAsync(savedPath, initiatedByUserId, cancellationToken);
@@ -280,15 +288,15 @@ namespace DMS_CPMS.Services.BackupRecovery
                 Directory.CreateDirectory(tempExtractDir);
                 ZipFile.ExtractToDirectory(tempZipPath, tempExtractDir, overwriteFiles: true);
 
-                var dbBakPath = Path.Combine(tempExtractDir, "database.bak");
-                if (!File.Exists(dbBakPath))
-                    throw new InvalidDataException("Backup archive is missing database.bak.");
+                var dbExportPath = Path.Combine(tempExtractDir, "database.json");
+                if (!File.Exists(dbExportPath))
+                    throw new InvalidDataException("Backup archive is missing database.json.");
 
                 var uploadsDir = Path.Combine(tempExtractDir, "uploads");
                 if (!Directory.Exists(uploadsDir))
                     throw new InvalidDataException("Backup archive is missing uploads directory.");
 
-                await RestoreDatabaseFromBakAsync(dbBakPath, cancellationToken);
+                await RestoreDatabaseFromExportAsync(dbExportPath, cancellationToken);
                 await RestoreUploadsAtomicAsync(uploadsDir, cancellationToken);
 
                 await _audit.LogAsync("System Restore Completed", initiatedByUserId, details: Path.GetFileName(encryptedPath));
@@ -302,16 +310,14 @@ namespace DMS_CPMS.Services.BackupRecovery
 
         private async Task CreatePlainBackupZipAsync(string outputZipPath, CancellationToken cancellationToken)
         {
-            var sqlBackupDir = GetSqlServerBackupDirectory();
-            Directory.CreateDirectory(sqlBackupDir);
-            var tempDbBakPath = Path.Combine(sqlBackupDir, $"clinixdocs_db_{Guid.NewGuid():N}.bak");
+            var tempDbExportPath = Path.Combine(Path.GetTempPath(), $"clinixdocs_dbexport_{Guid.NewGuid():N}.json");
             try
             {
-                await BackupDatabaseToFileAsync(tempDbBakPath, cancellationToken);
+                await ExportDatabaseToJsonAsync(tempDbExportPath, cancellationToken);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(outputZipPath)!);
                 using var zip = ZipFile.Open(outputZipPath, ZipArchiveMode.Create);
-                zip.CreateEntryFromFile(tempDbBakPath, "database.bak", CompressionLevel.Optimal);
+                zip.CreateEntryFromFile(tempDbExportPath, "database.json", CompressionLevel.Optimal);
 
                 var uploadsPhysical = Path.Combine(_env.WebRootPath, "uploads");
                 if (Directory.Exists(uploadsPhysical))
@@ -321,94 +327,172 @@ namespace DMS_CPMS.Services.BackupRecovery
             }
             finally
             {
-                TryDelete(tempDbBakPath);
+                TryDelete(tempDbExportPath);
             }
         }
 
-        private async Task BackupDatabaseToFileAsync(string bakPath, CancellationToken cancellationToken)
+        private async Task ExportDatabaseToJsonAsync(string outputJsonPath, CancellationToken cancellationToken)
         {
-            var dbName = GetDatabaseNameFromConnectionString();
             var connStr = _config.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection is missing.");
-
             await using var conn = new SqlConnection(connStr);
             await conn.OpenAsync(cancellationToken);
 
-            var supportsCompression = await SupportsBackupCompressionAsync(conn, cancellationToken);
-            var withOptions = supportsCompression
-                ? "COPY_ONLY, COMPRESSION, INIT, CHECKSUM, STATS = 10"
-                : "COPY_ONLY, INIT, CHECKSUM, STATS = 10";
-
-            var cmdText = $@"
-BACKUP DATABASE [{dbName}]
-TO DISK = @p
-WITH {withOptions};";
-
-            await using var cmd = new SqlCommand(cmdText, conn)
+            var export = new DatabaseExport
             {
-                CommandTimeout = 60 * 60 // 1 hour
+                DatabaseName = GetDatabaseNameFromConnectionString(),
+                ExportedUtc = DateTime.UtcNow
             };
-            cmd.Parameters.Add(new SqlParameter("@p", SqlDbType.NVarChar, 4000) { Value = bakPath });
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
-        }
 
-        private static async Task<bool> SupportsBackupCompressionAsync(SqlConnection conn, CancellationToken cancellationToken)
-        {
-            // EngineEdition: 4 = Express. Express does NOT support backup compression.
-            // https://learn.microsoft.com/sql/t-sql/functions/serverproperty-transact-sql
-            await using var cmd = new SqlCommand("SELECT CAST(SERVERPROPERTY('EngineEdition') AS int);", conn);
-            var obj = await cmd.ExecuteScalarAsync(cancellationToken);
-            var engineEdition = obj is int i ? i : Convert.ToInt32(obj ?? 0);
-            return engineEdition != 4;
-        }
+            var tables = new List<(string Schema, string Name)>();
+            const string tableSql = @"
+SELECT s.name AS SchemaName, t.name AS TableName
+FROM sys.tables t
+INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE t.is_ms_shipped = 0
+ORDER BY s.name, t.name;";
 
-        private string GetSqlServerBackupDirectory()
-        {
-            // Override if needed (must be a local path SQL Server service can write to)
-            var configured = _config["BackupRecovery:SqlServerBackupDirectory"];
-            if (!string.IsNullOrWhiteSpace(configured))
+            await using (var tableCmd = new SqlCommand(tableSql, conn) { CommandTimeout = 120 })
             {
-                return configured;
+                await using var reader = await tableCmd.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    tables.Add((reader.GetString(0), reader.GetString(1)));
+                }
             }
 
-            // Default to a shared, non-Program Files location so both:
-            // - SQL Server service account can write the .bak
-            // - Web app process can read it for encryption/packaging
-            //
-            // ProgramData is the recommended default for Windows services.
-            var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-            if (string.IsNullOrWhiteSpace(programData))
+            foreach (var (schema, name) in tables)
             {
-                programData = @"C:\ProgramData";
+                var tableExport = new TableExport
+                {
+                    Schema = schema,
+                    Name = name
+                };
+
+                var full = $"[{schema}].[{name}]";
+
+                const string colSql = @"
+SELECT c.name, ty.name AS SqlType, c.is_nullable, c.is_identity
+FROM sys.columns c
+INNER JOIN sys.types ty ON c.user_type_id = ty.user_type_id
+INNER JOIN sys.tables t ON c.object_id = t.object_id
+INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE s.name = @schema AND t.name = @table
+ORDER BY c.column_id;";
+
+                await using (var colCmd = new SqlCommand(colSql, conn) { CommandTimeout = 120 })
+                {
+                    colCmd.Parameters.AddWithValue("@schema", schema);
+                    colCmd.Parameters.AddWithValue("@table", name);
+                    await using var colReader = await colCmd.ExecuteReaderAsync(cancellationToken);
+                    while (await colReader.ReadAsync(cancellationToken))
+                    {
+                        tableExport.Columns.Add(new ColumnExport
+                        {
+                            Name = colReader.GetString(0),
+                            SqlType = colReader.GetString(1),
+                            IsNullable = colReader.GetBoolean(2),
+                            IsIdentity = colReader.GetBoolean(3)
+                        });
+                    }
+                }
+
+                await using (var dataCmd = new SqlCommand($"SELECT * FROM {full};", conn) { CommandTimeout = 60 * 60 })
+                await using (var dataReader = await dataCmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await dataReader.ReadAsync(cancellationToken))
+                    {
+                        var row = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+                        for (var i = 0; i < dataReader.FieldCount; i++)
+                        {
+                            var val = dataReader.IsDBNull(i) ? null : dataReader.GetValue(i);
+                            row[dataReader.GetName(i)] = JsonSerializer.SerializeToElement(val, val?.GetType() ?? typeof(object));
+                        }
+                        tableExport.Rows.Add(row);
+                    }
+                }
+
+                export.Tables.Add(tableExport);
             }
 
-            return Path.Combine(programData, "ClinixDocs", "SqlBackups");
+            Directory.CreateDirectory(Path.GetDirectoryName(outputJsonPath)!);
+            await using var fs = new FileStream(outputJsonPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await JsonSerializer.SerializeAsync(fs, export, cancellationToken: cancellationToken);
         }
 
-        private async Task RestoreDatabaseFromBakAsync(string bakPath, CancellationToken cancellationToken)
+        private async Task RestoreDatabaseFromExportAsync(string exportJsonPath, CancellationToken cancellationToken)
         {
-            var dbName = GetDatabaseNameFromConnectionString();
-            var masterConnStr = BuildMasterConnectionString();
+            await using var fs = new FileStream(exportJsonPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var payload = await JsonSerializer.DeserializeAsync<DatabaseExport>(fs, cancellationToken: cancellationToken)
+                ?? throw new InvalidDataException("Invalid database export payload.");
 
-            await using var conn = new SqlConnection(masterConnStr);
+            var connStr = _config.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection is missing.");
+            await using var conn = new SqlConnection(connStr);
             await conn.OpenAsync(cancellationToken);
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync(cancellationToken);
 
-            // Put database into single user to drop existing connections; then restore.
-            var restoreSql = $@"
-IF DB_ID(@db) IS NOT NULL
-BEGIN
-    ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-END
+            try
+            {
+                await ExecuteNonQueryAsync(conn, tx, "EXEC sp_msforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';", cancellationToken);
+                await ExecuteNonQueryAsync(conn, tx, "EXEC sp_msforeachtable 'DISABLE TRIGGER ALL ON ?';", cancellationToken);
 
-RESTORE DATABASE [{dbName}]
-FROM DISK = @bak
-WITH REPLACE, CHECKSUM, STATS = 10;
+                foreach (var table in payload.Tables)
+                {
+                    var tableName = $"[{table.Schema}].[{table.Name}]";
+                    await ExecuteNonQueryAsync(conn, tx, $"DELETE FROM {tableName};", cancellationToken);
+                }
 
-ALTER DATABASE [{dbName}] SET MULTI_USER;";
+                foreach (var table in payload.Tables)
+                {
+                    if (table.Rows.Count == 0) continue;
 
-            await using var cmd = new SqlCommand(restoreSql, conn) { CommandTimeout = 60 * 60 };
-            cmd.Parameters.Add(new SqlParameter("@db", SqlDbType.NVarChar, 128) { Value = dbName });
-            cmd.Parameters.Add(new SqlParameter("@bak", SqlDbType.NVarChar, 4000) { Value = bakPath });
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
+                    var tableName = $"[{table.Schema}].[{table.Name}]";
+                    var columnList = table.Columns.Select(c => $"[{c.Name}]").ToList();
+                    var hasIdentity = table.Columns.Any(c => c.IsIdentity);
+
+                    if (hasIdentity)
+                    {
+                        await ExecuteNonQueryAsync(conn, tx, $"SET IDENTITY_INSERT {tableName} ON;", cancellationToken);
+                    }
+
+                    try
+                    {
+                        var insertSql = $"INSERT INTO {tableName} ({string.Join(", ", columnList)}) VALUES ({string.Join(", ", table.Columns.Select((_, i) => $"@p{i}"))});";
+                        foreach (var row in table.Rows)
+                        {
+                            await using var cmd = new SqlCommand(insertSql, conn, tx)
+                            {
+                                CommandTimeout = 120
+                            };
+
+                            for (var i = 0; i < table.Columns.Count; i++)
+                            {
+                                var col = table.Columns[i];
+                                row.TryGetValue(col.Name, out var elem);
+                                var value = ConvertJsonToSqlValue(elem, col.SqlType);
+                                AddTypedParameter(cmd, $"@p{i}", col.SqlType, value);
+                            }
+
+                            await cmd.ExecuteNonQueryAsync(cancellationToken);
+                        }
+                    }
+                    finally
+                    {
+                        if (hasIdentity)
+                        {
+                            await ExecuteNonQueryAsync(conn, tx, $"SET IDENTITY_INSERT {tableName} OFF;", cancellationToken);
+                        }
+                    }
+                }
+
+                await ExecuteNonQueryAsync(conn, tx, "EXEC sp_msforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';", cancellationToken);
+                await ExecuteNonQueryAsync(conn, tx, "EXEC sp_msforeachtable 'ENABLE TRIGGER ALL ON ?';", cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
 
         private Task RestoreUploadsAtomicAsync(string restoredUploadsDir, CancellationToken cancellationToken)
@@ -512,16 +596,79 @@ SELECT @res;", conn)
             return key;
         }
 
-        private string GetLocalBackupsDirectory()
+        /// <summary>
+        /// Resolves a folder the app can actually write to. Shared hosts (e.g. MonsterASP) often deny arbitrary paths like D:\home\site\backups;
+        /// the app falls back to <c>ContentRoot/App_Data/Backups</c> automatically.
+        /// </summary>
+        private string ResolveWritableLocalBackupDirectory()
         {
-            var configured = _config["BackupRecovery:LocalBackupDirectory"];
-            if (!string.IsNullOrWhiteSpace(configured))
+            var configuredRaw = _config["BackupRecovery:LocalBackupDirectory"]?.Trim();
+            string? configuredFull = null;
+            try
             {
-                return configured;
+                if (!string.IsNullOrWhiteSpace(configuredRaw))
+                    configuredFull = Path.GetFullPath(configuredRaw);
+            }
+            catch
+            {
+                configuredFull = null;
             }
 
-            // Not under wwwroot (non-public)
-            return Path.Combine(_env.ContentRootPath, "App_Data", "Backups");
+            var appDataBackupsFull = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "Backups"));
+
+            var candidates = new List<string>();
+            if (!string.IsNullOrEmpty(configuredFull))
+                candidates.Add(configuredFull);
+            if (!candidates.Contains(appDataBackupsFull, StringComparer.OrdinalIgnoreCase))
+                candidates.Add(appDataBackupsFull);
+
+            foreach (var path in candidates)
+            {
+                if (!TryPrepareWritableBackupDirectory(path, out _))
+                    continue;
+
+                if (!string.IsNullOrEmpty(configuredFull) &&
+                    !path.Equals(configuredFull, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "BackupRecovery LocalBackupDirectory is not writable ({Configured}). Using fallback under the site App_Data folder: {Fallback}. Tip: delete env var BackupRecovery__LocalBackupDirectory or set it to that path.",
+                        configuredFull, path);
+                }
+                else
+                {
+                    _logger.LogInformation("Using backup directory: {Path}", path);
+                }
+
+                return path;
+            }
+
+            throw new InvalidOperationException(
+                "Could not prepare a writable backup directory. Remove BackupRecovery__LocalBackupDirectory so the app uses App_Data/Backups, " +
+                "or ask your host to grant the app identity write permission. " +
+                $"Tried: {string.Join(", ", candidates.Select(p => '\"' + p + '\"'))}.");
+        }
+
+        private static bool TryPrepareWritableBackupDirectory(string directoryPath, out string? error)
+        {
+            error = null;
+            try
+            {
+                Directory.CreateDirectory(directoryPath);
+                var probe = Path.Combine(directoryPath, $".acl_probe_{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(probe, "ok");
+                File.Delete(probe);
+                return true;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+            catch (IOException ex)
+            {
+                error = ex.Message;
+                return false;
+            }
         }
 
         private string GetDatabaseNameFromConnectionString()
@@ -531,11 +678,75 @@ SELECT @res;", conn)
             return builder.InitialCatalog;
         }
 
-        private string BuildMasterConnectionString()
+        private static async Task ExecuteNonQueryAsync(SqlConnection conn, SqlTransaction tx, string sql, CancellationToken cancellationToken)
         {
-            var cs = _config.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection is missing.");
-            var builder = new SqlConnectionStringBuilder(cs) { InitialCatalog = "master" };
-            return builder.ToString();
+            await using var cmd = new SqlCommand(sql, conn, tx) { CommandTimeout = 60 * 60 };
+            await cmd.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        private static void AddTypedParameter(SqlCommand cmd, string parameterName, string sqlType, object? value)
+        {
+            var t = sqlType.ToLowerInvariant();
+            var parameter = t switch
+            {
+                "bit" => cmd.Parameters.Add(parameterName, SqlDbType.Bit),
+                "tinyint" => cmd.Parameters.Add(parameterName, SqlDbType.TinyInt),
+                "smallint" => cmd.Parameters.Add(parameterName, SqlDbType.SmallInt),
+                "int" => cmd.Parameters.Add(parameterName, SqlDbType.Int),
+                "bigint" => cmd.Parameters.Add(parameterName, SqlDbType.BigInt),
+                "real" => cmd.Parameters.Add(parameterName, SqlDbType.Real),
+                "float" => cmd.Parameters.Add(parameterName, SqlDbType.Float),
+                "decimal" or "numeric" => cmd.Parameters.Add(parameterName, SqlDbType.Decimal),
+                "money" => cmd.Parameters.Add(parameterName, SqlDbType.Money),
+                "smallmoney" => cmd.Parameters.Add(parameterName, SqlDbType.SmallMoney),
+                "uniqueidentifier" => cmd.Parameters.Add(parameterName, SqlDbType.UniqueIdentifier),
+                "date" => cmd.Parameters.Add(parameterName, SqlDbType.Date),
+                "datetime" => cmd.Parameters.Add(parameterName, SqlDbType.DateTime),
+                "datetime2" => cmd.Parameters.Add(parameterName, SqlDbType.DateTime2),
+                "smalldatetime" => cmd.Parameters.Add(parameterName, SqlDbType.SmallDateTime),
+                "datetimeoffset" => cmd.Parameters.Add(parameterName, SqlDbType.DateTimeOffset),
+                "time" => cmd.Parameters.Add(parameterName, SqlDbType.Time),
+                "binary" or "varbinary" or "image" or "rowversion" or "timestamp" => cmd.Parameters.Add(parameterName, SqlDbType.VarBinary),
+                _ => cmd.Parameters.Add(parameterName, SqlDbType.NVarChar)
+            };
+
+            if (value == null)
+            {
+                parameter.Value = DBNull.Value;
+                return;
+            }
+
+            if (t == "datetime" && value is DateTime dt && dt < new DateTime(1753, 1, 1))
+                value = new DateTime(1753, 1, 1);
+            if (t == "smalldatetime" && value is DateTime sdt && sdt < new DateTime(1900, 1, 1))
+                value = new DateTime(1900, 1, 1);
+
+            parameter.Value = value;
+        }
+
+        private static object? ConvertJsonToSqlValue(JsonElement value, string sqlType)
+        {
+            if (value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+                return null;
+
+            var t = sqlType.ToLowerInvariant();
+            return t switch
+            {
+                "bit" => value.GetBoolean(),
+                "tinyint" => value.GetByte(),
+                "smallint" => value.GetInt16(),
+                "int" => value.GetInt32(),
+                "bigint" => value.GetInt64(),
+                "real" => value.GetSingle(),
+                "float" => value.GetDouble(),
+                "decimal" or "numeric" or "money" or "smallmoney" => value.GetDecimal(),
+                "uniqueidentifier" => value.GetGuid(),
+                "date" or "datetime" or "datetime2" or "smalldatetime" => value.GetDateTime(),
+                "datetimeoffset" => value.GetDateTimeOffset(),
+                "time" => TimeSpan.Parse(value.GetString() ?? "00:00:00", CultureInfo.InvariantCulture),
+                "binary" or "varbinary" or "image" or "rowversion" or "timestamp" => Convert.FromBase64String(value.GetString() ?? string.Empty),
+                _ => value.GetString()
+            };
         }
 
         private static void AddDirectoryToZip(ZipArchive zip, string sourceDir, string entryRoot)
@@ -572,6 +783,29 @@ SELECT @res;", conn)
         {
             try { if (Directory.Exists(path)) Directory.Delete(path, recursive: true); } catch { }
         }
+    }
+
+    public sealed class DatabaseExport
+    {
+        public string DatabaseName { get; set; } = string.Empty;
+        public DateTime ExportedUtc { get; set; }
+        public List<TableExport> Tables { get; set; } = new();
+    }
+
+    public sealed class TableExport
+    {
+        public string Schema { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public List<ColumnExport> Columns { get; set; } = new();
+        public List<Dictionary<string, JsonElement>> Rows { get; set; } = new();
+    }
+
+    public sealed class ColumnExport
+    {
+        public string Name { get; set; } = string.Empty;
+        public string SqlType { get; set; } = string.Empty;
+        public bool IsNullable { get; set; }
+        public bool IsIdentity { get; set; }
     }
 }
 

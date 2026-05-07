@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="d4f7a8eb-d64b-4464-83d7-f7580b1a99ef" name="Dextr@MSI 2026-05-06 22:14:05" runUser="MSI\Dextr" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-05-06T22:14:05.2209233+08:00" queuing="2026-05-06T22:14:05.2209239+08:00" start="2026-05-06T22:14:04.6494678+08:00" finish="2026-05-06T22:14:05.3525914+08:00" />
+  <TestSettings name="default" id="8552cd23-7d05-4f33-adef-2c25c941b053">
+    <Deployment runDeploymentRoot="Dextr_MSI_2026-05-06_22_14_05" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e324a62c-f6fe-4eb0-acc7-ad5bcbf28912" testId="f570a2d2-05ef-6037-11c3-8653a57ab459" testName="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Date_before_1900_is_invalid" computerName="MSI" duration="00:00:00.0001362" startTime="2026-05-06T22:14:05.1974434+08:00" endTime="2026-05-06T22:14:05.1974435+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e324a62c-f6fe-4eb0-acc7-ad5bcbf28912" />
+    <UnitTestResult executionId="508cf34d-3ef6-4763-8f75-8c17fadf6e84" testId="3e574689-94cc-bad7-6e3c-4fb84d58c3f5" testName="DMS_CPMS.Tests.BackupCryptoServiceTests.Tampering_with_file_fails_integrity_check" computerName="MSI" duration="00:00:00.0431208" startTime="2026-05-06T22:14:05.2088793+08:00" endTime="2026-05-06T22:14:05.2088797+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="508cf34d-3ef6-4763-8f75-8c17fadf6e84" />
+    <UnitTestResult executionId="4c629e32-ff9c-4682-8fa0-189a03ca07f5" testId="4e00f68f-7f12-1207-a29c-9c06eed56d05" testName="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Weak_password_fails_complexity" computerName="MSI" duration="00:00:00.0006891" startTime="2026-05-06T22:14:05.1974894+08:00" endTime="2026-05-06T22:14:05.1974895+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4c629e32-ff9c-4682-8fa0-189a03ca07f5" />
+    <UnitTestResult executionId="66a6791b-0c60-43a0-adbc-fd3e740e3906" testId="fc82bd67-7b60-ae5a-f249-db54528694c9" testName="DMS_CPMS.Tests.BackupCryptoServiceTests.Encrypt_then_decrypt_returns_original_bytes" computerName="MSI" duration="00:00:00.0965935" startTime="2026-05-06T22:14:05.3056308+08:00" endTime="2026-05-06T22:14:05.3056311+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="66a6791b-0c60-43a0-adbc-fd3e740e3906" />
+    <UnitTestResult executionId="440ecce3-056d-4c48-a4d6-6ea33c5a60c3" testId="f9434cef-0ed9-7767-ae25-60bcd2494180" testName="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Username_too_short_fails" computerName="MSI" duration="00:00:00.0002761" startTime="2026-05-06T22:14:05.1975599+08:00" endTime="2026-05-06T22:14:05.1975599+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="440ecce3-056d-4c48-a4d6-6ea33c5a60c3" />
+    <UnitTestResult executionId="a0767bfd-0857-4ac8-b849-7669807157be" testId="1a0aa8e6-5225-cc0f-22cb-3f642de3400f" testName="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Date_in_valid_range_is_valid" computerName="MSI" duration="00:00:00.0000933" startTime="2026-05-06T22:14:05.1974801+08:00" endTime="2026-05-06T22:14:05.1974801+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a0767bfd-0857-4ac8-b849-7669807157be" />
+    <UnitTestResult executionId="57035b6f-10be-4174-a023-8f61ce4fcb79" testId="3f55d32c-09b6-6561-b87d-07174f4b9fd6" testName="DMS_CPMS.Tests.CreatePatientViewModelValidationTests.Valid_gender_passes" computerName="MSI" duration="00:00:00.0082872" startTime="2026-05-06T22:14:05.1766812+08:00" endTime="2026-05-06T22:14:05.1766814+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="57035b6f-10be-4174-a023-8f61ce4fcb79" />
+    <UnitTestResult executionId="74d1a130-1fea-4d90-a336-2bd54762accc" testId="ab327c29-ea4b-421f-dd4e-952e1227a681" testName="DMS_CPMS.Tests.MaxFileSizeAttributeTests.File_within_limit_is_valid" computerName="MSI" duration="00:00:00.0046397" startTime="2026-05-06T22:14:05.1755150+08:00" endTime="2026-05-06T22:14:05.1755151+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74d1a130-1fea-4d90-a336-2bd54762accc" />
+    <UnitTestResult executionId="0dbaab3f-fb15-405f-af99-8461ef76d20e" testId="ae42362e-9328-ced1-61f7-90e878f26dab" testName="DMS_CPMS.Tests.CreatePatientViewModelValidationTests.Invalid_gender_fails" computerName="MSI" duration="00:00:00.0007620" startTime="2026-05-06T22:14:05.1974677+08:00" endTime="2026-05-06T22:14:05.1974677+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0dbaab3f-fb15-405f-af99-8461ef76d20e" />
+    <UnitTestResult executionId="93c6707e-98f1-4616-8490-4a1629bfb6c1" testId="f74580a1-480d-a644-f0f5-92fa4f7cdcde" testName="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Mismatched_confirm_password_fails" computerName="MSI" duration="00:00:00.0089452" startTime="2026-05-06T22:14:05.1767609+08:00" endTime="2026-05-06T22:14:05.1767610+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="93c6707e-98f1-4616-8490-4a1629bfb6c1" />
+    <UnitTestResult executionId="f1ca0afb-3e0e-48aa-98f6-b16fff3b42c1" testId="027bbd0b-d88f-ff7d-b769-147475398b8d" testName="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Invalid_role_fails" computerName="MSI" duration="00:00:00.0002320" startTime="2026-05-06T22:14:05.1975839+08:00" endTime="2026-05-06T22:14:05.1975839+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f1ca0afb-3e0e-48aa-98f6-b16fff3b42c1" />
+    <UnitTestResult executionId="6e1a2d6c-482a-439b-8be9-bfad4e8a13ee" testId="ac6108ae-9e29-1a63-db6a-d7ce34760dc6" testName="DMS_CPMS.Tests.MaxFileSizeAttributeTests.File_over_limit_is_invalid" computerName="MSI" duration="00:00:00.0021212" startTime="2026-05-06T22:14:05.1972910+08:00" endTime="2026-05-06T22:14:05.1972911+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e1a2d6c-482a-439b-8be9-bfad4e8a13ee" />
+    <UnitTestResult executionId="0b8fbdd8-90a3-4863-a3a2-6e31c1957405" testId="048e873a-0912-2fb2-035d-cf50420fc38d" testName="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Today_is_valid" computerName="MSI" duration="00:00:00.0069186" startTime="2026-05-06T22:14:05.1731813+08:00" endTime="2026-05-06T22:14:05.1732030+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b8fbdd8-90a3-4863-a3a2-6e31c1957405" />
+    <UnitTestResult executionId="5483ee33-88f5-4350-809b-8277b1bd5354" testId="fe2d1a31-7066-9b33-542b-ab22f9fef152" testName="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Future_date_is_invalid" computerName="MSI" duration="00:00:00.0020480" startTime="2026-05-06T22:14:05.1767265+08:00" endTime="2026-05-06T22:14:05.1767266+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5483ee33-88f5-4350-809b-8277b1bd5354" />
+    <UnitTestResult executionId="6d386858-0bb3-40d7-8bac-226aed0afc68" testId="a0272455-e6f7-b4ab-844d-5dc177ba9786" testName="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Valid_model_passes_all_rules" computerName="MSI" duration="00:00:00.0003930" startTime="2026-05-06T22:14:05.1976173+08:00" endTime="2026-05-06T22:14:05.1976173+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d386858-0bb3-40d7-8bac-226aed0afc68" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="DMS_CPMS.Tests.CreatePatientViewModelValidationTests.Invalid_gender_fails" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="ae42362e-9328-ced1-61f7-90e878f26dab">
+      <Execution id="0dbaab3f-fb15-405f-af99-8461ef76d20e" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreatePatientViewModelValidationTests" name="Invalid_gender_fails" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Mismatched_confirm_password_fails" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="f74580a1-480d-a644-f0f5-92fa4f7cdcde">
+      <Execution id="93c6707e-98f1-4616-8490-4a1629bfb6c1" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreateAccountViewModelValidationTests" name="Mismatched_confirm_password_fails" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Today_is_valid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="048e873a-0912-2fb2-035d-cf50420fc38d">
+      <Execution id="0b8fbdd8-90a3-4863-a3a2-6e31c1957405" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.ValidBirthDateAttributeTests" name="Today_is_valid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.MaxFileSizeAttributeTests.File_within_limit_is_valid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="ab327c29-ea4b-421f-dd4e-952e1227a681">
+      <Execution id="74d1a130-1fea-4d90-a336-2bd54762accc" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.MaxFileSizeAttributeTests" name="File_within_limit_is_valid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.BackupCryptoServiceTests.Tampering_with_file_fails_integrity_check" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="3e574689-94cc-bad7-6e3c-4fb84d58c3f5">
+      <Execution id="508cf34d-3ef6-4763-8f75-8c17fadf6e84" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.BackupCryptoServiceTests" name="Tampering_with_file_fails_integrity_check" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Date_in_valid_range_is_valid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="1a0aa8e6-5225-cc0f-22cb-3f642de3400f">
+      <Execution id="a0767bfd-0857-4ac8-b849-7669807157be" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.ValidBirthDateAttributeTests" name="Date_in_valid_range_is_valid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Valid_model_passes_all_rules" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="a0272455-e6f7-b4ab-844d-5dc177ba9786">
+      <Execution id="6d386858-0bb3-40d7-8bac-226aed0afc68" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreateAccountViewModelValidationTests" name="Valid_model_passes_all_rules" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.BackupCryptoServiceTests.Encrypt_then_decrypt_returns_original_bytes" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="fc82bd67-7b60-ae5a-f249-db54528694c9">
+      <Execution id="66a6791b-0c60-43a0-adbc-fd3e740e3906" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.BackupCryptoServiceTests" name="Encrypt_then_decrypt_returns_original_bytes" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Future_date_is_invalid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="fe2d1a31-7066-9b33-542b-ab22f9fef152">
+      <Execution id="5483ee33-88f5-4350-809b-8277b1bd5354" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.ValidBirthDateAttributeTests" name="Future_date_is_invalid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.MaxFileSizeAttributeTests.File_over_limit_is_invalid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="ac6108ae-9e29-1a63-db6a-d7ce34760dc6">
+      <Execution id="6e1a2d6c-482a-439b-8be9-bfad4e8a13ee" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.MaxFileSizeAttributeTests" name="File_over_limit_is_invalid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreatePatientViewModelValidationTests.Valid_gender_passes" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="3f55d32c-09b6-6561-b87d-07174f4b9fd6">
+      <Execution id="57035b6f-10be-4174-a023-8f61ce4fcb79" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreatePatientViewModelValidationTests" name="Valid_gender_passes" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Username_too_short_fails" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="f9434cef-0ed9-7767-ae25-60bcd2494180">
+      <Execution id="440ecce3-056d-4c48-a4d6-6ea33c5a60c3" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreateAccountViewModelValidationTests" name="Username_too_short_fails" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Weak_password_fails_complexity" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="4e00f68f-7f12-1207-a29c-9c06eed56d05">
+      <Execution id="4c629e32-ff9c-4682-8fa0-189a03ca07f5" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreateAccountViewModelValidationTests" name="Weak_password_fails_complexity" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.ValidBirthDateAttributeTests.Date_before_1900_is_invalid" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="f570a2d2-05ef-6037-11c3-8653a57ab459">
+      <Execution id="e324a62c-f6fe-4eb0-acc7-ad5bcbf28912" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.ValidBirthDateAttributeTests" name="Date_before_1900_is_invalid" />
+    </UnitTest>
+    <UnitTest name="DMS_CPMS.Tests.CreateAccountViewModelValidationTests.Invalid_role_fails" storage="c:\users\dextr\source\repos\dms_cpms\dms_cpms\dms_cpms.tests\bin\debug\net8.0\dms_cpms.tests.dll" id="027bbd0b-d88f-ff7d-b769-147475398b8d">
+      <Execution id="f1ca0afb-3e0e-48aa-98f6-b16fff3b42c1" />
+      <TestMethod codeBase="C:\Users\Dextr\source\repos\DMS_CPMS\DMS_CPMS\DMS_CPMS.Tests\bin\Debug\net8.0\DMS_CPMS.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DMS_CPMS.Tests.CreateAccountViewModelValidationTests" name="Invalid_role_fails" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f570a2d2-05ef-6037-11c3-8653a57ab459" executionId="e324a62c-f6fe-4eb0-acc7-ad5bcbf28912" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e574689-94cc-bad7-6e3c-4fb84d58c3f5" executionId="508cf34d-3ef6-4763-8f75-8c17fadf6e84" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4e00f68f-7f12-1207-a29c-9c06eed56d05" executionId="4c629e32-ff9c-4682-8fa0-189a03ca07f5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fc82bd67-7b60-ae5a-f249-db54528694c9" executionId="66a6791b-0c60-43a0-adbc-fd3e740e3906" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f9434cef-0ed9-7767-ae25-60bcd2494180" executionId="440ecce3-056d-4c48-a4d6-6ea33c5a60c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a0aa8e6-5225-cc0f-22cb-3f642de3400f" executionId="a0767bfd-0857-4ac8-b849-7669807157be" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3f55d32c-09b6-6561-b87d-07174f4b9fd6" executionId="57035b6f-10be-4174-a023-8f61ce4fcb79" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab327c29-ea4b-421f-dd4e-952e1227a681" executionId="74d1a130-1fea-4d90-a336-2bd54762accc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae42362e-9328-ced1-61f7-90e878f26dab" executionId="0dbaab3f-fb15-405f-af99-8461ef76d20e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f74580a1-480d-a644-f0f5-92fa4f7cdcde" executionId="93c6707e-98f1-4616-8490-4a1629bfb6c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="027bbd0b-d88f-ff7d-b769-147475398b8d" executionId="f1ca0afb-3e0e-48aa-98f6-b16fff3b42c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ac6108ae-9e29-1a63-db6a-d7ce34760dc6" executionId="6e1a2d6c-482a-439b-8be9-bfad4e8a13ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="048e873a-0912-2fb2-035d-cf50420fc38d" executionId="0b8fbdd8-90a3-4863-a3a2-6e31c1957405" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fe2d1a31-7066-9b33-542b-ab22f9fef152" executionId="5483ee33-88f5-4350-809b-8277b1bd5354" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a0272455-e6f7-b4ab-844d-5dc177ba9786" executionId="6d386858-0bb3-40d7-8bac-226aed0afc68" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="15" executed="15" passed="15" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.26)&#xD;
+[xUnit.net 00:00:00.06]   Discovering: DMS_CPMS.Tests&#xD;
+[xUnit.net 00:00:00.10]   Discovered:  DMS_CPMS.Tests&#xD;
+[xUnit.net 00:00:00.10]   Starting:    DMS_CPMS.Tests&#xD;
+[xUnit.net 00:00:00.28]   Finished:    DMS_CPMS.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>
